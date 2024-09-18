@@ -14,7 +14,7 @@ class Tablero(Base):
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=True)
     partida = relationship("Partida", back_populates="tablero")
 
-    #fichas_cajon = relationship("FichaCajon", back_populates="tablero")
+    fichas_cajon = relationship("FichaCajon", back_populates="tablero")
 
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
