@@ -1,8 +1,6 @@
 from sqlalchemy import Column, String, Integer, Boolean, CheckConstraint
-from sqlalchemy.orm import declarative_base
-
-
-Base = declarative_base()
+from sqlalchemy.orm import relationship
+from src.models.utils import Base
 
 class Partida(Base):
     __tablename__ = "partidas"
@@ -13,6 +11,7 @@ class Partida(Base):
     cantidad_min_jugadores = Column(Integer, nullable=False)
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
+    tablero = relationship("Tablero", back_populates="partida", uselist=False)
 
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
