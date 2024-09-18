@@ -2,18 +2,20 @@ import pytest
 from sqlalchemy import inspect, create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
-from src.models.partida import Partida, Base
+from src.models.partida import Partida
+from src.models.tablero import Tablero
+from src.db import Base
 
 @pytest.fixture(scope='function')
 def test_db():
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    with SessionLocal() as db:
+        try:
+            yield db
+        finally:
+            db.close()
 
 def cheq_partida(partida: Partida, dicc: dict) -> bool:
     res = True
@@ -28,7 +30,8 @@ def test_create_user(test_db):
     configuracion = {"nombre": "primera",
                     "cantidad_max_jugadores": 4,
                     "cantidad_min_jugadores": 2, 
-                    "partida_iniciada": True}
+                    "partida_iniciada": True
+                    }
     partida = Partida(**configuracion)
     test_db.add(partida)
     test_db.commit()
