@@ -1,10 +1,8 @@
 import pytest
 from sqlalchemy import inspect, create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
-from src.db import get_db, create_table, engine
 from src.models.partida import Partida, Base
-
-inspector = inspect(engine)
 
 @pytest.fixture(scope='function')
 def test_db():
@@ -58,3 +56,24 @@ def test_multi_partida(test_db):
         assert partida.jugador_en_turno == 0
         assert partida.id == i+1
 
+def test_create_partida_invalid_jugadores(test_db):
+    configuracion = {
+        "nombre": "segunda", 
+        "cantidad_max_jugadores": 5,  
+        "cantidad_min_jugadores": 1,  
+        "partida_iniciada": True
+    }
+    
+    partida = Partida(**configuracion)
+    
+    with pytest.raises(IntegrityError):
+        test_db.add(partida)
+        test_db.commit()
+
+def test_create_partida_invalid_nulls(test_db):
+    
+    partida = Partida()
+    
+    with pytest.raises(IntegrityError):
+        test_db.add(partida)
+        test_db.commit()

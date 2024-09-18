@@ -2,11 +2,16 @@ from sqlalchemy import Column, Integer, String, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 db_url = "sqlite:///database.db"
-engine = create_engine(db_url)
+engine = None
 
-Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
+Session = None
 Base = declarative_base()
+
+def init_db():
+    global engine, Session
+    if engine is None:
+        engine = create_engine(db_url)
+        Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():
     db = Session()
