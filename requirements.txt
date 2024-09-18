@@ -3,4 +3,4 @@ uvicorn
 websockets
 databases
 sqlalchemy
-
+pytest
