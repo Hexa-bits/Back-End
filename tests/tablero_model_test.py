@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from src.models.partida import Partida
 from src.models.tablero import Tablero
+from src.models.jugadores import Jugador
+from src.models.cartafigura import pictureCard
 from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.color_enum import Color
