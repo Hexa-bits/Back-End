@@ -18,7 +18,7 @@ class CardState(enum.Enum):
     mazo = 2
     descartada = 3
 
-class movementCard(Base):
+class MovementCard(Base):
     __tablename__ = "cartasMovimiento"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

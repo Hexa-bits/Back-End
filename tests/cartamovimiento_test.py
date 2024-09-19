@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.partida import Partida
 from src.models.tablero import Tablero
-from src.models.cartamovimiento import Move, CardState, movementCard 
+from src.models.cartamovimiento import Move, CardState, MovementCard 
 
 
 @pytest.fixture(scope='module')
@@ -28,7 +28,7 @@ def test_picture_card_creation_and_relationship(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = movementCard(movimiento=Move.diagonal_con_espacio, estado=CardState.mano, partida_id=partida.id)
+    card = MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardState.mano, partida_id=partida.id)
     
     # Añade la tarjeta a la base de datos
     test_db.add(card)
@@ -42,7 +42,7 @@ def test_picture_card_creation_and_relationship(test_db):
     assert card.estado == CardState.mano
 
 def test_picture_card_2(test_db):
-    card = movementCard(movimiento=Move.diagonal_contiguo, estado=CardState.mazo)
+    card = MovementCard(movimiento=Move.diagonal_contiguo, estado=CardState.mazo)
     
     test_db.add(card)
     test_db.commit()
@@ -55,7 +55,7 @@ def test_picture_card_2(test_db):
     
     
 def test_picture_card_repr(test_db):
-    card = movementCard(movimiento=Move.linea_al_lateral, estado=CardState.descartada)
+    card = MovementCard(movimiento=Move.linea_al_lateral, estado=CardState.descartada)
     
     test_db.add(card)
     test_db.commit()
@@ -66,8 +66,8 @@ def test_picture_card_repr(test_db):
     assert repr(card) == expected_repr
 
 def test_picture_card_ids(test_db):
-    card1 = movementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
-    card2 = movementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
+    card1 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
+    card2 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
     
     test_db.add(card1)
     test_db.commit()
@@ -88,13 +88,13 @@ def test_relationship2(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = movementCard(movimiento=Move.L_derecha, estado=CardState.mano, partida_id=partida.id)
+    card = MovementCard(movimiento=Move.L_derecha, estado=CardState.mano, partida_id=partida.id)
     
     test_db.add(card)
     test_db.commit()
     test_db.refresh(card)
     
-    card1 = movementCard(movimiento=Move.L_izquierda, estado=CardState.mano, partida_id=partida.id)
+    card1 = MovementCard(movimiento=Move.L_izquierda, estado=CardState.mano, partida_id=partida.id)
     
     test_db.add(card1)
     test_db.commit()
