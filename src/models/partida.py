@@ -14,6 +14,7 @@ class Partida(Base):
     partida_iniciada = Column(Boolean, default=False)
 
     cartafigura = relationship("pictureCard", back_populates="partida")
+    tablero = relationship("Tablero", back_populates="partida", uselist=False)
 
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
