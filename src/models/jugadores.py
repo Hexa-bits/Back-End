@@ -1,9 +1,9 @@
 from sqlalchemy import Column, String, Integer, Boolean, ForeignKey
 from sqlalchemy.orm import relationship
 from src.db import Base
-
+from src.models.partida import Partida
 class Jugador(Base):
-    __tablename__ = "juagdor"
+    __tablename__ = "jugador"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(50), nullable=False)
