@@ -1,6 +1,8 @@
 from sqlalchemy import Column, String, Integer, Boolean, CheckConstraint
 from sqlalchemy.orm import relationship
 from src.db import Base
+
+
 class Partida(Base):
     __tablename__ = "partidas"
 
@@ -11,6 +13,7 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
 
+    cartafigura = relationship("pictureCard", back_populates="partida")
     tablero = relationship("Tablero", back_populates="partida", uselist=False)
 
     def __repr__(self) -> str:
