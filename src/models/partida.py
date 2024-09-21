@@ -18,6 +18,8 @@ class Partida(Base):
     cartafigura = relationship("pictureCard", back_populates="partida")
     tablero = relationship("Tablero", back_populates="partida", uselist=False)
 
+    cartasmovimiento = relationship("MovementCard", back_populates="partida")
+
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
         nombre = f'nombre={self.nombre!r}'
