@@ -7,6 +7,8 @@ from src.models.tablero import Tablero
 from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
 
+from fastapi.middleware.cors import CORSMiddleware
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -18,6 +20,15 @@ def get_db():
         yield db
     finally:
         db.close
+
+# Configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Permitir solicitudes desde tu front-end
+    allow_credentials=True,
+    allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
+    allow_headers=["*"],  # Permitir todos los headers
+)
 
 class PlayerId(BaseModel):
     id: int
