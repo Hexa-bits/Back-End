@@ -6,6 +6,7 @@ from src.models.cartafigura import pictureCard
 from src.models.tablero import Tablero
 from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
+from src.consultas import add_player
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -44,12 +45,9 @@ def read_root():
 
 @app.post("/login", response_model=PlayerId, status_code=status.HTTP_201_CREATED)
 async def login(user: User, db: Session = Depends(get_db)):
-    jugador = Jugador(nombre= user.username, es_anfitrion=False)
-    db.add(jugador)
     try:
-        db.commit()  
-        db.refresh(jugador)
-    except Exception as e:
+        jugador = add_player(user.username, False, db)#Jugador(nombre= user.username, es_anfitrion=False)
+    except Exception:
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
