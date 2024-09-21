@@ -84,7 +84,7 @@ def test_endpoint_partida_invalid_max ():
                                             'input': 1, 'ctx': {'gt': 1}}]
 
 
-def test_endpoint_partida_invalid_name ():
+def test_endpoint_partida_invalid_name_length ():
     config = {"id_user": 1, "game_name": "abcdefghijklmnopq", "max_players": 4}
     with patch("src.main.add_partida", return_value=1) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
@@ -98,6 +98,22 @@ def test_endpoint_partida_invalid_name ():
                                              'loc': ['body', 'game_name'], 
                                              'msg': 'String should have at most 10 characters', 
                                              'input': 'abcdefghijklmnopq', 'ctx': {'max_length': 10}}]
+    
+
+def test_endpoint_partida_invalid_name_str ():
+    config = {"id_user": 1, "game_name": None, "max_players": 4}
+    with patch("src.main.add_partida", return_value=1) as mock_add_player:
+        with patch("src.main.jugador_anfitrion") as mock_get_jugador:
+            response = client.post("/home/create_config", json=config)
+            
+            mock_add_player.assert_not_called()
+            mock_get_jugador.assert_not_called()
+            assert response.status_code == 422
+            json_resp = response.json()
+            assert json_resp ["detail"] == [{'input': None,
+                                            'loc': ['body', 'game_name'],
+                                            'msg': 'Input should be a valid string',
+                                            'type': 'string_type'}]
             
 
 def test_endpoint_partida_invalid_name ():
