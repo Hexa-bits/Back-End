@@ -16,7 +16,7 @@ Conflictos de versiones entre colaboradores.
 - Para instalar dependencias
 
     ```bash
-    pip install -r requirements
+    pip install -r requirements.txt
     ```
 
 - Para actualizar las dependencias instaladas
