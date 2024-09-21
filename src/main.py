@@ -22,6 +22,9 @@ def get_db():
 class PlayerId(BaseModel):
     id: int
 
+class User(BaseModel):
+    username: str
+
 @app.get("/")
 def read_root():
     return {"mensaje": "¡Hola, FastAPI!"}
@@ -29,8 +32,8 @@ def read_root():
 # Endpoint para jugador /login
 
 @app.post("/login", response_model=PlayerId, status_code=status.HTTP_201_CREATED)
-async def login(username: str, db: Session = Depends(get_db)):
-    jugador = Jugador(nombre=username, es_anfitrion=False)
+async def login(user: User, db: Session = Depends(get_db)):
+    jugador = Jugador(nombre= user.username, es_anfitrion=False)
     db.add(jugador)
     try:
         db.commit()  
