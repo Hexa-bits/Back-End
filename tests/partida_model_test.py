@@ -8,9 +8,8 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import pictureCard
 
 def test_create_partida(test_db):
-    configuracion = {"nombre": "primera",
-                    "cantidad_max_jugadores": 4,
-                    "cantidad_min_jugadores": 2, 
+    configuracion = {"game_name": "primera",
+                    "max_players": 4,
                     "partida_iniciada": True
                     }
     partida = Partida(**configuracion)
@@ -19,46 +18,23 @@ def test_create_partida(test_db):
     test_db.refresh(partida)
 
     assert cheq_entity(partida, configuracion)
-    assert partida.cantidad_max_jugadores in range(2, 5)
-    assert partida.cantidad_min_jugadores in range(2, 5)
     assert partida.jugador_en_turno == 0
     assert partida.id == 1
 
 def test_multi_partida(test_db):
     for i in range(20):
-        configuracion = {"nombre": str(i),
-                        "cantidad_max_jugadores": 4,
-                        "cantidad_min_jugadores": 2}
+        configuracion = {"game_name": str(i),
+                        "max_players": 4}
         partida = Partida(**configuracion)
         test_db.add(partida)
         test_db.commit()
         test_db.refresh(partida)
 
         assert cheq_entity(partida, configuracion)
-        assert partida.cantidad_max_jugadores in range(2, 5)
-        assert partida.cantidad_min_jugadores in range(2, 5)
         assert partida.jugador_en_turno == 0
         assert partida.id == i+1
 
-""""
-def test_create_partida_invalid_jugadores(test_db):
-    configuracion = {
-        "nombre": "segunda", 
-        "cantidad_max_jugadores": 5,  
-        "cantidad_min_jugadores": 1,  
-        "partida_iniciada": True
-    }
-    
-    partida = Partida(**configuracion)
-    
-    with pytest.raises(IntegrityError):
-        test_db.add(partida)
-        test_db.commit()
-"""
-
-
-def test_create_partida_invalid_nulls(test_db):
-    
+def test_create_partida_invalid_nulls(test_db):    
     partida = Partida()
     
     with pytest.raises(IntegrityError):

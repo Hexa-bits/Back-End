@@ -24,7 +24,7 @@ def test_db():
             db.close()
 
 def test_picture_card_creation_and_relationship(test_db):
-    partida = Partida(nombre="Mi partida", cantidad_max_jugadores=4, cantidad_min_jugadores=2)
+    partida = Partida(game_name="Mi partida", max_players=4)
     
     test_db.add(partida)
     test_db.commit()
@@ -84,7 +84,7 @@ def test_picture_card_ids(test_db):
     assert card1.id != card2.id 
 
 def test_relationship2(test_db):
-    partida = Partida(nombre="Mi partida", cantidad_max_jugadores=4, cantidad_min_jugadores=2)
+    partida = Partida(game_name="Mi partida", max_players=4)
     
     test_db.add(partida)
     test_db.commit()
