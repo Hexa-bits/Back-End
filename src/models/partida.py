@@ -1,6 +1,8 @@
 from sqlalchemy import Column, String, Integer, Boolean, CheckConstraint
 from sqlalchemy.orm import relationship
 from src.db import Base
+
+
 class Partida(Base):
     __tablename__ = "partidas"
 
@@ -11,6 +13,9 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
 
+    jugadores = relationship("Jugador", back_populates="partida", uselist=False)
+
+    cartafigura = relationship("pictureCard", back_populates="partida")
     tablero = relationship("Tablero", back_populates="partida", uselist=False)
 
     def __repr__(self) -> str:
@@ -21,7 +26,7 @@ class Partida(Base):
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
         return id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada
     
-    __table_args__ = (
-        CheckConstraint('cantidad_max_jugadores BETWEEN 2 AND 4', name='cantidad_max_check'),
-        CheckConstraint('cantidad_min_jugadores BETWEEN 2 AND 4', name='cantidad_min_check'),
-    )
+    #__table_args__ = (
+    #    CheckConstraint('cantidad_max_jugadores BETWEEN 2 AND 4', name='cantidad_max_check'),
+    #    CheckConstraint('cantidad_min_jugadores BETWEEN 2 AND 4', name='cantidad_min_check'),
+    #)
