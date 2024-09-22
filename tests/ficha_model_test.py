@@ -6,8 +6,6 @@ from sqlalchemy.orm import sessionmaker
 from src.models.partida import Partida
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
-from src.models.jugadores import Jugador
-from src.models.cartafigura import PictureCard
 from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.color_enum import Color
@@ -23,10 +21,10 @@ def test_db():
         finally:
             db.close()
 
-def cheq_tablero(tablero: Tablero, dicc: dict) -> bool:
+def cheq_ficha_cajon(ficha_cajon: FichaCajon, dicc: dict) -> bool:
     res = True
     for (key, des) in dicc.items():
-        atributo = getattr(tablero, key, None)
+        atributo = getattr(ficha_cajon, key, None)
         if isinstance(atributo, enum.Enum):
             res = atributo.name == des  # Compara el nombre del Enum con la cadena
         else:
@@ -35,25 +33,29 @@ def cheq_tablero(tablero: Tablero, dicc: dict) -> bool:
             break
     return res
 
-def test_create_tablero(test_db):
-    configuracion = {"color_prohibido": "ROJO"}
-    tablero = Tablero(**configuracion)
-    test_db.add(tablero)
+def test_create_ficha_cajon(test_db):
+    configuracion = {"x_pos": 1, "y_pos": 2, "color": "AZUL"}
+    ficha_cajon = FichaCajon(**configuracion)
+    test_db.add(ficha_cajon)
     test_db.commit()
-    test_db.refresh(tablero)
+    test_db.refresh(ficha_cajon)
 
-    assert cheq_tablero(tablero, configuracion)
-    assert tablero.id == 1
-    assert tablero.color_prohibido == Color.ROJO
+    assert cheq_ficha_cajon(ficha_cajon, configuracion)
+    assert ficha_cajon.id == 1
+    assert ficha_cajon.x_pos == 1
+    assert ficha_cajon.y_pos == 2
+    assert ficha_cajon.color == Color.AZUL
 
-def test_multi_tablero(test_db):
+def test_multi_ficha_cajon(test_db):
     for i in range(20):
-        configuracion = {"color_prohibido": "AZUL"}
-        tablero = Tablero(**configuracion)
-        test_db.add(tablero)
+        configuracion = {"x_pos": 1, "y_pos": 2, "color": "AZUL"}
+        ficha_cajon = FichaCajon(**configuracion)
+        test_db.add(ficha_cajon)
         test_db.commit()
-        test_db.refresh(tablero)
+        test_db.refresh(ficha_cajon)
 
-        assert cheq_tablero(tablero, configuracion)
-        assert tablero.id == i+1
-        assert tablero.color_prohibido == Color.AZUL
+        assert cheq_ficha_cajon(ficha_cajon, configuracion)
+        assert ficha_cajon.id == i+1
+        assert ficha_cajon.x_pos == 1
+        assert ficha_cajon.y_pos == 2
+        assert ficha_cajon.color == Color.AZUL

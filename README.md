@@ -6,6 +6,10 @@ Conflictos de versiones entre colaboradores.
 
 ### Pasos:
 
+- installar el gestor de entornos virtuales
+   ```bash
+   sudo apt install python3.12-venv
+
 - Crear y activar entorno virtual
 
     ```bash
@@ -16,7 +20,7 @@ Conflictos de versiones entre colaboradores.
 - Para instalar dependencias
 
     ```bash
-    pip install -r requirements
+    pip install -r requirements.txt
     ```
 
 - Para actualizar las dependencias instaladas

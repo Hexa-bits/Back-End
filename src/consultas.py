@@ -1,26 +1,34 @@
+from sqlalchemy.orm import Session
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
-from src.db import Session
-
+from src.models.cartafigura import PictureCard
+from src.models.tablero import Tablero
 from sqlalchemy import select
 
-def get_Jugador(id: int) -> Jugador:
-    with Session() as session:      
-        smt = select(Jugador).where(Jugador.id == id)
-        jugador = session.excecute(smt).scalar()
-        return jugador
-    
-def jugador_anfitrion(id: int):
+def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
+    jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
+    db.add(jugador)
+    db.commit()  
+    db.refresh(jugador)
+    return jugador
+
+
+def get_Jugador(id: int, db: Session) -> Jugador:
+    smt = select(Jugador).where(Jugador.id == id)
+    jugador = db.excecute(smt).scalar()
+    return jugador
+
+
+def jugador_anfitrion(id: int, db: Session):
     jugador = get_Jugador(id)
     jugador.es_anfitrion = True
-    with Session() as session:
-        session.commit()
+    db.commit()
 
-def add_partida(config: Partida_config) -> int:
-    with Session() as session:
-        partida = Partida(game_name=config.game_name, max_players=config.max_players)
-        session.add(partida)
-        session.commit()
-        session.refresh(partida)
-        return partida.id
+
+def add_partida(config: Partida_config, db: Session) -> int:
+    partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    db.add(partida)
+    db.commit()
+    db.refresh(partida)
+    return partida.id

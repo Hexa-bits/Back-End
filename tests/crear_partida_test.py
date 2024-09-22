@@ -8,14 +8,14 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from src.db import Session
 from .test_helpers import mock_add_partida, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.tablero import Tablero
 from src.models.jugadores import Jugador
-from src.models.cartafigura import pictureCard
+from src.models.cartafigura import PictureCard
+from unittest.mock import ANY
 
 from sqlalchemy.exc import IntegrityError
 
@@ -23,14 +23,14 @@ client = TestClient(app)
 
 @patch("src.main.add_partida")
 def test_endpoint_partida (mock_add_game):
-    mock_add_game.side_effect = lambda partida: mock_add_partida(partida)
+    mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
     config = {"id_user": 1, "game_name": "partida", "max_players": 4}
     with patch("src.main.jugador_anfitrion") as mock_get_jugador:
         response = client.post("/home/create_config", json=config)
         
         config_partida = Partida_config(**config)
-        mock_add_game.assert_called_once_with(config_partida)
-        mock_get_jugador.assert_called_once_with(1)
+        mock_add_game.assert_called_once_with(config_partida, ANY)
+        mock_get_jugador.assert_called_once_with(1, ANY)
         assert response.status_code == 200
         json_resp = response.json()
         assert json_resp ["id"] == 1
@@ -45,9 +45,9 @@ def test_endpoint_partida_exception_add_partida ():
             response = client.post("/home/create_config", json=config)
             
             config_partida = Partida_config(**config)
-            mock_add_player.assert_called_once_with(config_partida)
+            mock_add_player.assert_called_once_with(config_partida, ANY)
             mock_get_jugador.assert_not_called()
-            assert response.status_code == 400
+            assert response.status_code == 500
             json_resp = response.json()
             assert json_resp["detail"] == "Fallo en la base de datos"
 
@@ -61,9 +61,9 @@ def test_endpoint_partida_exception_jugador_anf ():
             response = client.post("/home/create_config", json=config)
 
             config_partida = Partida_config(**config)
-            mock_add_player.assert_called_once_with(config_partida)
-            mock_get_jugador.assert_called_once_with(1)
-            assert response.status_code == 400
+            mock_add_player.assert_called_once_with(config_partida, ANY)
+            mock_get_jugador.assert_called_once_with(1, ANY)
+            assert response.status_code == 500
             json_resp = response.json()
             assert json_resp["detail"] == "Fallo en la base de datos"
 
