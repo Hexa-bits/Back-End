@@ -16,20 +16,12 @@ def list_lobbies(db):
     for lobby in raw_lobbies:
         #Calculo la cantidad de jugadores actuales en partida
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
-        print(current_players)
 
-        print (current_players)
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.nombre,
             "current_players": current_players,
             "max_players": lobby.cantidad_max_jugadores,
             })
-    print(lobbies)
 
-    #lobbies_reponse = {
-    #    "game_config": lobbies
-    #}
-
-    #print(lobbies_reponse)
     return lobbies
