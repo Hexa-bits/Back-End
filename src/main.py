@@ -38,7 +38,6 @@ def read_root():
 @app.get("/home/get-lobbies")
 async def get_lobbies(db: Session = Depends(get_db)):
     try:
-        print("Obteniendo lobbies...")
         lobbies = list_lobbies(db)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")

@@ -27,9 +27,9 @@ def list_lobbies(db):
             })
     print(lobbies)
 
-    lobbies_reponse = {
-        "game_config": lobbies
-    }
+    #lobbies_reponse = {
+    #    "game_config": lobbies
+    #}
 
-    print(lobbies_reponse)
-    return lobbies_reponse
+    #print(lobbies_reponse)
+    return lobbies
