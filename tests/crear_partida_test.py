@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
 from src.db import Session
-from .test_helpers import test_db, cheq_entity
+from .test_helpers import mock_add_partida, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
@@ -21,19 +21,19 @@ from sqlalchemy.exc import IntegrityError
 
 client = TestClient(app)
 
-
-def test_endpoint_partida ():
+@patch("src.main.add_partida")
+def test_endpoint_partida (mock_add_game):
+    mock_add_game.side_effect = lambda partida: mock_add_partida(partida)
     config = {"id_user": 1, "game_name": "partida", "max_players": 4}
-    with patch("src.main.add_partida", return_value=1) as mock_add_player:
-        with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
-            
-            config_partida = Partida_config(**config)
-            mock_add_player.assert_called_once_with(config_partida)
-            mock_get_jugador.assert_called_once_with(1)
-            assert response.status_code == 200
-            json_resp = response.json()
-            assert json_resp ["id"] == mock_add_player.return_value
+    with patch("src.main.jugador_anfitrion") as mock_get_jugador:
+        response = client.post("/home/create_config", json=config)
+        
+        config_partida = Partida_config(**config)
+        mock_add_game.assert_called_once_with(config_partida)
+        mock_get_jugador.assert_called_once_with(1)
+        assert response.status_code == 200
+        json_resp = response.json()
+        assert json_resp ["id"] == 1
 
 
 def test_endpoint_partida_exception_add_partida ():
