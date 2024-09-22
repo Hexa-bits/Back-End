@@ -36,7 +36,7 @@ class CardState(enum.Enum):
     mazo = 2
     bloqueada = 3
 
-class pictureCard(Base):
+class PictureCard(Base):
     __tablename__ = "cartasFigura"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

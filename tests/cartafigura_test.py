@@ -5,8 +5,8 @@ from src.db import Base
 from src.models.partida import Partida
 from src.models.tablero import Tablero
 from src.models.jugadores import Jugador
-from src.models.cartafigura import pictureCard
-from src.models.cartafigura import Picture, CardState, pictureCard 
+from src.models.cartafigura import PictureCard
+from src.models.cartafigura import Picture, CardState, PictureCard 
 
 
 @pytest.fixture(scope='module')
@@ -30,7 +30,7 @@ def test_picture_card_creation_and_relationship(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = pictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
+    card = PictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
     
     # Añade la tarjeta a la base de datos
     test_db.add(card)
@@ -44,7 +44,7 @@ def test_picture_card_creation_and_relationship(test_db):
     assert card.estado == CardState.mano
 
 def test_picture_card_2(test_db):
-    card = pictureCard(figura=Picture.figura2, estado=CardState.mazo)
+    card = PictureCard(figura=Picture.figura2, estado=CardState.mazo)
     
     test_db.add(card)
     test_db.commit()
@@ -57,7 +57,7 @@ def test_picture_card_2(test_db):
     
     
 def test_picture_card_repr(test_db):
-    card = pictureCard(figura=Picture.figura3, estado=CardState.mazo)
+    card = PictureCard(figura=Picture.figura3, estado=CardState.mazo)
     
     test_db.add(card)
     test_db.commit()
@@ -68,8 +68,8 @@ def test_picture_card_repr(test_db):
     assert repr(card) == expected_repr
 
 def test_picture_card_ids(test_db):
-    card1 = pictureCard(figura=Picture.figura4, estado=CardState.mazo)
-    card2 = pictureCard(figura=Picture.figura4, estado=CardState.mazo)
+    card1 = PictureCard(figura=Picture.figura4, estado=CardState.mazo)
+    card2 = PictureCard(figura=Picture.figura4, estado=CardState.mazo)
     
     test_db.add(card1)
     test_db.commit()
@@ -90,13 +90,13 @@ def test_relationship2(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = pictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
+    card = PictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
     
     test_db.add(card)
     test_db.commit()
     test_db.refresh(card)
     
-    card1 = pictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
+    card1 = PictureCard(figura=Picture.figura1, estado=CardState.mano, partida_id=partida.id)
     
     test_db.add(card1)
     test_db.commit()
