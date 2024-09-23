@@ -14,7 +14,7 @@ from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.consultas import add_player, jugador_anfitrion, add_partida
+from src.consultas import add_player, add_partida
 
 from sqlalchemy.exc import IntegrityError
 
@@ -74,7 +74,6 @@ async def login(user: User, db: Session = Depends(get_db)):
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
-        jugador_anfitrion(partida_config.id_user, db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
