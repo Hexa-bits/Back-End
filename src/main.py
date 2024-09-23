@@ -46,7 +46,7 @@ def read_root():
 async def get_lobbies(db: Session = Depends(get_db)):
     try:
         lobbies = list_lobbies(db)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
 # Endpoint para jugador /login
