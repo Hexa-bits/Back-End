@@ -2,8 +2,13 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.db import Base
+from src.models.jugadores import Jugador
+from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
+from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard
+from src.models.fichas_cajon import FichaCajon
 from src.models.cartamovimiento import Move, CardState, MovementCard 
 
 
@@ -22,7 +27,7 @@ def test_db():
             db.close()
 
 def test_picture_card_creation_and_relationship(test_db):
-    partida = Partida(nombre="Mi partida", cantidad_max_jugadores=4, cantidad_min_jugadores=2)
+    partida = Partida(game_name="Mi partida", max_players=4)
     
     test_db.add(partida)
     test_db.commit()
@@ -82,7 +87,7 @@ def test_picture_card_ids(test_db):
     assert card1.id != card2.id 
 
 def test_relationship2(test_db):
-    partida = Partida(nombre="Mi partida", cantidad_max_jugadores=4, cantidad_min_jugadores=2)
+    partida = Partida(game_name="Mi partida", max_players=4)
     
     test_db.add(partida)
     test_db.commit()
