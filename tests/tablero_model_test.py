@@ -3,11 +3,13 @@ import pytest
 from sqlalchemy import inspect, create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
-from src.models.partida import Partida
-from src.models.tablero import Tablero
-from src.models.fichas_cajon import FichaCajon
 from src.models.jugadores import Jugador
+from src.models.inputs_front import Partida_config
+from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
+from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard
+from src.models.fichas_cajon import FichaCajon
 from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.color_enum import Color
