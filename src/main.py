@@ -2,21 +2,13 @@ from fastapi import FastAPI, Depends, status, HTTPException
 from pydantic import BaseModel
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-<<<<<<< HEAD
-from src.models.cartafigura import pictureCard
 from src.models.tablero import Tablero
-from src.db import Base, engine, SessionLocal
-from sqlalchemy.orm import Session
-
 from src.logic.lobby import list_lobbies
-=======
 from src.models.cartafigura import PictureCard
-from src.models.tablero import Tablero
 from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
 from src.consultas import add_player
 
->>>>>>> 87686286ba68b96ed6c43f87e84c0ea0f06d7f24
 from fastapi.middleware.cors import CORSMiddleware
 
 
