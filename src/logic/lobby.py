@@ -9,9 +9,6 @@ def list_lobbies(db):
     raw_lobbies = db.query(Partida).all()
     
     lobbies = []
-    print("Obteniendo lobbies...")
-
-    print(raw_lobbies)
 
     for lobby in raw_lobbies:
         #Calculo la cantidad de jugadores actuales en partida
