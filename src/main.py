@@ -74,10 +74,10 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(id=jugador.id)
 
 #Endpoint para get info lobby
-@app.get("/home/lobby/lobby-info")
-async def get_lobby_info(game: GameId, db: Session = Depends(get_db)):
+@app.get("/home/lobby/")
+async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
     try:
-        lobby_info = get_lobby(game.game_id, db)
+        lobby_info = get_lobby(game_id, db)
     
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail= e)
