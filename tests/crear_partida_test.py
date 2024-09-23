@@ -26,12 +26,12 @@ def test_endpoint_partida (mock_add_game):
     mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
     config = {"id_user": 1, "game_name": "partida", "max_players": 4}
     with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-        response = client.post("/home/create_config", json=config)
+        response = client.post("/home/create-config", json=config)
         
         config_partida = Partida_config(**config)
         mock_add_game.assert_called_once_with(config_partida, ANY)
         mock_get_jugador.assert_called_once_with(1, ANY)
-        assert response.status_code == 200
+        assert response.status_code == 201
         json_resp = response.json()
         assert json_resp ["id"] == 1
 
@@ -42,7 +42,7 @@ def test_endpoint_partida_exception_add_partida ():
                                                                     params=None, 
                                                                     orig=None)) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
             
             config_partida = Partida_config(**config)
             mock_add_player.assert_called_once_with(config_partida, ANY)
@@ -58,7 +58,7 @@ def test_endpoint_partida_exception_jugador_anf ():
         with patch("src.main.jugador_anfitrion", side_effect=IntegrityError("Error de integridad", 
                                                  params=None, 
                                                  orig=None)) as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
 
             config_partida = Partida_config(**config)
             mock_add_player.assert_called_once_with(config_partida, ANY)
@@ -72,7 +72,7 @@ def test_endpoint_partida_invalid_max ():
     config = {"id_user": 1, "game_name": "partida", "max_players": 1}
     with patch("src.main.add_partida", return_value=1) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
             
             mock_add_player.assert_not_called()
             mock_get_jugador.assert_not_called()
@@ -88,7 +88,7 @@ def test_endpoint_partida_invalid_name_length ():
     config = {"id_user": 1, "game_name": "abcdefghijklmnopq", "max_players": 4}
     with patch("src.main.add_partida", return_value=1) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
             
             mock_add_player.assert_not_called()
             mock_get_jugador.assert_not_called()
@@ -104,7 +104,7 @@ def test_endpoint_partida_invalid_name_str ():
     config = {"id_user": 1, "game_name": None, "max_players": 4}
     with patch("src.main.add_partida", return_value=1) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
             
             mock_add_player.assert_not_called()
             mock_get_jugador.assert_not_called()
@@ -120,7 +120,7 @@ def test_endpoint_partida_invalid_name ():
     config = {"id_user": "str", "game_name": "partida", "max_players": 4, "extra": 1}
     with patch("src.main.add_partida", return_value=1) as mock_add_player:
         with patch("src.main.jugador_anfitrion") as mock_get_jugador:
-            response = client.post("/home/create_config", json=config)
+            response = client.post("/home/create-config", json=config)
             
             mock_add_player.assert_not_called()
             mock_get_jugador.assert_not_called()

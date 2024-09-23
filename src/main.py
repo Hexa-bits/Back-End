@@ -12,7 +12,11 @@ from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard
+from src.models.fichas_cajon import FichaCajon
 from src.consultas import add_player, jugador_anfitrion, add_partida
+
+from sqlalchemy.exc import IntegrityError
 
 
 Base.metadata.create_all(bind=engine)
@@ -25,7 +29,7 @@ def get_db():
     try:
         yield db
     finally:
-        db.close
+        db.close()
 
 # Configuración de CORS
 app.add_middleware(
@@ -66,7 +70,7 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(id=jugador.id)
 
 
-@app.post("/home/create_config")
+@app.post("/home/create-config", status_code=status.HTTP_201_CREATED)
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
@@ -76,5 +80,6 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     
     return JSONResponse(
-        content={"id": id_game}
+        content={"id": id_game},
+        status_code=status.HTTP_201_CREATED
     ) 

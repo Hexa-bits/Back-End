@@ -16,12 +16,12 @@ def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
 
 def get_Jugador(id: int, db: Session) -> Jugador:
     smt = select(Jugador).where(Jugador.id == id)
-    jugador = db.excecute(smt).scalar()
+    jugador = db.execute(smt).scalar()
     return jugador
 
 
 def jugador_anfitrion(id: int, db: Session):
-    jugador = get_Jugador(id)
+    jugador = get_Jugador(id, db)
     jugador.es_anfitrion = True
     db.commit()
 
