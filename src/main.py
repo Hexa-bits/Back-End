@@ -4,9 +4,11 @@ from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard
+from src.models.fichas_cajon import FichaCajon
 from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
-from src.consultas import add_player
+from src.consultas import add_player, get_lobby
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -37,6 +39,9 @@ class PlayerId(BaseModel):
 class User(BaseModel):
     username: str
 
+class GameId(BaseModel):
+    game_id: int
+
 @app.get("/")
 def read_root():
     return {"mensaje": "¡Hola, FastAPI!"}
@@ -51,3 +56,14 @@ async def login(user: User, db: Session = Depends(get_db)):
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
+
+#Endpoint para get info lobby
+@app.get("/home/lobby/lobby-info")
+async def get_lobby_info(game: GameId, db: Session = Depends(get_db)):
+    try:
+        lobby_info = get_lobby(game.game_id, db)
+    
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail= e)
+    
+    return lobby_info

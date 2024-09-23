@@ -18,4 +18,4 @@ class Jugador(Base):
         nombre = f'nombre={self.nombre!r}'
         es_anfitrion = f'es_afirion={self.es_anfitrion!r}'
         turno = f'turno={turno!r}'
-        return id + ', ' + nombre + ', ' + es_anfitrion + ', ' + turno
+        return '{' +id + ', ' + nombre + ', ' + es_anfitrion + ', ' + turno + '}'

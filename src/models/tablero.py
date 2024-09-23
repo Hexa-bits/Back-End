@@ -19,6 +19,6 @@ class Tablero(Base):
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
         color_prohibido = f'color_prohibido={self.color_prohibido!r}'
-        return id + ', ' + color_prohibido
+        return '{' + id + ', ' + color_prohibido + '}'
 
 
