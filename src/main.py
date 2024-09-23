@@ -74,7 +74,7 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(id=jugador.id)
 
 #Endpoint para get info lobby
-@app.get("/home/lobby/")
+@app.get("/home/lobby")
 async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
     try:
         lobby_info = get_lobby(game_id, db)
