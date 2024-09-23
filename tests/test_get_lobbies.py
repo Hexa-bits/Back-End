@@ -10,9 +10,9 @@ def client():
 
 def test_get_lobbies_succes(client):
     with patch('src.main.get_db'):
-        response = client.get("/home/get-lobbies")
 #I want to mock the database too:
-        with patch('src.logic.lobby.list_lobbies', return_value=[]):
+        with patch('src.main.list_lobbies', return_value=[]):
+            response = client.get("/home/get-lobbies")
 
             assert response.status_code == 200
             assert response.json() == []
