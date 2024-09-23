@@ -26,7 +26,6 @@ def add_partida(config: Partida_config, db: Session) -> int:
     db.add(partida)
     db.commit()
     db.refresh(partida)
-    db.add(jugador)
     jugador.es_anfitrion = True
     jugador.partida_id = partida.id
     db.commit()
