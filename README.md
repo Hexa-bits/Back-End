@@ -33,3 +33,8 @@ Conflictos de versiones entre colaboradores.
     ```bash
     deactivate
     ```
+- Para correr el backend:
+    ```bash
+    uvicorn src.main:app --reload
+
+    ```
