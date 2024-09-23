@@ -8,10 +8,10 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 #def init_db():
-#    global engine, Session
+#    global engine, SessionLocal
 #    if engine is None:
 #        engine = create_engine(db_url)
-#        Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+#        SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def create_table(table_name):
     table = Base.metadata.tables.get(table_name)

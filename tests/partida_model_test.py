@@ -7,7 +7,7 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.db import Base
 from src.models.jugadores import Jugador
-from src.models.cartafigura import pictureCard
+from src.models.cartafigura import PictureCard
 
 def test_create_partida(test_db):
     configuracion = {"nombre": "primera",
