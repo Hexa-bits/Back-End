@@ -30,3 +30,23 @@ def add_partida(config: Partida_config, db: Session) -> int:
     jugador.partida_id = partida.id
     db.commit()
     return partida.id
+
+def list_lobbies(db):
+
+    raw_lobbies = db.query(Partida).all()
+    
+    lobbies = []
+
+    for lobby in raw_lobbies:
+        #Calculo la cantidad de jugadores actuales en partida
+        current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
+
+        lobbies.append({
+            "game_id": lobby.id,
+            "game_name": lobby.game_name,
+            "current_players": current_players,
+            "max_players": lobby.max_players,
+            })
+        
+    return lobbies
+

@@ -10,11 +10,15 @@ from sqlalchemy.orm import Session
 from src.models.jugadores import Jugador
 from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
-from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
+
+from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.consultas import add_player, add_partida
+
+from sqlalchemy.orm import Session
+from src.consultas import add_player
+from src.consultas import add_player, add_partida, list_lobbies
 
 from sqlalchemy.exc import IntegrityError
 
@@ -53,6 +57,13 @@ class User(BaseModel):
 def read_root():
     return {"mensaje": "¡Hola, FastAPI!"}
 
+@app.get("/home/get-lobbies")
+async def get_lobbies(db: Session = Depends(get_db)):
+    try:
+        lobbies = list_lobbies(db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
+    return lobbies
 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
