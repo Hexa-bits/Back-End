@@ -18,7 +18,7 @@ from src.models.fichas_cajon import FichaCajon
 
 from sqlalchemy.orm import Session
 from src.consultas import add_player
-from src.consultas import add_player, jugador_anfitrion, add_partida, list_lobbies
+from src.consultas import add_player, add_partida, list_lobbies
 
 from sqlalchemy.exc import IntegrityError
 
