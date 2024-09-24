@@ -85,7 +85,6 @@ async def login(user: User, db: Session = Depends(get_db)):
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
-        jugador_anfitrion(partida_config.id_user, db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")

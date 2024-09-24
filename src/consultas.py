@@ -20,17 +20,15 @@ def get_Jugador(id: int, db: Session) -> Jugador:
     return jugador
 
 
-def jugador_anfitrion(id: int, db: Session):
-    jugador = get_Jugador(id, db)
-    jugador.es_anfitrion = True
-    db.commit()
-
-
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    jugador = get_Jugador(config.id_user, db)
     db.add(partida)
     db.commit()
     db.refresh(partida)
+    jugador.es_anfitrion = True
+    jugador.partida_id = partida.id
+    db.commit()
     return partida.id
 
 def list_lobbies(db):
@@ -49,5 +47,6 @@ def list_lobbies(db):
             "current_players": current_players,
             "max_players": lobby.max_players,
             })
-
+        
     return lobbies
+
