@@ -32,4 +32,4 @@ class MovementCard(Base):
         id = f'{self.id!r}'
         movimiento = f'{self.movimiento!r}'
         estado = f'{self.estado!r}'
-        return '{' + id + ', ' + movimiento + ', ' + estado + '}'
+        return '{id' + id + ', ' + movimiento + ', ' + estado + '}'

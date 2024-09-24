@@ -79,8 +79,8 @@ async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
     try:
         lobby_info = get_lobby(game_id, db)
     
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail= e)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la partida")
     
     return lobby_info
 

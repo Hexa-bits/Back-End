@@ -65,7 +65,7 @@ def test_picture_card_repr(test_db):
 
     expected_repr = f"id{card.id!r}, {card.figura!r}, {card.estado!r}"
     assert card.partida_id is None
-    assert repr(card) == expected_repr
+    assert repr(card) == '{' + expected_repr + '}'
 
 def test_picture_card_ids(test_db):
     card1 = PictureCard(figura=Picture.figura4, estado=CardState.mazo)
