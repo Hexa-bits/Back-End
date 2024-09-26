@@ -30,7 +30,7 @@ def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
-            response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+            response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
             mock_delete_jugadores.assert_called_once_with(mock_get_partida.return_value, ANY)
@@ -45,7 +45,7 @@ def test_endpoint_leave_lobby (mock_delete_jugador):
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
-            response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+            response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
             mock_delete_jugador.assert_called_once_with(mock_get_jugador.return_value, ANY)
@@ -60,7 +60,7 @@ def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1)) as mock_get_partida:
-            response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+            response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
             mock_delete_jugador.assert_called_once_with(mock_get_jugador.return_value, ANY)
@@ -72,7 +72,7 @@ def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
 def test_endpoint_leave_lobby_invalid_game_type ():
     info_leave = {"id_user": 1, "game_id": "str"}
     with patch("src.main.get_Jugador") as mock_get_jugador:
-        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
         assert response.status_code == 422
@@ -85,7 +85,7 @@ def test_endpoint_leave_lobby_invalid_game_type ():
 def test_endpoint_leave_lobby_invalid_player_type ():
     info_leave = {"id_user": "str", "game_id": 1}
     with patch("src.main.get_Jugador") as mock_get_jugador:
-        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
         assert response.status_code == 422
@@ -98,7 +98,7 @@ def test_endpoint_leave_lobby_invalid_player_type ():
 def test_endpoint_leave_lobby_invalid_player_num ():
     info_leave = {"id_user": -1, "game_id": 1}
     with patch("src.main.get_Jugador") as mock_get_jugador:
-        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
         assert response.status_code == 422
@@ -113,7 +113,7 @@ def test_endpoint_leave_lobby_exception_add_partida ():
     with patch("src.main.get_Jugador", side_effect=IntegrityError("Error de integridad", 
                                                                     params=None, 
                                                                     orig=None)) as mock_add_player:
-        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        response = client.put(url="/game/leave", json=info_leave)
         
         config = Leave_config(**info_leave)
         mock_add_player.assert_called_once_with(config.id_user, ANY)
@@ -125,7 +125,7 @@ def test_endpoint_leave_lobby_exception_add_partida ():
 def test_endpoint_leave_lobby_exception_not_found ():
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = None) as mock_add_player:
-        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        response = client.put(url="/game/leave", json=info_leave)
         
         config = Leave_config(**info_leave)
         mock_add_player.assert_called_once_with(config.id_user, ANY)

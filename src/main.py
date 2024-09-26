@@ -95,7 +95,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     ) 
 
 
-@app.delete("/game/leave", status_code=status.HTTP_204_NO_CONTENT)
+@app.put("/game/leave", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
     try:
         jugador = get_Jugador(leave_lobby.id_user, db)
