@@ -12,7 +12,7 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
 
-    jugadores = relationship("Jugador", back_populates="partida", uselist=False)
+    jugadores = relationship("Jugador", back_populates="partida")
 
     cartafigura = relationship("PictureCard", back_populates="partida")
     tablero = relationship("Tablero", back_populates="partida", uselist=False)
@@ -25,5 +25,9 @@ class Partida(Base):
         cantidad_jugadores = f'cantidad_max_jugadores={self.max_players!r}'
         jugador_en_turno = f'jugador_en_turno={self.jugador_en_turno!r}'
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
-        return id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada
+        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + '}'
     
+    #__table_args__ = (
+    #    CheckConstraint('cantidad_max_jugadores BETWEEN 2 AND 4', name='cantidad_max_check'),
+    #    CheckConstraint('cantidad_min_jugadores BETWEEN 2 AND 4', name='cantidad_min_check'),
+    #)

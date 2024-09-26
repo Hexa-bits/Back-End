@@ -3,7 +3,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
 from sqlalchemy import Column, Integer, Enum
 from src.db import Base
-from src.models.tablero import Tablero
+
+#from src.models.tablero import Tablero
+#Debe importarla Tablero a ficha cajon y no al reves
+#Sino genera un bug de que tablero no encuentra la tabla ficha cajon al crearse
+
+#NOTA A FUTURO: Quizas sea mejor tener todos los modelos en un solo archivo por problemas de dependencias
 
 class FichaCajon(Base):
     __tablename__ = "fichas"

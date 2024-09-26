@@ -18,6 +18,7 @@ from src.models.fichas_cajon import FichaCajon
 from src.consultas import *
 
 
+
 Base.metadata.create_all(bind=engine)
 
 
@@ -28,7 +29,7 @@ def get_db():
     try:
         yield db
     finally:
-        db.close
+        db.close()
 
 # Configuración de CORS
 app.add_middleware(
@@ -53,6 +54,15 @@ def read_root():
     return {"mensaje": "¡Hola, FastAPI!"}
 
 
+@app.get("/home/get-lobbies")
+async def get_lobbies(db: Session = Depends(get_db)):
+    try:
+        lobbies = list_lobbies(db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
+    return lobbies
+
+
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.errors())
@@ -70,11 +80,11 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(id=jugador.id)
 
 
-@app.post("/home/create_config", status_code=status.HTTP_201_CREATED)
+
+@app.post("/home/create-config", status_code=status.HTTP_201_CREATED)
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
-        jugador_anfitrion(partida_config.id_user, db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -85,7 +95,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     ) 
 
 
-@app.delete("/home/lobby/leave", status_code=status.HTTP_204_NO_CONTENT)
+@app.delete("/game/leave", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
     try:
         jugador = get_Jugador(leave_lobby.id_user, db)
@@ -102,10 +112,8 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
         if jugador.es_anfitrion:
             delete_players_partida(partida, db)
-            #return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)         #si es anfitrion borra partida
         else:
             delete_player(jugador, db)
-            #return JSONResponse(status_code=status.HTTP_200_OK)                 #si no es anfitrion cambia la foreignkey por null
         
     except SQLAlchemyError:
         db.rollback()

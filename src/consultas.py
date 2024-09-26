@@ -19,23 +19,22 @@ def get_Jugador(id: int, db: Session) -> Jugador:
     jugador = db.execute(smt).scalar()
     return jugador
 
+
 def get_Partida(id: int, db: Session) -> Partida:
     smt = select(Partida).where(Partida.id == id)
     partida = db.execute(smt).scalar()
     return partida
 
 
-def jugador_anfitrion(id: int, db: Session):
-    jugador = get_Jugador(id, db)
-    jugador.es_anfitrion = True
-    db.commit()
-
-
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    jugador = get_Jugador(config.id_user, db)
     db.add(partida)
     db.commit()
     db.refresh(partida)
+    jugador.es_anfitrion = True
+    jugador.partida_id = partida.id
+    db.commit()
     return partida.id
 
 
@@ -66,3 +65,24 @@ def delete_players_partida(partida: Partida, db: Session):
 def player_in_partida(partida: Partida, db: Session) -> int:
     smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
     return db.execute(smt).scalar()
+
+
+def list_lobbies(db):
+
+    raw_lobbies = db.query(Partida).all()
+    
+    lobbies = []
+
+    for lobby in raw_lobbies:
+        #Calculo la cantidad de jugadores actuales en partida
+        current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
+
+        lobbies.append({
+            "game_id": lobby.id,
+            "game_name": lobby.game_name,
+            "current_players": current_players,
+            "max_players": lobby.max_players,
+            })
+        
+    return lobbies
+

@@ -33,7 +33,18 @@ def mock_add_partida(config: Partida_config) -> int:
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
     with (SessionLocal() as test_db):
-        return add_partida(config, test_db)
+        jugador = Jugador(nombre="player")
+        test_db.add(jugador)
+        test_db.commit()
+
+        id_game = add_partida(config, test_db)
+        test_db.refresh(jugador)
+
+        assert jugador.partida_id == id_game
+        assert jugador.partida.game_name == config.game_name
+        assert jugador.partida.max_players == config.max_players
+
+        return id_game 
     
 
 def mock_delete_players_partida(max_players: int):
@@ -75,3 +86,4 @@ def db_prueba(max_players: int, db: Session):
         db.commit()
     except SQLAlchemyError:
         db.rollback()
+
