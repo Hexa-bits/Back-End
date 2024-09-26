@@ -99,11 +99,10 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
 async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
     try:
         jugador = get_Jugador(leave_lobby.id_user, db)
-        partida = get_Partida(leave_lobby.game_id, db)
-        
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
         
+        partida = get_Partida(leave_lobby.game_id, db)
         if partida is None or partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
         

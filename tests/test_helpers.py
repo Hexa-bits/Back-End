@@ -65,7 +65,6 @@ def mock_delete_player(max_players: int):
     with (SessionLocal() as test_db):
         db_prueba(max_players, test_db)
         jugador = get_Jugador(1, test_db)
-        print(jugador)
         partida = get_Partida(jugador.partida_id, test_db)
         delete_player(jugador, test_db)
 

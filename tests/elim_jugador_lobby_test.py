@@ -67,3 +67,69 @@ def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
             mock_get_jugador.assert_called_once_with(leave_lobby.id_user, ANY)
             mock_get_partida.assert_called_once_with(leave_lobby.game_id, ANY)
             assert response.status_code == 204
+
+
+def test_endpoint_leave_lobby_invalid_game_type ():
+    info_leave = {"id_user": 1, "game_id": "str"}
+    with patch("src.main.get_Jugador") as mock_get_jugador:
+        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+
+        mock_get_jugador.assert_not_called()
+        assert response.status_code == 422
+        json_resp = response.json()
+        assert json_resp["detail"] == [{'type': 'int_parsing', 'loc': ['body', 'game_id'], 
+                                        'msg': 'Input should be a valid integer, unable to parse string as an integer',
+                                        'input': 'str'}]
+
+
+def test_endpoint_leave_lobby_invalid_player_type ():
+    info_leave = {"id_user": "str", "game_id": 1}
+    with patch("src.main.get_Jugador") as mock_get_jugador:
+        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+
+        mock_get_jugador.assert_not_called()
+        assert response.status_code == 422
+        json_resp = response.json()
+        assert json_resp["detail"] == [{'type': 'int_parsing', 'loc': ['body', 'id_user'],
+                                      'msg': 'Input should be a valid integer, unable to parse string as an integer', 
+                                      'input': 'str'}]
+        
+
+def test_endpoint_leave_lobby_invalid_player_num ():
+    info_leave = {"id_user": -1, "game_id": 1}
+    with patch("src.main.get_Jugador") as mock_get_jugador:
+        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+
+        mock_get_jugador.assert_not_called()
+        assert response.status_code == 422
+        json_resp = response.json()
+        assert json_resp["detail"] == [{'type': 'greater_than', 'loc': ['body', 'id_user'],
+                                        'msg': 'Input should be greater than 0',
+                                        'input': -1, 'ctx': {'gt': 0}}]
+
+
+def test_endpoint_leave_lobby_exception_add_partida ():
+    info_leave = {"id_user": 1, "game_id": 1}
+    with patch("src.main.get_Jugador", side_effect=IntegrityError("Error de integridad", 
+                                                                    params=None, 
+                                                                    orig=None)) as mock_add_player:
+        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        
+        config = Leave_config(**info_leave)
+        mock_add_player.assert_called_once_with(config.id_user, ANY)
+        assert response.status_code == 500
+        json_resp = response.json()
+        assert json_resp["detail"] == "Fallo en la base de datos"
+
+
+def test_endpoint_leave_lobby_exception_not_found ():
+    info_leave = {"id_user": 1, "game_id": 1}
+    with patch("src.main.get_Jugador", return_value = None) as mock_add_player:
+        response = client.request(method="DELETE", url="/game/leave", json=info_leave)
+        
+        config = Leave_config(**info_leave)
+        mock_add_player.assert_called_once_with(config.id_user, ANY)
+        assert mock_add_player.return_value is None
+        assert response.status_code == 404
+        json_resp = response.json()
+        assert json_resp["detail"] == f'No existe el jugador: {config.id_user}' 
