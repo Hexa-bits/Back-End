@@ -18,7 +18,8 @@ from src.models.fichas_cajon import FichaCajon
 
 from sqlalchemy.orm import Session
 from src.consultas import add_player
-from src.consultas import add_player, add_partida, list_lobbies
+from src.consultas import add_player, add_partida, list_lobbies, add_player_game, get_partida
+import pdb
 
 from sqlalchemy.exc import IntegrityError
 
@@ -52,6 +53,9 @@ class PlayerId(BaseModel):
 class User(BaseModel):
     username: str
 
+class PlayerAndGameId(BaseModel):
+    player_id: int
+    game_id: int
 
 @app.get("/")
 def read_root():
@@ -93,3 +97,19 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         content={"id": id_game},
         status_code=status.HTTP_201_CREATED
     ) 
+
+@app.post("/game/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
+async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+    try:
+        partida = get_partida(playerAndGameId.game_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
+        
+        jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
+        if jugador is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+        
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
+    return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
