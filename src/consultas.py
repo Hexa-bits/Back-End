@@ -25,6 +25,8 @@ def get_Jugador(id: int, db: Session) -> Jugador:
     jugador = db.execute(smt).scalar()
     return jugador
 
+def get_partida(id: int, db: Session) -> Partida:
+    return db.query(Partida).filter(Partida.id==id).first()
 
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
