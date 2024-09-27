@@ -13,6 +13,12 @@ def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     db.refresh(jugador)
     return jugador
 
+def add_player_game(player_id: int, game_id: int, db: Session) -> Jugador:
+    jugador = get_Jugador(player_id, db)
+    jugador.partida_id = game_id
+    db.commit()
+    db.refresh(jugador)
+    return jugador
 
 def get_Jugador(id: int, db: Session) -> Jugador:
     smt = select(Jugador).where(Jugador.id == id)
