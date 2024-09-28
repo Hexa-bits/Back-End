@@ -5,7 +5,7 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.cartamovimiento import MovementCard
 from src.models.tablero import Tablero
-from sqlalchemy import select, func
+from sqlalchemy import select, func, and_
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 import random
@@ -196,3 +196,11 @@ def mezclar_fichas(db: Session, game_id: int):
     
     return tablero.id
 
+
+def list_fig_cards(player_id: int, db: Session) -> List[int]:
+    smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
+    cards = db.execute(smt).scalars().all()
+    res = []
+    for card in cards:
+        res.append(card.value)
+    return res 
