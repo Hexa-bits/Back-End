@@ -4,7 +4,7 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
-from src.models.cartamovimiento import MovementCard
+from src.models.cartamovimiento import MovementCard, Move, CardState
 from sqlalchemy import select
 import random
 
@@ -62,7 +62,10 @@ def list_lobbies(db):
 
 def mezclar_cartas_movimiento(db: Session, game_id: int):
     
-    cards_mov_type = [1,2,3,4,5,6,7]
+    cards_mov_type = [Move.linea_contiguo,Move.linea_con_espacio,
+                    Move.diagonal_contiguo,Move.diagonal_con_espacio,
+                    Move.L_derecha,Move.L_izquierda,Move.linea_al_lateral]
+    
     
     for card_type in cards_mov_type:
         for i in range (7):
@@ -71,10 +74,21 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.add(carta_mov)
             db.commit()
             db.refresh(carta_mov)
-            
+    
+    all_cards_mov = db.query(MovementCard).filter(MovementCard.partida_id == game_id).all()
+    
+    #Mezclo las cartas
+    random.shuffle(all_cards_mov)
+        
     #Obtengo 3 cartas para cada jugador
+    #Obtengo mi lista de jugadores
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
     
-    
-    #random.shuffle(all_cards_mov)
-    
-    return
+    for jugador in jugadores:
+        for i in range(3):
+            #Obtengo una carta aleatoria de all_cards_mov
+            carta = all_cards_mov.pop()
+            carta.jugador_id = jugador.id
+            carta.estado = CardState.mano
+            db.commit()
+            db.refresh(carta)
