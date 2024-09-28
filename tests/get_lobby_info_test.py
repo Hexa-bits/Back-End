@@ -11,10 +11,15 @@ def client():
 
 def test_get_lobby_info_success(client):
     with patch('src.main.get_db'):
-        response = client.get("/home/lobby?game_id=1")
+        
+        with patch('src.main.get_lobby', return_value={"game_name": "Juego1", 
+                                                        "max_players": 4, 
+                                                        "name_players": ["player1", "player2"]}):
+            
+            response = client.get("/home/lobby?game_id=1")
 
-        assert response.status_code == 200
-        assert response.json() != {"game_name": None, "max_players": None, "name_players": None}
+            assert response.status_code == 200
+            assert response.json() != {"game_name": None, "max_players": None, "name_players": None}
 
 def test_get_lobby_info_failure(client):
     with patch('src.main.get_db'):
