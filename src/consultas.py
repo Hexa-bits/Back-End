@@ -4,7 +4,9 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard
 from sqlalchemy import select
+import random
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
@@ -59,5 +61,20 @@ def list_lobbies(db):
     return lobbies
 
 def mezclar_cartas_movimiento(db: Session, game_id: int):
+    
+    cards_mov_type = [1,2,3,4,5,6,7]
+    
+    for card_type in cards_mov_type:
+        for i in range (7):
+            #Añado la carta en la db
+            carta_mov = MovementCard(movimiento=card_type, partida_id=game_id )
+            db.add(carta_mov)
+            db.commit()
+            db.refresh(carta_mov)
+            
+    #Obtengo 3 cartas para cada jugador
+    
+    
+    #random.shuffle(all_cards_mov)
     
     return
