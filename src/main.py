@@ -130,7 +130,9 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
 
 
+
 def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
+    
