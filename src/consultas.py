@@ -91,9 +91,9 @@ def list_lobbies(db):
 
 
 def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
-    smt = select(Jugador).where(Jugador.partida_id == id_game)
-    jugadores = db.execute(smt).scalars().all()
-    jugadores.sort(key=lambda jugador: jugador.turno)
+    #Obtengo todos los jugadores de la partida en orden de turno ascendente
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == id_game).order_by(Jugador.turno).all()
+    
     return jugadores
 
 
@@ -158,5 +158,28 @@ def mezclar_fichas(db: Session, game_id: int):
     return tablero.id
 
 def terminar_turno(game_id: int, db: Session):
+    #Obtengo la partida
+    partida = get_partida(game_id, db)
     
+    #Obtengo los jugadores ordenados por turno
+    jugadores = get_ordenes(game_id, db)
+    
+    #hago una lista con los indices de los jugadores
+    lista_turnos = [x.id for x in jugadores]
+    
+    turno = partida.jugador_en_turno
+    
+    #Busco que lugar de la lista esta el jugador en turno
+    index = lista_turnos.index(turno)
+    
+    #indice del proximo jugador
+    new_index = index + 1
+    #Si me paso del final de la lista tomo  el primer jugador de nuevo
+    if (index+1) == len(jugadores):
+        new_index = 0
+        
+    partida.jugador_en_turno = lista_turnos[new_index]
+    db.commit()
+    
+    #Debo retornar lo que esta en la API formato JSON
     return
