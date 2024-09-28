@@ -26,4 +26,4 @@ class FichaCajon(Base):
         x_pos = f'x_pos={self.x_pos!r}'
         y_pos = f'y_pos={self.y_pos!r}'
         color = f'color={self.color!r}'
-        return id + ', ' + x_pos + ', ' + y_pos + ', ' + color
+        return '{' + id + ', ' + x_pos + ', ' + y_pos + ', ' + color + '}'
