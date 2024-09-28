@@ -12,7 +12,7 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
 
-    jugadores = relationship("Jugador", back_populates="partida", uselist=False)
+    jugadores = relationship("Jugador", back_populates="partida")
 
     cartafigura = relationship("PictureCard", back_populates="partida")
     tablero = relationship("Tablero", back_populates="partida", uselist=False)
