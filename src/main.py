@@ -18,10 +18,11 @@ from src.models.fichas_cajon import FichaCajon
 
 from sqlalchemy.orm import Session
 from src.consultas import add_player
-from src.consultas import add_player, add_partida, list_lobbies
+from src.consultas import *
 
 from sqlalchemy.exc import IntegrityError
 
+import random
 
 Base.metadata.create_all(bind=engine)
 
@@ -57,6 +58,7 @@ class User(BaseModel):
 def read_root():
     return {"mensaje": "¡Hola, FastAPI!"}
 
+
 @app.get("/home/get-lobbies")
 async def get_lobbies(db: Session = Depends(get_db)):
     try:
@@ -65,9 +67,11 @@ async def get_lobbies(db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
 
+
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.errors())
+
 
 # Endpoint para jugador /login
 
@@ -93,3 +97,9 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         content={"id": id_game},
         status_code=status.HTTP_201_CREATED
     ) 
+
+def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
+    figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
+    random.shuffle(figuras_list)
+    repartir_cartas_figuras(game_id, figuras_list, db)
+    

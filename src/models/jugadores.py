@@ -14,6 +14,8 @@ class Jugador(Base):
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=True)
     partida = relationship("Partida", back_populates="jugadores")
 
+    cartafigura = relationship("PictureCard", back_populates="jugador")
+
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
         nombre = f'nombre={self.nombre!r}'

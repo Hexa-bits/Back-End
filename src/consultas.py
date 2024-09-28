@@ -2,9 +2,10 @@ from sqlalchemy.orm import Session
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
-from src.models.cartafigura import PictureCard
+from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from sqlalchemy import select
+from typing import List
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
@@ -50,3 +51,39 @@ def list_lobbies(db):
         
     return lobbies
 
+
+def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
+    smt = select(Jugador).where(Jugador.partida_id == id_game)
+    jugadores = db.execute(smt).scalars().all()
+    jugadores.sort(key=lambda jugador: jugador.turno)
+    return jugadores
+
+
+def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
+    smt = select(PictureCard).where(PictureCard.id == id_carta_figura)
+    return db.execute(smt).scalar() 
+
+
+def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session):
+    jugadores = get_ordenes(game_id, db)
+    num_jugadores = len(jugadores)
+
+    cartas_total = (50 // num_jugadores) *num_jugadores
+
+    for i in range(cartas_total):
+
+        cartaFigura = PictureCard(figura=Picture(figuras_list[i]))
+        if (i < 3 *num_jugadores):
+            cartaFigura.estado = CardState.mano
+
+        cartaFigura.partida_id = game_id
+        cartaFigura.jugador_id = jugadores[i % num_jugadores].id
+        i += num_jugadores
+        db.add(cartaFigura)
+
+    db.commit()
+
+
+def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
+    smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
+    return db.execute(smt).scalars().all()

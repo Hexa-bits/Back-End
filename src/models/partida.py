@@ -26,8 +26,3 @@ class Partida(Base):
         jugador_en_turno = f'jugador_en_turno={self.jugador_en_turno!r}'
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
         return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + '}'
-    
-    #__table_args__ = (
-    #    CheckConstraint('cantidad_max_jugadores BETWEEN 2 AND 4', name='cantidad_max_check'),
-    #    CheckConstraint('cantidad_min_jugadores BETWEEN 2 AND 4', name='cantidad_min_check'),
-    #)
