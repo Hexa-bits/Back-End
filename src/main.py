@@ -129,7 +129,14 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
 
-
+@app.put("/game/end-turn", status_code=status.HTTP_200_OK)
+async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
+    try:
+        next_jugador = terminar_turno(game_id.game_id, db)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
+    return next_jugador
 
 def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]

@@ -157,3 +157,6 @@ def mezclar_fichas(db: Session, game_id: int):
     
     return tablero.id
 
+def terminar_turno(game_id: int, db: Session):
+    
+    return
