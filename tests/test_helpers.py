@@ -104,7 +104,7 @@ def db_prueba(max_players: int, db: Session):
         db.rollback()
 
 
-def mock_list_fig_cards (figura: Picture) -> List[int]:
+def mock_list_fig_cards (fig_cards: List[PictureCard]) -> List[int]:
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
@@ -114,9 +114,9 @@ def mock_list_fig_cards (figura: Picture) -> List[int]:
         test_db.commit()
         test_db.refresh(jugador)
 
-        mov_card = PictureCard(figura=figura, estado=CardState.mano)
-        mov_card.jugador_id = jugador.id
-        test_db.add(mov_card)
+        for fig_card in fig_cards:
+            fig_card.jugador_id = jugador.id
+            test_db.add(fig_card)
         test_db.commit()
 
         cards = list_fig_cards(jugador.id, test_db)

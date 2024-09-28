@@ -23,40 +23,85 @@ client = TestClient(app)
 
 
 @patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_fig19(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(Picture.figura19)
+def test_get_fig_cards_endpoint_3cards(mock_list_movs):
+    cards_fig = [
+        PictureCard(figura=Picture.figura1, estado=CardState.mano),
+        PictureCard(figura=Picture.figura2, estado=CardState.mano),
+        PictureCard(figura=Picture.figura3, estado=CardState.mano)
+    ]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    #assert json_resp ["id_fig_card"] == [Move.diagonal_con_espacio.value]
+    assert len(json_resp ["id_fig_card"]) == 3
+    assert json_resp ["id_fig_card"] == [
+                                        Picture.figura1.value,
+                                        Picture.figura2.value,
+                                        Picture.figura3.value
+                                        ]
 
 
 @patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_fig1(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(Picture.figura1)
+def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
+    cards_fig = [
+        PictureCard(figura=Picture.figura1, estado=CardState.mano),
+        PictureCard(figura=Picture.figura2, estado=CardState.mano),
+        PictureCard(figura=Picture.figura3, estado=CardState.bloqueada)
+    ]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    #assert json_resp ["id_fig_card"] == [Move.linea_contiguo.value]
+    assert len(json_resp ["id_fig_card"]) == 2
+    assert json_resp ["id_fig_card"] == [
+                                        Picture.figura1.value,
+                                        Picture.figura2.value
+                                        ]
 
 
 @patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_fig10(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(Picture.figura10)
+def test_get_fig_cards_endpoint_2cards(mock_list_movs):
+    cards_fig = [
+        PictureCard(figura=Picture.figura1, estado=CardState.mano),
+        PictureCard(figura=Picture.figura2, estado=CardState.mano)
+    ]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    #assert json_resp ["id_fig_card"] == [Move.L_derecha.value]
+    assert len(json_resp ["id_fig_card"]) == 2
+    assert json_resp ["id_fig_card"] == [
+                                        Picture.figura1.value,
+                                        Picture.figura2.value
+                                        ]
 
+
+@patch("src.main.list_fig_cards")
+def test_get_fig_cards_endpoint_1card(mock_list_movs):
+    cards_fig = [PictureCard(figura=Picture.figura1, estado=CardState.mano)]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
+
+    response = client.get("/game/my-fig-card?player_id=1")
+
+    mock_list_movs.assert_called_once_with(1, ANY)
+    assert response.status_code == 200
+    json_resp = response.json()
+    assert len(json_resp ["id_fig_card"]) == 1
+    assert json_resp ["id_fig_card"] == [Picture.figura1.value]
+    
 
 def test_get_fig_enpoint_exception_list():
     with patch("src.main.list_fig_cards", side_effect=IntegrityError("Error de integridad", 
