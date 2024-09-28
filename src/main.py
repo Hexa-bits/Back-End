@@ -18,7 +18,7 @@ from src.models.fichas_cajon import FichaCajon
 
 from sqlalchemy.orm import Session
 from src.consultas import add_player
-from src.consultas import add_player, add_partida, list_lobbies
+from src.consultas import add_player, add_partida, list_lobbies, asignar_turnos
 
 from sqlalchemy.exc import IntegrityError
 
@@ -93,3 +93,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         content={"id": id_game},
         status_code=status.HTTP_201_CREATED
     ) 
+
+@app.get("/turnos/{game_id}")
+async def turnos(game_id: int, db: Session = Depends(get_db)):
+    return asignar_turnos(game_id, db)

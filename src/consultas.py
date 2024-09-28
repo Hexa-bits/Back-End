@@ -5,6 +5,8 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from sqlalchemy import select
+import random
+import pdb
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
@@ -50,3 +52,15 @@ def list_lobbies(db):
         
     return lobbies
 
+def asignar_turnos(game_id: int, db: Session):
+    player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+
+    turnos = random.sample(range(len(player_list)), len(player_list))
+    pdb.set_trace()
+    for jugador, turno in zip(player_list, turnos):
+        jugador.turno = turno
+
+    #db.commit()
+
+def get_jugadores(game_id: int, db: Session):
+    return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
