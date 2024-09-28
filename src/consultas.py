@@ -3,8 +3,10 @@ from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
-from src.models.cartamovimiento import MovementCard
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from sqlalchemy import select
+import random
 from sqlalchemy import select, func
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
@@ -193,6 +195,39 @@ def mezclar_fichas(db: Session, game_id: int):
         db.add(ficha)
         db.commit()
         db.refresh(ficha)
-    
+        
     return tablero.id
 
+def mezclar_cartas_movimiento(db: Session, game_id: int):
+    #Creo las cartas de movimiento
+    cards_mov_type = [Move.linea_contiguo,Move.linea_con_espacio,
+                    Move.diagonal_contiguo,Move.diagonal_con_espacio,
+                    Move.L_derecha,Move.L_izquierda,Move.linea_al_lateral]
+    
+    
+    for card_type in cards_mov_type:
+        for i in range (7):
+            #Añado la carta en la db
+            carta_mov = MovementCard(movimiento=card_type, partida_id=game_id )
+            db.add(carta_mov)
+            db.commit()
+            db.refresh(carta_mov)
+    
+    all_cards_mov = db.query(MovementCard).filter(MovementCard.partida_id == game_id).all()
+    
+    #Mezclo las cartas
+    random.shuffle(all_cards_mov)
+        
+    #Obtengo 3 cartas para cada jugador
+    #Obtengo mi lista de jugadores
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    
+    for jugador in jugadores:
+        for i in range(3):
+            #Obtengo una carta aleatoria de all_cards_mov
+            carta = all_cards_mov.pop()
+            carta.jugador_id = jugador.id
+            carta.estado = CardStateMov.mano
+            db.commit()
+            db.refresh(carta)
+    return
