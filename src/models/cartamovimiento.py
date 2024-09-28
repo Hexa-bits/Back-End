@@ -14,7 +14,7 @@ class Move(enum.Enum):
     L_izquierda = 6
     linea_al_lateral = 7 # Ver si existe 
 
-class CardState(enum.Enum):
+class CardStateMov(enum.Enum):
     mano = 1
     mazo = 2
     descartada = 3
@@ -24,7 +24,7 @@ class MovementCard(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     movimiento = Column(Enum(Move))
-    estado = Column(Enum(CardState), default=CardState.mazo)
+    estado = Column(Enum(CardStateMov), default=CardStateMov.mazo)
 
     partida_id = Column(Integer, ForeignKey("partidas.id"))
     partida = relationship("Partida", back_populates="cartasmovimiento")

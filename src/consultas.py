@@ -4,7 +4,7 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
-from src.models.cartamovimiento import MovementCard, Move, CardState
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from sqlalchemy import select
 import random
 from src.models.fichas_cajon import FichaCajon
@@ -188,7 +188,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             #Obtengo una carta aleatoria de all_cards_mov
             carta = all_cards_mov.pop()
             carta.jugador_id = jugador.id
-            carta.estado = CardState.mano
+            carta.estado = CardStateMov.mano
             db.commit()
             db.refresh(carta)
     return

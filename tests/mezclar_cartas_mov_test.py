@@ -7,7 +7,7 @@ from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
-from src.models.cartamovimiento import MovementCard, CardState
+from src.models.cartamovimiento import MovementCard, CardStateMov
 from src.models.fichas_cajon import FichaCajon
 
 from src.consultas import mezclar_cartas_movimiento
@@ -49,7 +49,7 @@ def test_mezclar_cartas_mov(test_db):
     #Chequeo que el resto esten en mazo
     mazo = test_db.query(MovementCard).filter(MovementCard.jugador_id == None).all()
     for carta in mazo:
-        assert carta.estado == CardState.mazo
+        assert carta.estado == CardStateMov.mazo
     
     #Chequo que hayan 49-(4*3) cartas en el mazo
     assert len(mazo) == 49-(4*3)
