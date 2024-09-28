@@ -23,39 +23,61 @@ client = TestClient(app)
 
 
 @patch("src.main.list_mov_cards")
-def test_get_mov_cards_endpoint_diag_esp(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(Move.diagonal_con_espacio)
+def test_get_mov_cards_endpoint_3cards(mock_list_movs):
+    cards_mov = [
+        MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
+        MovementCard(movimiento=Move.linea_contiguo, estado=CardStateMov.mano),
+        MovementCard(movimiento=Move.linea_con_espacio, estado=CardStateMov.mano)
+    ]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
 
     response = client.get("/game/my-mov-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
+    assert json_resp ["id_mov_card"] == [
+                                        Move.diagonal_con_espacio.value,
+                                        Move.linea_contiguo.value,
+                                        Move.linea_con_espacio.value 
+                                        ]
+
+
+@patch("src.main.list_mov_cards")
+def test_get_mov_cards_endpoint_2cards(mock_list_movs):
+    cards_mov = [
+        MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
+        MovementCard(movimiento=Move.linea_contiguo, estado=CardStateMov.mano)
+    ]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
+
+    response = client.get("/game/my-mov-card?player_id=1")
+
+    mock_list_movs.assert_called_once_with(1, ANY)
+    assert response.status_code == 200
+    json_resp = response.json()
+    assert len(json_resp ["id_mov_card"]) == 2 
+    assert json_resp ["id_mov_card"] == [
+                                        Move.diagonal_con_espacio.value,
+                                        Move.linea_contiguo.value
+                                        ]
+
+
+@patch("src.main.list_mov_cards")
+def test_get_mov_cards_endpoint_1card(mock_list_movs):
+    cards_mov = [MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano)]
+
+    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
+
+    response = client.get("/game/my-mov-card?player_id=1")
+
+    mock_list_movs.assert_called_once_with(1, ANY)
+    assert response.status_code == 200
+    json_resp = response.json()
+    assert len(json_resp ["id_mov_card"]) == 1
     assert json_resp ["id_mov_card"] == [Move.diagonal_con_espacio.value]
-
-
-@patch("src.main.list_mov_cards")
-def test_get_mov_cards_endpoint_linea_cont(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(Move.linea_contiguo)
-
-    response = client.get("/game/my-mov-card?player_id=1")
-
-    mock_list_movs.assert_called_once_with(1, ANY)
-    assert response.status_code == 200
-    json_resp = response.json()
-    assert json_resp ["id_mov_card"] == [Move.linea_contiguo.value]
-
-
-@patch("src.main.list_mov_cards")
-def test_get_mov_cards_endpoint_L_derecha(mock_list_movs):
-    mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(Move.L_derecha)
-
-    response = client.get("/game/my-mov-card?player_id=1")
-
-    mock_list_movs.assert_called_once_with(1, ANY)
-    assert response.status_code == 200
-    json_resp = response.json()
-    assert json_resp ["id_mov_card"] == [Move.L_derecha.value]
 
 
 def test_get_mov_enpoint_exception_list():

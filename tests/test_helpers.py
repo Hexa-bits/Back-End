@@ -79,7 +79,7 @@ def db_prueba(max_players: int, db: Session):
         db.rollback()
 
 
-def mock_list_mov_cards (move: Move) -> List[int]:
+def mock_list_mov_cards (mov_cards: List[MovementCard]) -> List[int]:
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
@@ -89,9 +89,10 @@ def mock_list_mov_cards (move: Move) -> List[int]:
         test_db.commit()
         test_db.refresh(jugador)
 
-        mov_card = MovementCard(movimiento=move, estado=CardStateMov.mano)
-        mov_card.jugador_id = jugador.id
-        test_db.add(mov_card)
+        for mov_card in mov_cards:
+            mov_card.jugador_id = jugador.id
+            test_db.add(mov_card)
+
         test_db.commit()
 
         cards = list_mov_cards(jugador.id, test_db)
