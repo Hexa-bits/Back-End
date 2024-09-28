@@ -165,7 +165,7 @@ def terminar_turno(game_id: int, db: Session):
     jugadores = get_ordenes(game_id, db)
     
     #hago una lista con los indices de los jugadores
-    lista_turnos = [x.id for x in jugadores]
+    lista_turnos = [x.turno for x in jugadores]
     
     turno = partida.jugador_en_turno
     
@@ -175,11 +175,16 @@ def terminar_turno(game_id: int, db: Session):
     #indice del proximo jugador
     new_index = index + 1
     #Si me paso del final de la lista tomo  el primer jugador de nuevo
-    if (index+1) == len(jugadores):
+    if new_index == len(jugadores):
         new_index = 0
         
     partida.jugador_en_turno = lista_turnos[new_index]
     db.commit()
     
+    json_jugador_turno = {
+        "id_player": jugadores[new_index].id ,
+        "name_player": jugadores[new_index].nombre
+    }
+    
     #Debo retornar lo que esta en la API formato JSON
-    return
+    return json_jugador_turno
