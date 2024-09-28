@@ -52,6 +52,7 @@ class GameId(BaseModel):
     game_id: int
 
 class PlayerAndGameId(BaseModel):
+    game_id: int
     player_id: int
 
 @app.get("/")
