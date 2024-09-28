@@ -146,6 +146,6 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content={"id_fig_card": id_fig_cards},
+        content={"id_mov_card": id_fig_cards},
         status_code=status.HTTP_200_OK
     )

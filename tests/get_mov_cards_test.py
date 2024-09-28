@@ -31,7 +31,7 @@ def test_get_mov_cards_endpoint_diag_esp(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert json_resp ["id_fig_card"] == [Move.diagonal_con_espacio.value]
+    assert json_resp ["id_mov_card"] == [Move.diagonal_con_espacio.value]
 
 
 @patch("src.main.list_mov_cards")
@@ -43,7 +43,7 @@ def test_get_mov_cards_endpoint_linea_cont(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert json_resp ["id_fig_card"] == [Move.linea_contiguo.value]
+    assert json_resp ["id_mov_card"] == [Move.linea_contiguo.value]
 
 
 @patch("src.main.list_mov_cards")
@@ -55,7 +55,7 @@ def test_get_mov_cards_endpoint_L_derecha(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert json_resp ["id_fig_card"] == [Move.L_derecha.value]
+    assert json_resp ["id_mov_card"] == [Move.L_derecha.value]
 
 
 def test_get_mov_enpoint_exception_list():
