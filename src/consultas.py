@@ -58,3 +58,6 @@ def list_lobbies(db):
         
     return lobbies
 
+def mezclar_cartas_movimiento(db: Session, game_id: int):
+    
+    return
