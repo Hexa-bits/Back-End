@@ -27,6 +27,5 @@ def test_get_lobby_info_failure(client):
                                                                         params=None, 
                                                                         orig=None)):
             response = client.get("/home/lobby?game_id=1")
-            print(response)
             assert response.status_code == 500
             assert response.json() == {"detail": "Error al obtener la partida"}

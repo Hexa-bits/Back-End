@@ -6,6 +6,8 @@ from src.db import Base
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
 from src.consultas import *
+from src.models.cartafigura import CardState
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.inputs_front import Partida_config
 from typing import List
 
@@ -59,9 +61,7 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
         for i in range(1, max_players+1):
             cartas = get_cartasFigura_player(i, test_db)
             assert len(cartas) == 50//max_players
-            assert len([x for x in cartas if x.estado == CardState.mano]) == 3
-
-            
+            assert len([x for x in cartas if x.estado == CardState.mano]) == 3            
         
 
 def db_prueba(max_players: int, db: Session):
@@ -77,3 +77,24 @@ def db_prueba(max_players: int, db: Session):
         db.commit()
     except SQLAlchemyError:
         db.rollback()
+
+
+def mock_list_mov_cards (move: Move) -> List[int]:
+    engine = create_engine('sqlite:///:memory:')
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    with (SessionLocal() as test_db):
+        jugador = Jugador(nombre="player")
+        test_db.add(jugador)
+        test_db.commit()
+        test_db.refresh(jugador)
+
+        mov_card = MovementCard(movimiento=move, estado=CardStateMov.mano)
+        mov_card.jugador_id = jugador.id
+        test_db.add(mov_card)
+        test_db.commit()
+
+        cards = list_mov_cards(jugador.id, test_db)
+
+        assert cards is not None
+        return cards

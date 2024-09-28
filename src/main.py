@@ -14,8 +14,8 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+from pydantic import BaseModel, conint
 
-from sqlalchemy.orm import Session
 from src.consultas import *
 
 from sqlalchemy.exc import IntegrityError
@@ -46,7 +46,6 @@ app.add_middleware(
 
 class PlayerId(BaseModel):
     id: int
-
 
 class User(BaseModel):
     username: str
@@ -88,6 +87,7 @@ async def login(user: User, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
 
+
 #Endpoint para get info lobby
 @app.get("/home/lobby")
 async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
@@ -98,6 +98,7 @@ async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la partida")
     
     return lobby_info
+
 
 @app.post("/home/create-config", status_code=status.HTTP_201_CREATED)
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
@@ -134,3 +135,17 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
+
+
+@app.get("/game/my-mov-card/", status_code=status.HTTP_200_OK)
+async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+    try:
+        id_fig_cards = list_mov_cards(player_id, db)
+
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+        content={"id_fig_card": id_fig_cards},
+        status_code=status.HTTP_200_OK
+    )

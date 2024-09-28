@@ -3,12 +3,12 @@ from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
-from src.models.cartamovimiento import MovementCard
+from src.models.cartamovimiento import MovementCard, CardStateMov
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 import random
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from typing import List
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
@@ -157,3 +157,11 @@ def mezclar_fichas(db: Session, game_id: int):
     
     return tablero.id
 
+
+def list_mov_cards(player_id: int, db: Session) -> List[int]:
+    smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
+    cards = db.execute(smt).scalars().all()
+    res = []
+    for card in cards:
+        res.append(card.value)
+    return res 
