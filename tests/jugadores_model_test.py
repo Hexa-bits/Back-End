@@ -4,6 +4,7 @@ from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
+
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard

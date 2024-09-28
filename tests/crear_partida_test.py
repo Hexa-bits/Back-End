@@ -11,13 +11,13 @@ from sqlalchemy.exc import IntegrityError
 from .test_helpers import mock_add_partida, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.inputs_front import Partida_config, Leave_config
 from src.models.tablero import Tablero
-from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
+from src.models.cartamovimiento import MovementCard
+from src.models.fichas_cajon import FichaCajon
 from unittest.mock import ANY
 
-from sqlalchemy.exc import IntegrityError
 
 client = TestClient(app)
 
