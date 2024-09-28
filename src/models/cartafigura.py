@@ -54,4 +54,4 @@ class PictureCard(Base):
         id = f'{self.id!r}'
         figura = f'{self.figura!r}'
         estado = f'{self.estado!r}'
-        return 'id' + id + ', ' + figura + ', ' + estado
+        return '{' + 'id' + id + ', ' + figura + ', ' + estado + '}'

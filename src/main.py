@@ -11,13 +11,11 @@ from src.models.jugadores import Jugador
 from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
 from src.models.tablero import Tablero
-
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 
 from sqlalchemy.orm import Session
-from src.consultas import add_player
 from src.consultas import *
 
 from sqlalchemy.exc import IntegrityError
@@ -53,6 +51,12 @@ class PlayerId(BaseModel):
 class User(BaseModel):
     username: str
 
+class GameId(BaseModel):
+    game_id: int
+
+class PlayerAndGameId(BaseModel):
+    game_id: int
+    player_id: int
 
 @app.get("/")
 def read_root():
@@ -84,6 +88,16 @@ async def login(user: User, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
 
+#Endpoint para get info lobby
+@app.get("/home/lobby")
+async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
+    try:
+        lobby_info = get_lobby(game_id, db)
+    
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la partida")
+    
+    return lobby_info
 
 @app.post("/home/create-config", status_code=status.HTTP_201_CREATED)
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
@@ -98,8 +112,25 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         status_code=status.HTTP_201_CREATED
     ) 
 
+    
+@app.post("/game/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
+async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+    try:
+        partida = get_partida(playerAndGameId.game_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
+        
+        jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
+        if jugador is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+        
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
+    return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
+
+
 def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
-    
