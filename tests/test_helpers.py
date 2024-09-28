@@ -1,12 +1,13 @@
 import pytest
-from sqlalchemy import create_engine, select
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
-from src.models.inputs_front import Partida_config, Leave_config
-from sqlalchemy.exc import SQLAlchemyError
 from src.consultas import *
+from src.models.inputs_front import Partida_config
+from typing import List
 
 
 @pytest.fixture(scope='function')
@@ -72,6 +73,21 @@ def mock_delete_player(max_players: int):
         assert jugador.partida_id == None
 
 
+def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
+    engine = create_engine('sqlite:///:memory:')
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    
+    with (SessionLocal() as test_db):
+        db_prueba(max_players, test_db)
+        repartir_cartas_figuras(game_id=1, figuras_list=figuras_list, db=test_db)
+
+        for i in range(1, max_players+1):
+            cartas = get_cartasFigura_player(i, test_db)
+            assert len(cartas) == 50//max_players
+            assert len([x for x in cartas if x.estado == CardState.mano]) == 3
+
+            
 def db_prueba(max_players: int, db: Session):
     try:
         partida = Partida(game_name="partida", max_players=max_players)
@@ -79,10 +95,9 @@ def db_prueba(max_players: int, db: Session):
         db.commit()
         db.refresh(partida)
         for i in range(0, max_players):
-            jugador = Jugador(nombre=f'player_{i}')
+            jugador = Jugador(nombre=f'player_{i}', turno=i+1)
             jugador.partida_id = partida.id
             db.add(jugador)
         db.commit()
     except SQLAlchemyError:
         db.rollback()
-

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Enum, Integer, ForeignKey
+from sqlalchemy import Column, Enum, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from src.db import Base
 import enum
@@ -41,13 +41,17 @@ class PictureCard(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     figura = Column(Enum(Picture))
-    estado = Column(Enum(CardState))
+    is_simple = Column(Boolean, default=True)
+    estado = Column(Enum(CardState), default=CardState.mazo)
 
     partida_id = Column(Integer, ForeignKey("partidas.id"))
     partida = relationship("Partida", back_populates="cartafigura")
+
+    jugador_id = Column(Integer, ForeignKey("jugador.id"))
+    jugador = relationship("Jugador", back_populates="cartafigura")
 
     def __repr__(self) -> str:
         id = f'{self.id!r}'
         figura = f'{self.figura!r}'
         estado = f'{self.estado!r}'
-        return 'id' + id + ', ' + figura + ', ' + estado
+        return '{' + 'id' + id + ', ' + figura + ', ' + estado + '}'
