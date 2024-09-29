@@ -17,9 +17,7 @@ def test_mezclar_fichas(test_db):
     partida = Partida(game_name="partida", max_players=4)
     test_db.add(partida)
     test_db.commit()
-    
-    print(partida.id)
-    
+        
     #Creo un tablero y sus fichas mezcladas
     mezclar_fichas(test_db, partida.id)
     

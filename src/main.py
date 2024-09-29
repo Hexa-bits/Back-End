@@ -14,6 +14,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+
 from src.consultas import *
 
 from sqlalchemy.exc import IntegrityError
@@ -44,7 +45,6 @@ app.add_middleware(
 
 class PlayerId(BaseModel):
     id: int
-
 
 class User(BaseModel):
     username: str
@@ -85,6 +85,7 @@ async def login(user: User, db: Session = Depends(get_db)):
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
+
 
 #Endpoint para get info lobby
 @app.get("/home/lobby")
@@ -155,6 +156,21 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
 
+@app.get("/game/board", status_code=status.HTTP_200_OK)
+async def get_board(game_id: int, db: Session = Depends(get_db)):
+    try:
+        tablero = get_fichas(game_id, db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
+    return tablero
+@app.put("/game/end-turn", status_code=status.HTTP_200_OK)
+async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
+    try:
+        next_jugador = terminar_turno(game_id.game_id, db)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
+    return next_jugador
 
 def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
@@ -166,11 +182,42 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
     try:
         id_fig_cards = list_fig_cards(player_id, db)
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(    
+        content={"id_fig_card": id_fig_cards},
+        status_code=status.HTTP_200_OK
+    )
+
+
+@app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
+async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+    try:
+        id_mov_cards = list_mov_cards(player_id, db)
 
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content={"id_fig_card": id_fig_cards},
+        content={"id_mov_card": id_mov_cards},
         status_code=status.HTTP_200_OK
     )
+
+@app.put("/game/start-game", status_code= status.HTTP_200_OK)
+async def start_game(game_id: GameId, db: Session = Depends(get_db)):
+    try:
+        mezclar_fichas(db, game_id.game_id)
+        mezclar_cartas_movimiento(db, game_id.game_id)
+        mezclar_figuras(game_id.game_id, db)
+        asignar_turnos(game_id.game_id, db)
+        partida = get_Partida(game_id.game_id, db)
+        partida.partida_iniciada = True
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+        content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
+        status_code=status.HTTP_200_OK
+    )
+
