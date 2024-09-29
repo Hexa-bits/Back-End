@@ -234,4 +234,19 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
 
 def get_fichas(game_id: int, db: Session):
 
-    return
+    tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
+    
+    all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+    
+    lista_fichas = []
+    for ficha in all_fichas:
+        #armo un json con las fichas
+        lista_fichas.append({
+            "x": ficha.x_pos,
+            "y": ficha.y_pos,
+            "color": ficha.color
+        })
+    
+    response = { "fichas": lista_fichas }
+    
+    return response
