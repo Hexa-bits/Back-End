@@ -14,11 +14,7 @@ from .test_helpers import mock_add_partida, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 
-
 from sqlalchemy.exc import IntegrityError
-
-
-
 
 from src.models.inputs_front import Partida_config, Leave_config
 from src.models.tablero import Tablero
