@@ -50,3 +50,14 @@ def test_terminar_turno_succesful(test_db, client):
             assert response.status_code == 200
             #assert response.json() == {"id_player": next_player.id, "name_player": next_player.nombre}
             assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}
+
+def test_terminar_turno_unsuccesful(test_db, client):
+
+    with patch("src.main.get_db"):
+        with patch("src.main.terminar_turno") as mock_terminar_turno:
+            mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
+
+            response = client.put("/game/end-turn", json={"game_id": 1})
+
+            assert response.status_code == 500
+            assert response.json() == {"detail": "Error al finalizar el turno"}
