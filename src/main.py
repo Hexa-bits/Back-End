@@ -181,3 +181,21 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
         content={"id_mov_card": id_mov_cards},
         status_code=status.HTTP_200_OK
     )
+
+@app.put("/game/start-game", status_code= status.HTTP_200_OK)
+async def start_game(game_id: GameId, db: Session = Depends(get_db)):
+    try:
+        mezclar_fichas(db, game_id.game_id)
+        mezclar_cartas_movimiento(db, game_id.game_id)
+        mezclar_figuras(game_id.game_id, db)
+        asignar_turnos(game_id.game_id, db)
+        partida = get_Partida(game_id.game_id, db)
+        partida.partida_iniciada = True
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+        content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
+        status_code=status.HTTP_200_OK
+    )
+
