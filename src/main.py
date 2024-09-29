@@ -210,7 +210,8 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             mezclar_cartas_movimiento(db, game_id.game_id)
             mezclar_figuras(game_id.game_id, db)
             asignar_turnos(game_id.game_id, db)
-        partida.partida_iniciada = True
+            partida.partida_iniciada = True
+            db.commit()
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
