@@ -9,7 +9,7 @@ from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.models.cartamovimiento import Move, CardState, MovementCard 
+from src.models.cartamovimiento import Move, CardStateMov, MovementCard 
 
 
 @pytest.fixture(scope='module')
@@ -33,7 +33,7 @@ def test_picture_card_creation_and_relationship(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardState.mano, partida_id=partida.id)
+    card = MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano, partida_id=partida.id)
     
     # Añade la tarjeta a la base de datos
     test_db.add(card)
@@ -44,10 +44,10 @@ def test_picture_card_creation_and_relationship(test_db):
     # Verifica que la tarjeta se haya añadido correctamente
     assert card.id is not None
     assert card.movimiento == Move.diagonal_con_espacio
-    assert card.estado == CardState.mano
+    assert card.estado == CardStateMov.mano
 
 def test_picture_card_2(test_db):
-    card = MovementCard(movimiento=Move.diagonal_contiguo, estado=CardState.mazo)
+    card = MovementCard(movimiento=Move.diagonal_contiguo, estado=CardStateMov.mazo)
     
     test_db.add(card)
     test_db.commit()
@@ -56,11 +56,11 @@ def test_picture_card_2(test_db):
     assert card.partida_id is None
     assert card.id is not None
     assert card.movimiento == Move.diagonal_contiguo
-    assert (card.estado != CardState.mano) & (card.estado != CardState.descartada)    
+    assert (card.estado != CardStateMov.mano) & (card.estado != CardStateMov.descartada)    
     
     
 def test_picture_card_repr(test_db):
-    card = MovementCard(movimiento=Move.linea_al_lateral, estado=CardState.descartada)
+    card = MovementCard(movimiento=Move.linea_al_lateral, estado=CardStateMov.descartada)
     
     test_db.add(card)
     test_db.commit()
@@ -68,11 +68,11 @@ def test_picture_card_repr(test_db):
 
     expected_repr = f"id{card.id!r}, {card.movimiento!r}, {card.estado!r}"
     assert card.partida_id is None
-    assert repr(card) == expected_repr
+    assert repr(card) == '{' + expected_repr + '}'
 
 def test_picture_card_ids(test_db):
-    card1 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
-    card2 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardState.mazo)
+    card1 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardStateMov.mazo)
+    card2 = MovementCard(movimiento=Move.linea_con_espacio, estado=CardStateMov.mazo)
     
     test_db.add(card1)
     test_db.commit()
@@ -93,13 +93,13 @@ def test_relationship2(test_db):
     test_db.commit()
     test_db.refresh(partida)
     
-    card = MovementCard(movimiento=Move.L_derecha, estado=CardState.mano, partida_id=partida.id)
+    card = MovementCard(movimiento=Move.L_derecha, estado=CardStateMov.mano, partida_id=partida.id)
     
     test_db.add(card)
     test_db.commit()
     test_db.refresh(card)
     
-    card1 = MovementCard(movimiento=Move.L_izquierda, estado=CardState.mano, partida_id=partida.id)
+    card1 = MovementCard(movimiento=Move.L_izquierda, estado=CardStateMov.mano, partida_id=partida.id)
     
     test_db.add(card1)
     test_db.commit()
