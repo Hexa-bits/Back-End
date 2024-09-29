@@ -159,19 +159,42 @@ def mezclar_fichas(db: Session, game_id: int):
 
 def terminar_turno(game_id: int, db: Session):
     #Obtengo la partida
-    partida = get_partida(game_id, db)
-    
-    #Obtengo los jugadores ordenados por turno
-    jugadores = get_ordenes(game_id, db)
+    #partida = get_partida(game_id, db)
+    try:
+        partida = db.query(Partida).filter(Partida.id == game_id).first()
+        print(partida)
+
+        pep = db.query(Jugador).filter(Jugador.partida_id == game_id).count()
+        print(pep)
+
+        jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
+        print(jugadores)
+
+    except Exception:
+        raise Exception("Error")
     
     #hago una lista con los indices de los jugadores
     lista_turnos = [x.turno for x in jugadores]
-    
+    print(lista_turnos)
+
     turno = partida.jugador_en_turno
-    
+    print(turno)
+
     #Busco que lugar de la lista esta el jugador en turno
     index = lista_turnos.index(turno)
-    
+    print(index)
+
+    #Si index falla porque el jugador en turno abandono partida, busco el numero siguiente
+    # ESTO SERIA EN CASO QUE AL ABANDONAR NO SE PASARA EL TURNO
+    # PERO NUESTRO ABANDONAR TURNO SI LLAMA A ESTE TERMINAR TURNO SI EL JUGADOR QUE ABANDONA ERA EL JUGADOR EN TURNO
+    # es decir: SI JUGADOR_QUE_ABANDONA.TURNO == PARTIDA.JUGADOR_EN_TURNO deberia llamarse esta funcion
+
+    #if index == -1:
+    #    lista_turnos.append(turno)
+    #    lista_turnos.sort()
+    #    index = lista_turnos.index(turno)
+    #    print(index)
+
     #indice del proximo jugador
     new_index = index + 1
     #Si me paso del final de la lista tomo  el primer jugador de nuevo
@@ -179,6 +202,7 @@ def terminar_turno(game_id: int, db: Session):
         new_index = 0
         
     partida.jugador_en_turno = lista_turnos[new_index]
+    print(partida.jugador_en_turno)
     db.commit()
     
     json_jugador_turno = {

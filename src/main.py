@@ -28,10 +28,12 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 def get_db():
+    print("Conectando a la base de datos")
     db = SessionLocal()
     try:
         yield db
     finally:
+        print("Cerrando conexión a la base de datos")
         db.close()
 
 # Configuración de CORS

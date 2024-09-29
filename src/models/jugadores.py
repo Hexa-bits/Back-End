@@ -9,7 +9,7 @@ class Jugador(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(50), nullable=False)
     es_anfitrion = Column(Boolean, default=False)
-    turno = Column(Integer, default=0)
+    turno = Column(Integer)
 
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=True)
     partida = relationship("Partida", back_populates="jugadores")
@@ -22,5 +22,5 @@ class Jugador(Base):
         id = f'id={self.id!r}'
         nombre = f'nombre={self.nombre!r}'
         es_anfitrion = f'es_afirion={self.es_anfitrion!r}'
-        turno = f'turno={turno!r}'
+        turno = f'turno={self.turno!r}'
         return '{' +id + ', ' + nombre + ', ' + es_anfitrion + ', ' + turno + '}'
