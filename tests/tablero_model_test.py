@@ -4,6 +4,7 @@ from sqlalchemy import inspect, create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker
 from src.models.jugadores import Jugador
+
 from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard

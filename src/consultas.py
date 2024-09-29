@@ -3,13 +3,16 @@ from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
-from src.models.cartamovimiento import MovementCard, CardStateMov
 from src.models.tablero import Tablero
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from sqlalchemy import select, and_
+import random
+from sqlalchemy import select, func
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 import random
-from sqlalchemy import select, and_
 from typing import List
+
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
@@ -17,6 +20,7 @@ def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     db.commit()  
     db.refresh(jugador)
     return jugador
+
 
 def get_lobby(game_id: int, db: Session):
     try:
@@ -44,6 +48,8 @@ def get_lobby(game_id: int, db: Session):
     }
 
     return lobby_info
+
+
 def add_player_game(player_id: int, game_id: int, db: Session) -> Jugador:
     jugador = get_Jugador(player_id, db)
     jugador.partida_id = game_id
@@ -51,13 +57,18 @@ def add_player_game(player_id: int, game_id: int, db: Session) -> Jugador:
     db.refresh(jugador)
     return jugador
 
+
 def get_Jugador(id: int, db: Session) -> Jugador:
     smt = select(Jugador).where(Jugador.id == id)
     jugador = db.execute(smt).scalar()
     return jugador
 
-def get_partida(id: int, db: Session) -> Partida:
-    return db.query(Partida).filter(Partida.id==id).first()
+
+def get_Partida(id: int, db: Session) -> Partida:
+    smt = select(Partida).where(Partida.id == id)
+    partida = db.execute(smt).scalar()
+    return partida
+
 
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
@@ -69,6 +80,36 @@ def add_partida(config: Partida_config, db: Session) -> int:
     jugador.partida_id = partida.id
     db.commit()
     return partida.id
+
+
+def delete_player(jugador: Jugador, db: Session):
+    partida = get_Partida(jugador.partida_id, db)
+    cant = player_in_partida(partida, db)
+    if (partida.partida_iniciada and cant <= 2):
+        delete_players_partida(partida, db)
+    else: 
+        jugador.partida_id = None
+        db.commit()
+
+
+def delete_partida(partida: Partida, db: Session):
+    db.delete(partida)
+    db.commit()
+
+
+def delete_players_partida(partida: Partida, db: Session):
+    smt = select(Jugador).where(Jugador.partida_id == partida.id)
+    jugadores = db.execute(smt).scalars().all()
+    for jugador in jugadores:
+        jugador.partida_id = None
+    db.commit()
+    delete_partida(partida, db)
+
+
+def player_in_partida(partida: Partida, db: Session) -> int:
+    smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
+    return db.execute(smt).scalar()
+
 
 def list_lobbies(db):
 
@@ -154,8 +195,42 @@ def mezclar_fichas(db: Session, game_id: int):
         db.add(ficha)
         db.commit()
         db.refresh(ficha)
-    
+        
     return tablero.id
+
+
+def mezclar_cartas_movimiento(db: Session, game_id: int):
+    #Creo las cartas de movimiento
+    cards_mov_type = [Move.linea_contiguo,Move.linea_con_espacio,
+                    Move.diagonal_contiguo,Move.diagonal_con_espacio,
+                    Move.L_derecha,Move.L_izquierda,Move.linea_al_lateral]
+    
+    for card_type in cards_mov_type:
+        for i in range (7):
+            #Añado la carta en la db
+            carta_mov = MovementCard(movimiento=card_type, partida_id=game_id )
+            db.add(carta_mov)
+            db.commit()
+            db.refresh(carta_mov)
+    
+    all_cards_mov = db.query(MovementCard).filter(MovementCard.partida_id == game_id).all()
+    
+    #Mezclo las cartas
+    random.shuffle(all_cards_mov)
+        
+    #Obtengo 3 cartas para cada jugador
+    #Obtengo mi lista de jugadores
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    
+    for jugador in jugadores:
+        for i in range(3):
+            #Obtengo una carta aleatoria de all_cards_mov
+            carta = all_cards_mov.pop()
+            carta.jugador_id = jugador.id
+            carta.estado = CardStateMov.mano
+            db.commit()
+            db.refresh(carta)
+    return
 
 
 def list_mov_cards(player_id: int, db: Session) -> List[int]:

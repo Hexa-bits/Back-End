@@ -8,13 +8,12 @@ from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
 
 from src.models.jugadores import Jugador
-from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
+from src.models.inputs_front import Partida_config, Leave_config
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from pydantic import BaseModel, conint
 
 from src.consultas import *
 
@@ -113,11 +112,35 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         status_code=status.HTTP_201_CREATED
     ) 
 
+
+@app.put("/game/leave", status_code=status.HTTP_204_NO_CONTENT)
+async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
+    try:
+        jugador = get_Jugador(leave_lobby.id_user, db)
+        if jugador is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
+        
+        partida = get_Partida(leave_lobby.game_id, db)
+        if partida is None or partida.partida_iniciada:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
+        
+        if jugador.partida_id == None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
+
+        if jugador.es_anfitrion:
+            delete_players_partida(partida, db)
+        else:
+            delete_player(jugador, db)
+        
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    
     
 @app.post("/game/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
 async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
     try:
-        partida = get_partida(playerAndGameId.game_id, db)
+        partida = get_Partida(playerAndGameId.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
         
@@ -137,15 +160,15 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     repartir_cartas_figuras(game_id, figuras_list, db)
 
 
-@app.get("/game/my-mov-card/", status_code=status.HTTP_200_OK)
+@app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
     try:
-        id_fig_cards = list_mov_cards(player_id, db)
+        id_mov_cards = list_mov_cards(player_id, db)
 
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content={"id_mov_card": id_fig_cards},
+        content={"id_mov_card": id_mov_cards},
         status_code=status.HTTP_200_OK
     )

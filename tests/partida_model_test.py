@@ -3,6 +3,7 @@ from sqlalchemy.exc import IntegrityError
 from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
+
 from src.models.inputs_front import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
