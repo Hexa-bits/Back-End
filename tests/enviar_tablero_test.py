@@ -57,7 +57,7 @@ def test_enviar_tablero_succesful(test_db, client):
             assert response.json() == response_expected
 
 
-def test_terminar_turno_unsuccesful(client):
+def test_enviar_tablero_unsuccesful(client):
 
     with patch("src.main.get_db"):
         with patch("src.main.get_fichas") as mock_terminar_turno:
