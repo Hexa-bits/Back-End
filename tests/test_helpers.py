@@ -28,6 +28,7 @@ def cheq_entity(entity: object, dicc: dict) -> bool:
             break
     return res 
 
+
 def mock_add_partida(config: Partida_config) -> int:
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
@@ -45,6 +46,31 @@ def mock_add_partida(config: Partida_config) -> int:
         assert jugador.partida.max_players == config.max_players
 
         return id_game 
+    
+
+def mock_delete_players_partida(max_players: int):
+    engine = create_engine('sqlite:///:memory:')
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    with (SessionLocal() as test_db):
+        db_prueba(max_players, test_db)
+        partida = get_Partida(1, test_db)
+        delete_players_partida(partida, test_db)
+        assert player_in_partida(partida, test_db) == 0 
+
+
+def mock_delete_player(max_players: int):
+    engine = create_engine('sqlite:///:memory:')
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    with (SessionLocal() as test_db):
+        db_prueba(max_players, test_db)
+        jugador = get_Jugador(1, test_db)
+        partida = get_Partida(jugador.partida_id, test_db)
+        delete_player(jugador, test_db)
+
+        assert player_in_partida(partida, test_db) == (0 if partida.partida_iniciada and max_players <= 2 else max_players - 1)
+        assert jugador.partida_id == None
 
 
 def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
@@ -62,8 +88,6 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
             assert len([x for x in cartas if x.estado == CardState.mano]) == 3
 
             
-        
-
 def db_prueba(max_players: int, db: Session):
     try:
         partida = Partida(game_name="partida", max_players=max_players)
