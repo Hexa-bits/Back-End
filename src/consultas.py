@@ -198,6 +198,49 @@ def mezclar_fichas(db: Session, game_id: int):
         
     return tablero.id
 
+def terminar_turno(game_id: int, db: Session):
+    #Obtengo la partida
+    try:
+        partida = db.query(Partida).filter(Partida.id == game_id).first()
+        jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
+
+    except Exception:
+        raise Exception("Error")
+    
+    #hago una lista con los indices de los jugadores
+    lista_turnos = [x.turno for x in jugadores]
+
+    turno = partida.jugador_en_turno
+
+    #Busco que lugar de la lista esta el jugador en turno
+    index = lista_turnos.index(turno)
+
+    #Si index falla porque el jugador en turno abandono partida, busco el numero siguiente
+    # ESTO SERIA EN CASO QUE AL ABANDONAR NO SE PASARA EL TURNO
+    # PERO NUESTRO ABANDONAR TURNO SI LLAMA A ESTE TERMINAR TURNO SI EL JUGADOR QUE ABANDONA ERA EL JUGADOR EN TURNO
+    # es decir: SI JUGADOR_QUE_ABANDONA.TURNO == PARTIDA.JUGADOR_EN_TURNO deberia llamarse esta funcion
+
+    #if index == -1:
+    #    lista_turnos.append(turno)
+    #    lista_turnos.sort()
+    #    index = lista_turnos.index(turno)
+
+    #indice del proximo jugador
+    new_index = index + 1
+    #Si me paso del final de la lista tomo  el primer jugador de nuevo
+    if new_index == len(jugadores):
+        new_index = 0
+        
+    partida.jugador_en_turno = lista_turnos[new_index]
+    db.commit()
+    
+    json_jugador_turno = {
+        "id_player": jugadores[new_index].id ,
+        "name_player": jugadores[new_index].nombre
+    }
+    
+    #Debo retornar lo que esta en la API formato JSON
+    return json_jugador_turno
 
 def mezclar_cartas_movimiento(db: Session, game_id: int):
     #Creo las cartas de movimiento
