@@ -86,7 +86,7 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            await ws_manager.send_all_message(data) #DUDA DE SI ESTO ES NECESARIO
+            #await ws_manager.send_all_message(data) #DUDA DE SI ESTO ES NECESARIO
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
@@ -102,7 +102,7 @@ async def get_lobbies(db: Session = Depends(get_db)):
         lobbies = list_lobbies(db)
 
         #Lo envio por websocket a todos los clientes conectados
-        await ws_manager.send_all_message(lobbies)
+        await ws_manager.send_all_message(str(lobbies))
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
