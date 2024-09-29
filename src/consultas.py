@@ -4,13 +4,10 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
-from sqlalchemy import select
+from sqlalchemy import select, func, and_
 import random
-import pdb
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from sqlalchemy import select, and_
 import random
-from sqlalchemy import select, func
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 import random
@@ -213,6 +210,7 @@ def mezclar_fichas(db: Session, game_id: int):
         
     return tablero.id
 
+
 def terminar_turno(game_id: int, db: Session):
     #Obtengo la partida
     try:
@@ -293,6 +291,14 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
 
 def list_mov_cards(player_id: int, db: Session) -> List[int]:
     smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
+    cards = db.execute(smt).scalars().all()
+    res = []
+    for card in cards:
+        res.append(card.value)
+    return res 
+
+def list_fig_cards(player_id: int, db: Session) -> List[int]:
+    smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()
     res = []
     for card in cards:

@@ -6,7 +6,7 @@ from src.db import Base
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
 from src.consultas import *
-from src.models.cartafigura import CardState
+from src.models.cartafigura import PictureCard, Picture, CardState
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.inputs_front import Partida_config
 from typing import List
@@ -122,6 +122,26 @@ def mock_list_mov_cards (mov_cards: List[MovementCard]) -> List[int]:
         test_db.commit()
 
         cards = list_mov_cards(jugador.id, test_db)
+
+        assert cards is not None
+        return cards
+
+def mock_list_fig_cards (fig_cards: List[PictureCard]) -> List[int]:
+    engine = create_engine('sqlite:///:memory:')
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    with (SessionLocal() as test_db):
+        jugador = Jugador(nombre="player")
+        test_db.add(jugador)
+        test_db.commit()
+        test_db.refresh(jugador)
+
+        for fig_card in fig_cards:
+            fig_card.jugador_id = jugador.id
+            test_db.add(fig_card)
+        test_db.commit()
+
+        cards = list_fig_cards(jugador.id, test_db)
 
         assert cards is not None
         return cards

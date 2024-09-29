@@ -166,7 +166,19 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
-    
+
+
+@app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
+async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+    try:
+        id_fig_cards = list_fig_cards(player_id, db)
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(    
+        content={"id_fig_card": id_fig_cards},
+        status_code=status.HTTP_200_OK
+    )
 
 
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
