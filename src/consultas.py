@@ -91,9 +91,9 @@ def list_lobbies(db):
 
 
 def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
-    #Obtengo todos los jugadores de la partida en orden de turno ascendente
-    jugadores = db.query(Jugador).filter(Jugador.partida_id == id_game).order_by(Jugador.turno).all()
-    
+    smt = select(Jugador).where(Jugador.partida_id == id_game)
+    jugadores = db.execute(smt).scalars().all()
+    jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
 
 
@@ -159,30 +159,20 @@ def mezclar_fichas(db: Session, game_id: int):
 
 def terminar_turno(game_id: int, db: Session):
     #Obtengo la partida
-    #partida = get_partida(game_id, db)
     try:
         partida = db.query(Partida).filter(Partida.id == game_id).first()
-        print(partida)
-
-        pep = db.query(Jugador).filter(Jugador.partida_id == game_id).count()
-        print(pep)
-
         jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
-        print(jugadores)
 
     except Exception:
         raise Exception("Error")
     
     #hago una lista con los indices de los jugadores
     lista_turnos = [x.turno for x in jugadores]
-    print(lista_turnos)
 
     turno = partida.jugador_en_turno
-    print(turno)
 
     #Busco que lugar de la lista esta el jugador en turno
     index = lista_turnos.index(turno)
-    print(index)
 
     #Si index falla porque el jugador en turno abandono partida, busco el numero siguiente
     # ESTO SERIA EN CASO QUE AL ABANDONAR NO SE PASARA EL TURNO
@@ -202,7 +192,6 @@ def terminar_turno(game_id: int, db: Session):
         new_index = 0
         
     partida.jugador_en_turno = lista_turnos[new_index]
-    print(partida.jugador_en_turno)
     db.commit()
     
     json_jugador_turno = {
