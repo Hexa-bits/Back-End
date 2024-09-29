@@ -56,11 +56,11 @@ def asignar_turnos(game_id: int, db: Session):
     player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
     turnos = random.sample(range(len(player_list)), len(player_list))
-    pdb.set_trace()
+
     for jugador, turno in zip(player_list, turnos):
         jugador.turno = turno
-
-    #db.commit()
+        db.commit()
+        db.refresh(jugador)
 
 def get_jugadores(game_id: int, db: Session):
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
