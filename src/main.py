@@ -153,6 +153,13 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
 
+@app.get("/game/board", status_code=status.HTTP_200_OK)
+async def get_board(game_id: int, db: Session = Depends(get_db)):
+    try:
+        tablero = get_fichas(game_id, db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
+    return tablero
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:

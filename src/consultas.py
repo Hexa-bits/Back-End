@@ -288,6 +288,23 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.refresh(carta)
     return
 
+def get_fichas(game_id: int, db: Session):
+
+    tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
+
+    all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+
+    lista_fichas = []
+    for ficha in all_fichas:
+        #armo un json con las fichas
+        lista_fichas.append({
+            "x": ficha.x_pos,
+            "y": ficha.y_pos,
+            "color": ficha.color
+        })
+    response = { "fichas": lista_fichas }
+    
+    return response
 
 def list_mov_cards(player_id: int, db: Session) -> List[int]:
     smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
