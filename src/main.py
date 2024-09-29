@@ -14,6 +14,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+
 from src.consultas import *
 
 from sqlalchemy.exc import IntegrityError
@@ -44,7 +45,6 @@ app.add_middleware(
 
 class PlayerId(BaseModel):
     id: int
-
 
 class User(BaseModel):
     username: str
@@ -85,6 +85,7 @@ async def login(user: User, db: Session = Depends(get_db)):
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return PlayerId(id=jugador.id)
+
 
 #Endpoint para get info lobby
 @app.get("/home/lobby")
@@ -166,3 +167,17 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
     
+
+
+@app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
+async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+    try:
+        id_mov_cards = list_mov_cards(player_id, db)
+
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+        content={"id_mov_card": id_mov_cards},
+        status_code=status.HTTP_200_OK
+    )
