@@ -183,7 +183,6 @@ def terminar_turno(game_id: int, db: Session):
     #    lista_turnos.append(turno)
     #    lista_turnos.sort()
     #    index = lista_turnos.index(turno)
-    #    print(index)
 
     #indice del proximo jugador
     new_index = index + 1

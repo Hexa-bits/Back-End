@@ -9,8 +9,8 @@ from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.main import app 
-from src.consultas import mezclar_fichas
+from src.main import app, end_turn 
+from src.consultas import mezclar_fichas, terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
@@ -23,9 +23,7 @@ def test_terminar_turno_succesful(test_db, client):
     partida = Partida(game_name="partida", max_players=4, jugador_en_turno=0, partida_iniciada=True)
     test_db.add(partida)
     test_db.commit()
-    
-    print(partida.id)
-    
+        
     #Agrego 4 jugadores a la partida
     jugador1 = Jugador(nombre="Jugador1", es_anfitrion=True, partida_id=partida.id, turno=0)
     jugador2 = Jugador(nombre="Jugador2", es_anfitrion=False, partida_id=partida.id, turno=1)
@@ -38,8 +36,17 @@ def test_terminar_turno_succesful(test_db, client):
     test_db.add(jugador4)
     test_db.commit()
 
-    with patch('src.main.get_db'):
-        response = client.put("/game/end-turn", json={"game_id": partida.id})
+    #turno_actual = partida.jugador_en_turno
+    #id_next_player = (turno_actual + 1) % 4
+    #next_player = test_db.query(Jugador).filter(Jugador.partida_id == partida.id, Jugador.turno == id_next_player).first()
 
-        assert response.status_code == 200
-        assert response.json() == {"detail": "Turno finalizado"}
+    #Testeo el endpoint usando la base de datos que cree
+    with patch("src.main.get_db"):
+        with patch("src.main.terminar_turno") as mock_terminar_turno:
+            mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
+
+            response = client.put("/game/end-turn", json={"game_id": partida.id})
+
+            assert response.status_code == 200
+            #assert response.json() == {"id_player": next_player.id, "name_player": next_player.nombre}
+            assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}

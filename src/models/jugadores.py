@@ -9,7 +9,7 @@ class Jugador(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(50), nullable=False)
     es_anfitrion = Column(Boolean, default=False)
-    turno = Column(Integer)
+    turno = Column(Integer, default=0)
 
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=True)
     partida = relationship("Partida", back_populates="jugadores")
