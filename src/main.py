@@ -94,6 +94,3 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         status_code=status.HTTP_201_CREATED
     ) 
 
-@app.get("/turnos/{game_id}")
-async def turnos(game_id: int, db: Session = Depends(get_db)):
-    return asignar_turnos(game_id, db)
