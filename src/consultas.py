@@ -4,6 +4,9 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
+from sqlalchemy import select
+import random
+import pdb
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from sqlalchemy import select, and_
 import random
@@ -130,6 +133,18 @@ def list_lobbies(db):
         
     return lobbies
 
+def asignar_turnos(game_id: int, db: Session):
+    player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+
+    turnos = random.sample(range(len(player_list)), len(player_list))
+
+    for jugador, turno in zip(player_list, turnos):
+        jugador.turno = turno
+        db.commit()
+        db.refresh(jugador)
+
+def get_jugadores(game_id: int, db: Session):
+    return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
 def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     smt = select(Jugador).where(Jugador.partida_id == id_game)
