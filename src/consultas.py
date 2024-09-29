@@ -231,3 +231,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.commit()
             db.refresh(carta)
     return
+
+def get_fichas(game_id: int, db: Session):
+
+    return
