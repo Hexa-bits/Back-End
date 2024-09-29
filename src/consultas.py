@@ -5,7 +5,7 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from sqlalchemy import select
+from sqlalchemy import select, and_
 import random
 from sqlalchemy import select, func
 from src.models.fichas_cajon import FichaCajon
@@ -198,12 +198,12 @@ def mezclar_fichas(db: Session, game_id: int):
         
     return tablero.id
 
+
 def mezclar_cartas_movimiento(db: Session, game_id: int):
     #Creo las cartas de movimiento
     cards_mov_type = [Move.linea_contiguo,Move.linea_con_espacio,
                     Move.diagonal_contiguo,Move.diagonal_con_espacio,
                     Move.L_derecha,Move.L_izquierda,Move.linea_al_lateral]
-    
     
     for card_type in cards_mov_type:
         for i in range (7):
@@ -231,3 +231,12 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.commit()
             db.refresh(carta)
     return
+
+
+def list_mov_cards(player_id: int, db: Session) -> List[int]:
+    smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
+    cards = db.execute(smt).scalars().all()
+    res = []
+    for card in cards:
+        res.append(card.value)
+    return res 
