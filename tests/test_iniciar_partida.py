@@ -69,7 +69,7 @@ def test_start_game_exception():
          mock.patch("src.main.get_Partida") as mock_get_partida:
 
         # Simula que se lanza una excepción en mezclar_fichas
-        mock_mezclar_fichas.side_effect = SQLAlchemyError()
+        mock_get_partida.side_effect = SQLAlchemyError()
         
         # Llama al endpoint
         response = client.put("/game/start-game", json={"game_id": 1})
