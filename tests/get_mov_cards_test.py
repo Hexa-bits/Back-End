@@ -37,6 +37,7 @@ def test_get_mov_cards_endpoint_3cards(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
+    assert len(json_resp["id_mov_card"]) == 3
     assert json_resp ["id_mov_card"] == [
                                         Move.diagonal_con_espacio.value,
                                         Move.linea_contiguo.value,
