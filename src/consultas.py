@@ -3,7 +3,7 @@ from src.models.partida import Partida
 from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
-from src.models.cartamovimiento import MovementCard
+from src.models.cartamovimiento import MovementCard, CardStateMov
 from src.models.tablero import Tablero
 from sqlalchemy import select, func, and_
 from src.models.fichas_cajon import FichaCajon
@@ -68,6 +68,21 @@ def get_Partida(id: int, db: Session) -> Partida:
     return partida
 
 
+def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
+    smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
+    return db.execute(smt).scalars().all()
+
+
+def get_cartasMovimiento_player(player_id: int, db: Session) -> List[MovementCard]:
+    smt = select(MovementCard).where(MovementCard.jugador_id == player_id)
+    return db.execute(smt).scalars().all()
+
+
+def get_cartasMovimiento_game(game_id: int, db: Session) -> List[MovementCard]:
+    smt = select(MovementCard).where(MovementCard.partida_id == game_id)
+    return db.execute(smt).scalars().all()
+
+
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
     jugador = get_Jugador(config.id_user, db)
@@ -80,17 +95,41 @@ def add_partida(config: Partida_config, db: Session) -> int:
     return partida.id
 
 
+def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
+    figs = get_cartasFigura_player(partida.id, db)
+    for fig in figs:
+        fig.partida_id = None
+        fig.jugador_id = None
+        db.delete(fig)
+    
+    movs = get_cartasMovimiento_player(partida.id, db)
+    for mov in movs:
+        mov.jugador_id = None
+        mov.estado = CardStateMov.mazo
+    
+    db.commit()
+
+
 def delete_player(jugador: Jugador, db: Session):
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
-    if (partida.partida_iniciada and cant <= 2):
-        delete_players_partida(partida, db)
-    else: 
-        jugador.partida_id = None
-        db.commit()
+    with db.begin():
+        if (partida.partida_iniciada):
+            cards_to_mazo(partida, jugador, db)
+            if (cant == 1):
+                delete_partida(partida, db)
+        else: 
+            jugador.partida_id = None
+            db.commit()
 
 
 def delete_partida(partida: Partida, db: Session):
+    if (partida.partida_iniciada):
+        movs = get_cartasMovimiento_game(partida.id, db)
+        for mov in movs:
+            mov.partida_id = None
+            db.delete(mov)
+
     db.delete(partida)
     db.commit()
 
@@ -159,11 +198,6 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
         db.add(cartaFigura)
 
     db.commit()
-
-
-def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
-    smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
-    return db.execute(smt).scalars().all()
 
 
 def mezclar_fichas(db: Session, game_id: int):

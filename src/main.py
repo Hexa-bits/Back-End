@@ -126,10 +126,13 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if jugador.partida_id == None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
-        if jugador.es_anfitrion:
-            delete_players_partida(partida, db)
-        else:
+        if partida.partida_iniciada:
             delete_player(jugador, db)
+        else:
+            if jugador.es_anfitrion:
+                delete_players_partida(partida, db)
+            else:
+                delete_player(jugador, db)
         
     except SQLAlchemyError:
         db.rollback()
