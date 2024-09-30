@@ -205,6 +205,15 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+@app.get("/game/current-turn", status_code=status.HTTP_200_OK)
+async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
+    try:
+        jugador = jugador_en_turno(game_id, db)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
+    return jugador
+
 @app.put("/game/start-game", status_code= status.HTTP_200_OK)
 async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     try:

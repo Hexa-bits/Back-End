@@ -350,6 +350,22 @@ def list_mov_cards(player_id: int, db: Session) -> List[int]:
         res.append(card.value)
     return res 
 
+def jugador_en_turno(game_id: int, db: Session):
+        
+    partida = db.query(Partida).filter(Partida.id == game_id).first()
+
+    turno_actual = partida.jugador_en_turno
+
+    #Obtengo el jugador en turno actual de partida_id == game_id
+    jugador_turno_actual = db.query(Jugador).filter(Jugador.turno == turno_actual,
+                                                    Jugador.partida_id == game_id).first()
+
+    jugador_response = {
+        "id_player": jugador_turno_actual.id,
+        "name_player": jugador_turno_actual.nombre
+    }
+    
+    return jugador_response
 def list_fig_cards(player_id: int, db: Session) -> List[int]:
     smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()
