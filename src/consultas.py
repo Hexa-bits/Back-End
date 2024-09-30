@@ -7,6 +7,7 @@ from src.models.tablero import Tablero
 from sqlalchemy import select, func, and_
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 import random
+import json
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from typing import List
@@ -172,13 +173,7 @@ def list_lobbies(db):
     return lobbies
 
 def list_lobbies_ws(db):
-
     response_http = list_lobbies(db)
-
-    import json
-
-    
-
     response_ws = json.dumps(response_http)
     return response_ws
 
