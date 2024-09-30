@@ -80,7 +80,7 @@ class WebSocketConnectionManager:
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
-@app.websocket("/ws")
+@app.websocket("/home/get-lobbies")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
