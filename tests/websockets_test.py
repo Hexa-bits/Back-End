@@ -1,3 +1,4 @@
+import asyncio
 import pytest
 from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
@@ -26,6 +27,7 @@ async def test_websocket_connection(client):
         # Verificar que la cantidad de conexiones activas aumentó
         assert len(ws_manager.active_connections) == initial_connections + 1        
     
+    await asyncio.sleep(0.1)
     # Después de cerrar la conexión, verificar que la cantidad de conexiones activas disminuyó
     assert len(ws_manager.active_connections) == initial_connections
 
