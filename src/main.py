@@ -205,6 +205,20 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+@app.get("/game/get-winner", status_code=status.HTTP_200_OK)
+async def get_winner(game_id: int, db: Session = Depends(get_db)):
+    try:
+        jugadores = get_jugadores(game_id, db)
+        if len(jugadores)==1:
+            winner = jugadores[0]
+            return JSONResponse(
+                content= {"id_player": winner.id, "name_player": winner.nombre}
+            )
+        else:
+            raise HTTPException(status_code=204, detail="No hay un ganador")
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
