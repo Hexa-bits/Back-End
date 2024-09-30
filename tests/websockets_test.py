@@ -19,7 +19,7 @@ async def test_websocket_connection(client):
     initial_connections = len(ws_manager.active_connections)
 
     #Simulo una conexión al WebSocket
-    with client.websocket_connect("/ws") as websocket:
+    with client.websocket_connect("/home/get-lobbies") as websocket:
         # Verificar que el WebSocket se conectó correctamente
         assert websocket is not None
 
@@ -33,8 +33,8 @@ async def test_websocket_connection(client):
 @pytest.mark.asyncio
 async def test_websocket_broadcast_lobbies(client):
     # Simular que un cliente se conecta al WebSocket
-    with client.websocket_connect("/ws") as websocket1:
-        with client.websocket_connect("/ws") as websocket2:
+    with client.websocket_connect("/home/get-lobbies") as websocket1:
+        with client.websocket_connect("/home/get-lobbies") as websocket2:
             # Simular una petición HTTP para obtener lobbies
             response = client.get("/home/get-lobbies")
             assert response.status_code == 200
