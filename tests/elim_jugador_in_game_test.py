@@ -32,10 +32,10 @@ def test_endpoint_leave_in_game_anf (mock_delete_jugador):
         with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
-            leave_lobby = Leave_config(**info_leave)
+            leave_game = Leave_config(**info_leave)
             mock_delete_jugador.assert_called_once_with(mock_get_jugador.return_value, ANY)
-            mock_get_jugador.assert_called_once_with(leave_lobby.id_user, ANY)
-            mock_get_partida.assert_called_once_with(leave_lobby.game_id, ANY)
+            mock_get_jugador.assert_called_once_with(leave_game.id_user, ANY)
+            mock_get_partida.assert_called_once_with(leave_game.game_id, ANY)
             assert response.status_code == 204
 
 
@@ -47,10 +47,10 @@ def test_endpoint_leave_in_game (mock_delete_jugador):
         with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
-            leave_lobby = Leave_config(**info_leave)
+            leave_game = Leave_config(**info_leave)
             mock_delete_jugador.assert_called_once_with(mock_get_jugador.return_value, ANY)
-            mock_get_jugador.assert_called_once_with(leave_lobby.id_user, ANY)
-            mock_get_partida.assert_called_once_with(leave_lobby.game_id, ANY)
+            mock_get_jugador.assert_called_once_with(leave_game.id_user, ANY)
+            mock_get_partida.assert_called_once_with(leave_game.game_id, ANY)
             assert response.status_code == 204
 
 
@@ -62,9 +62,9 @@ def test_endpoint_leave_in_game_elim_partida (mock_delete_jugador):
         with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
-            leave_lobby = Leave_config(**info_leave)
+            leave_game = Leave_config(**info_leave)
             mock_delete_jugador.assert_called_once_with(mock_get_jugador.return_value, ANY)
-            mock_get_jugador.assert_called_once_with(leave_lobby.id_user, ANY)
-            mock_get_partida.assert_called_once_with(leave_lobby.game_id, ANY)
+            mock_get_jugador.assert_called_once_with(leave_game.id_user, ANY)
+            mock_get_partida.assert_called_once_with(leave_game.game_id, ANY)
             assert response.status_code == 204
 

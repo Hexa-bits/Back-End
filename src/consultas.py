@@ -365,6 +365,7 @@ def jugador_en_turno(game_id: int, db: Session):
     }
     
     return jugador_response
+
 def list_fig_cards(player_id: int, db: Session) -> List[int]:
     smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()

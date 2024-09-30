@@ -45,6 +45,7 @@ class User(BaseModel):
 
 @app.get("/")
 def read_root():
+    """Endpoint para verificar que todo siga andando"""
     return {"mensaje": "¡Hola, FastAPI!"}
 
 

@@ -34,18 +34,18 @@ class PlayerAndGameId(BaseModel):
 
 
 @router.put("/leave", status_code=status.HTTP_204_NO_CONTENT)
-async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
+async def leave_game(leave_game: Leave_config, db: Session=Depends(get_db)):
     try:
-        jugador = get_Jugador(leave_lobby.id_user, db)
+        jugador = get_Jugador(leave_game.id_user, db)
         if jugador is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_game.id_user}')
         
-        partida = get_Partida(leave_lobby.game_id, db)
+        partida = get_Partida(leave_game.game_id, db)
         if partida is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_game.game_id}')
         
         if jugador.partida_id == None or jugador.partida_id != partida.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_game.id_user}')
 
         if partida.partida_iniciada:
             delete_player(jugador, db)
