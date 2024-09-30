@@ -121,16 +121,19 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
         
         partida = get_Partida(leave_lobby.game_id, db)
-        if partida is None or partida.partida_iniciada:
+        if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
         
-        if jugador.partida_id == None:
+        if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
-        if jugador.es_anfitrion:
-            delete_players_partida(partida, db)
-        else:
+        if partida.partida_iniciada:
             delete_player(jugador, db)
+        else:
+            if jugador.es_anfitrion:
+                delete_players_partida(partida, db)
+            else:
+                delete_player(jugador, db)
         
     except SQLAlchemyError:
         db.rollback()
@@ -160,6 +163,7 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
     return tablero
+
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
