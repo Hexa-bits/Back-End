@@ -168,8 +168,19 @@ def list_lobbies(db):
             "current_players": current_players,
             "max_players": lobby.max_players,
             })
-    
+
     return lobbies
+
+def list_lobbies_ws(db):
+
+    response_http = list_lobbies(db)
+
+    import json
+
+    
+
+    response_ws = json.dumps(response_http)
+    return response_ws
 
 def asignar_turnos(game_id: int, db: Session):
     player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()

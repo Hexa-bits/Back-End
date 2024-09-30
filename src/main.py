@@ -102,7 +102,8 @@ async def get_lobbies(db: Session = Depends(get_db)):
         lobbies = list_lobbies(db)
 
         #Lo envio por websocket a todos los clientes conectados
-        await ws_manager.send_all_message(str(lobbies))
+        lobby_ws = list_lobbies_ws(db)
+        await ws_manager.send_all_message(lobby_ws)
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
@@ -143,8 +144,8 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         id_game = add_partida(partida_config, db)
 
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
-        lobbies = list_lobbies(db)
-        await ws_manager.send_all_message(str(lobbies))
+        lobbies = list_lobbies_ws(db)
+        await ws_manager.send_all_message(lobbies)
 
     except SQLAlchemyError:
         db.rollback()
@@ -174,8 +175,8 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             delete_player(jugador, db)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
-            lobbies = list_lobbies(db)
-            await ws_manager.send_all_message(str(lobbies))
+            lobbies = list_lobbies_ws(db)
+            await ws_manager.send_all_message(lobbies)
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
             else:
@@ -199,7 +200,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
-        lobbies = list_lobbies(db)
+        lobbies = list_lobbies_ws(db)
         await ws_manager.send_all_message(str(lobbies))
 
     except SQLAlchemyError:
