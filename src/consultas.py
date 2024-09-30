@@ -114,7 +114,8 @@ def delete_player(jugador: Jugador, db: Session):
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
     if (partida.partida_iniciada):
-        terminar_turno(partida.id, db)
+        if (partida.jugador_en_turno == jugador.turno):
+            terminar_turno(partida.id, db)
         cards_to_mazo(partida, jugador, db)
         if (cant == 1):
             delete_partida(partida, db)
