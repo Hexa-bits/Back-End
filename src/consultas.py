@@ -4,16 +4,11 @@ from src.models.inputs_front import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
-from sqlalchemy import select
-import random
-import pdb
+from sqlalchemy import select, func, and_
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from sqlalchemy import select, and_
 import random
-from sqlalchemy import select, func
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
-import random
 from typing import List
 
 
@@ -47,6 +42,7 @@ def get_lobby(game_id: int, db: Session):
     lobby_info = {
         "game_name": partida.game_name,
         "max_players": partida.max_players,
+        "game_status": partida.partida_iniciada,
         "name_players": lista_jugadores
     }
 
@@ -73,6 +69,21 @@ def get_Partida(id: int, db: Session) -> Partida:
     return partida
 
 
+def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
+    smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
+    return db.execute(smt).scalars().all()
+
+
+def get_cartasMovimiento_player(player_id: int, db: Session) -> List[MovementCard]:
+    smt = select(MovementCard).where(MovementCard.jugador_id == player_id)
+    return db.execute(smt).scalars().all()
+
+
+def get_cartasMovimiento_game(game_id: int, db: Session) -> List[MovementCard]:
+    smt = select(MovementCard).where(MovementCard.partida_id == game_id)
+    return db.execute(smt).scalars().all()
+
+
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
     jugador = get_Jugador(config.id_user, db)
@@ -85,17 +96,43 @@ def add_partida(config: Partida_config, db: Session) -> int:
     return partida.id
 
 
+def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
+    figs = get_cartasFigura_player(partida.id, db)
+    for fig in figs:
+        fig.partida_id = None
+        fig.jugador_id = None
+        db.delete(fig)
+    
+    movs = get_cartasMovimiento_player(partida.id, db)
+    for mov in movs:
+        mov.jugador_id = None
+        mov.estado = CardStateMov.mazo
+    
+    db.commit()
+
+
 def delete_player(jugador: Jugador, db: Session):
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
-    if (partida.partida_iniciada and cant <= 2):
-        delete_players_partida(partida, db)
-    else: 
-        jugador.partida_id = None
-        db.commit()
+    if (partida.partida_iniciada):
+        if (partida.jugador_en_turno == jugador.turno):
+            terminar_turno(partida.id, db)
+        cards_to_mazo(partida, jugador, db)
+        if (cant == 1):
+            delete_partida(partida, db)
+    
+    jugador.partida_id = None
+    db.commit()
 
 
 def delete_partida(partida: Partida, db: Session):
+    if (partida.partida_iniciada):
+        movs = get_cartasMovimiento_game(partida.id, db)
+        for mov in movs:
+            mov.partida_id = None
+            db.delete(mov)
+        #A FUTURO SERA NECESARIO ELIMINAR EL TABLERO Y LAS FICHAS ASOCIADAS A LA PARTIDA TAMBIEN
+
     db.delete(partida)
     db.commit()
 
@@ -123,7 +160,8 @@ def list_lobbies(db):
     for lobby in raw_lobbies:
         #Calculo la cantidad de jugadores actuales en partida
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
-
+        if current_players == 0 or lobby.partida_iniciada:
+            continue
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.game_name,
@@ -178,11 +216,6 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
     db.commit()
 
 
-def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
-    smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
-    return db.execute(smt).scalars().all()
-
-
 def mezclar_fichas(db: Session, game_id: int):
 
     tablero = Tablero(partida_id=game_id)
@@ -212,6 +245,7 @@ def mezclar_fichas(db: Session, game_id: int):
         db.refresh(ficha)
         
     return tablero.id
+
 
 def terminar_turno(game_id: int, db: Session):
     #Obtengo la partida
@@ -290,9 +324,50 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.refresh(carta)
     return
 
+def get_fichas(game_id: int, db: Session):
+
+    tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
+
+    all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+
+    lista_fichas = []
+    for ficha in all_fichas:
+        #armo un json con las fichas
+        lista_fichas.append({
+            "x": ficha.x_pos,
+            "y": ficha.y_pos,
+            "color": ficha.color
+        })
+    response = { "fichas": lista_fichas }
+    
+    return response
 
 def list_mov_cards(player_id: int, db: Session) -> List[int]:
     smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
+    cards = db.execute(smt).scalars().all()
+    res = []
+    for card in cards:
+        res.append(card.value)
+    return res 
+
+def jugador_en_turno(game_id: int, db: Session):
+        
+    partida = db.query(Partida).filter(Partida.id == game_id).first()
+
+    turno_actual = partida.jugador_en_turno
+
+    #Obtengo el jugador en turno actual de partida_id == game_id
+    jugador_turno_actual = db.query(Jugador).filter(Jugador.turno == turno_actual,
+                                                    Jugador.partida_id == game_id).first()
+
+    jugador_response = {
+        "id_player": jugador_turno_actual.id,
+        "name_player": jugador_turno_actual.nombre
+    }
+    
+    return jugador_response
+def list_fig_cards(player_id: int, db: Session) -> List[int]:
+    smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()
     res = []
     for card in cards:
