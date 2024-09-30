@@ -141,6 +141,10 @@ async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
+
+        #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
+        lobbies = list_lobbies(db)
+        await ws_manager.send_all_message(str(lobbies))
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
