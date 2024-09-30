@@ -2,8 +2,6 @@
 
 ## Crear y activar un entorno virtual
 
-Conflictos de versiones entre colaboradores.
-
 ### Pasos:
 
 - installar el gestor de entornos virtuales
@@ -33,8 +31,23 @@ Conflictos de versiones entre colaboradores.
     ```bash
     deactivate
     ```
-- Para correr el backend:
+## Para correr el backend:
     ```bash
     uvicorn src.main:app --reload
 
+    ```
+
+# Crear una imagen Docker
+    ```bash
+    docker build -t my-fastapi-app .
+    ```
+
+# Construir la imagen de Docker
+    ```bash
+    docker build -t my-fastapi-app .
+    ```
+
+# Ejecutar el contenedor
+    ```bash
+    docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
     ```
