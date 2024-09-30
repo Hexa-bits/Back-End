@@ -1,6 +1,26 @@
 # Back-End
 
-## Crear y activar un entorno virtual
+## EJECUTAR LA APP:
+
+### Crear una imagen Docker
+    ```bash
+    docker build -t my-fastapi-app .
+    ```
+
+### Construir la imagen de Docker
+    ```bash
+    docker build -t my-fastapi-app .
+    ```
+
+### Ejecutar el contenedor
+    ```bash
+    docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
+    ```
+
+
+## EJECUTAR DESDE LA TERMINAL:
+
+## Es necesario crear y activar un entorno virtual
 
 ### Pasos:
 
@@ -35,19 +55,4 @@
     ```bash
     uvicorn src.main:app --reload
 
-    ```
-
-# Crear una imagen Docker
-    ```bash
-    docker build -t my-fastapi-app .
-    ```
-
-# Construir la imagen de Docker
-    ```bash
-    docker build -t my-fastapi-app .
-    ```
-
-# Ejecutar el contenedor
-    ```bash
-    docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
     ```
