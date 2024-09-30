@@ -291,6 +291,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             asignar_turnos(game_id.game_id, db)
             partida.partida_iniciada = True
             db.commit()
+
+        #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+        lobbies = list_lobbies_ws(db)
+        await ws_manager.send_all_message(str(lobbies))
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
