@@ -121,16 +121,19 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
         
         partida = get_Partida(leave_lobby.game_id, db)
-        if partida is None or partida.partida_iniciada:
+        if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
         
-        if jugador.partida_id == None:
+        if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
-        if jugador.es_anfitrion:
-            delete_players_partida(partida, db)
-        else:
+        if partida.partida_iniciada:
             delete_player(jugador, db)
+        else:
+            if jugador.es_anfitrion:
+                delete_players_partida(partida, db)
+            else:
+                delete_player(jugador, db)
         
     except SQLAlchemyError:
         db.rollback()
@@ -153,6 +156,14 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
 
+@app.get("/game/board", status_code=status.HTTP_200_OK)
+async def get_board(game_id: int, db: Session = Depends(get_db)):
+    try:
+        tablero = get_fichas(game_id, db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
+    return tablero
+
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
@@ -166,7 +177,19 @@ def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
-    
+
+
+@app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
+async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+    try:
+        id_fig_cards = list_fig_cards(player_id, db)
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(    
+        content={"id_fig_card": id_fig_cards},
+        status_code=status.HTTP_200_OK
+    )
 
 
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
@@ -190,3 +213,23 @@ async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
     return jugador
+
+@app.put("/game/start-game", status_code= status.HTTP_200_OK)
+async def start_game(game_id: GameId, db: Session = Depends(get_db)):
+    try:
+        partida = get_Partida(game_id.game_id, db)
+        if not partida.partida_iniciada:
+            mezclar_fichas(db, game_id.game_id)
+            mezclar_cartas_movimiento(db, game_id.game_id)
+            mezclar_figuras(game_id.game_id, db)
+            asignar_turnos(game_id.game_id, db)
+            partida.partida_iniciada = True
+            db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+        content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
+        status_code=status.HTTP_200_OK
+    )
+
