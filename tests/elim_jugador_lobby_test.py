@@ -2,7 +2,6 @@ from src.main import app
 import pytest
 
 from unittest.mock import patch
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from sqlalchemy import select
@@ -17,19 +16,18 @@ from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from unittest.mock import ANY
-import json
 
 from sqlalchemy.exc import IntegrityError
 
 
 client = TestClient(app)
 
-@patch("src.main.delete_players_partida")
+@patch("src.routers.game.delete_players_partida")
 def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
     mock_delete_jugadores.side_effect = lambda partida, db: mock_delete_players_partida(partida.max_players, partida.partida_iniciada)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
@@ -39,12 +37,12 @@ def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
             assert response.status_code == 204
 
 
-@patch("src.main.delete_player")
+@patch("src.routers.game.delete_player")
 def test_endpoint_leave_lobby (mock_delete_jugador):
     mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(4, empezada=False)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
@@ -54,12 +52,12 @@ def test_endpoint_leave_lobby (mock_delete_jugador):
             assert response.status_code == 204
 
 
-@patch("src.main.delete_player")
+@patch("src.routers.game.delete_player")
 def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
     mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(2, empezada=False)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
@@ -71,7 +69,7 @@ def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
 
 def test_endpoint_leave_lobby_invalid_game_type ():
     info_leave = {"id_user": 1, "game_id": "str"}
-    with patch("src.main.get_Jugador") as mock_get_jugador:
+    with patch("src.routers.game.get_Jugador") as mock_get_jugador:
         response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
@@ -84,7 +82,7 @@ def test_endpoint_leave_lobby_invalid_game_type ():
 
 def test_endpoint_leave_lobby_invalid_player_type ():
     info_leave = {"id_user": "str", "game_id": 1}
-    with patch("src.main.get_Jugador") as mock_get_jugador:
+    with patch("src.routers.game.get_Jugador") as mock_get_jugador:
         response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
@@ -97,7 +95,7 @@ def test_endpoint_leave_lobby_invalid_player_type ():
 
 def test_endpoint_leave_lobby_invalid_player_num ():
     info_leave = {"id_user": -1, "game_id": 1}
-    with patch("src.main.get_Jugador") as mock_get_jugador:
+    with patch("src.routers.game.get_Jugador") as mock_get_jugador:
         response = client.put(url="/game/leave", json=info_leave)
 
         mock_get_jugador.assert_not_called()
@@ -110,7 +108,7 @@ def test_endpoint_leave_lobby_invalid_player_num ():
 
 def test_endpoint_leave_lobby_exception_add_partida ():
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", side_effect=IntegrityError("Error de integridad", 
+    with patch("src.routers.game.get_Jugador", side_effect=IntegrityError("Error de integridad", 
                                                                     params=None, 
                                                                     orig=None)) as mock_add_player:
         response = client.put(url="/game/leave", json=info_leave)
@@ -124,7 +122,7 @@ def test_endpoint_leave_lobby_exception_add_partida ():
 
 def test_endpoint_leave_lobby_exception_not_found ():
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = None) as mock_add_player:
+    with patch("src.routers.game.get_Jugador", return_value = None) as mock_add_player:
         response = client.put(url="/game/leave", json=info_leave)
         
         config = Leave_config(**info_leave)

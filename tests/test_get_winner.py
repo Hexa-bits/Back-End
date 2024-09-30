@@ -10,7 +10,7 @@ def client():
     return TestClient(app)
 
 def test_not_winner(client):
-    with patch('src.main.get_jugadores') as mock_get_jugadores:
+    with patch('src.routers.game.get_jugadores') as mock_get_jugadores:
         game_id = 1
         jugadores_mock = [
             MagicMock(id=1, nombre="testwinner"),
@@ -25,7 +25,7 @@ def test_not_winner(client):
         assert response.status_code == 204
 
 def test_get_winner(client):
-    with patch('src.main.get_jugadores') as mock_get_jugadores:
+    with patch('src.routers.game.get_jugadores') as mock_get_jugadores:
         game_id = 1
         jugadores_mock = [
             MagicMock(id=1, nombre="testwinner"),
@@ -39,7 +39,7 @@ def test_get_winner(client):
         assert response.json() == {"id_player": 1, "name_player": "testwinner"}
 
 def test_except_winner(client):
-    with patch('src.main.get_jugadores') as mock_get_jugadores:
+    with patch('src.routers.game.get_jugadores') as mock_get_jugadores:
         game_id = 1
         jugadores_mock = [
             MagicMock(id=1, nombre="testwinner"),

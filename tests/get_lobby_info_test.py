@@ -10,11 +10,11 @@ def client():
 
 
 def test_get_lobby_info_success(client):
-    with patch('src.main.get_db'):
+    with patch('src.routers.home.get_db'):
         
-        with patch('src.main.get_lobby', return_value={"game_name": "Juego1", 
-                                                        "max_players": 4, 
-                                                        "name_players": ["player1", "player2"]}):
+        with patch('src.routers.home.get_lobby', return_value={"game_name": "Juego1", 
+                                                                "max_players": 4, 
+                                                                "name_players": ["player1", "player2"]}):
             
             response = client.get("/home/lobby?game_id=1")
 
@@ -22,10 +22,10 @@ def test_get_lobby_info_success(client):
             assert response.json() != {"game_name": None, "max_players": None, "name_players": None}
 
 def test_get_lobby_info_failure(client):
-    with patch('src.main.get_db'):
-        with patch('src.main.get_lobby', side_effect=OperationalError("Error de DB", 
-                                                                        params=None, 
-                                                                        orig=None)):
+    with patch('src.routers.home.get_db'):
+        with patch('src.routers.home.get_lobby', side_effect=OperationalError("Error de DB", 
+                                                                                params=None, 
+                                                                                orig=None)):
             response = client.get("/home/lobby?game_id=1")
             assert response.status_code == 500
             assert response.json() == {"detail": "Error al obtener la partida"}

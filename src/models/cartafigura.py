@@ -41,7 +41,6 @@ class PictureCard(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     figura = Column(Enum(Picture))
-    is_simple = Column(Boolean, default=True)
     estado = Column(Enum(CardState), default=CardState.mazo)
 
     partida_id = Column(Integer, ForeignKey("partidas.id"))

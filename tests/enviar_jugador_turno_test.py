@@ -2,7 +2,6 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
 from src.consultas import jugador_en_turno
-from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.inputs_front import Partida_config
@@ -38,8 +37,8 @@ def test_enviar_jugador_turno_succesful(test_db, client):
     test_db.add(jugador4)
     test_db.commit()
 
-    with patch("src.main.get_db"):
-        with patch("src.main.jugador_en_turno") as mock_jugador_en_turno:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.jugador_en_turno") as mock_jugador_en_turno:
             mock_jugador_en_turno.return_value = jugador_en_turno(partida.id, test_db)
 
             response = client.get("/game/current-turn?game_id=" + str(partida.id))
@@ -50,12 +49,10 @@ def test_enviar_jugador_turno_succesful(test_db, client):
             assert response.json() == response_expected
 
 
-
-
 def test_enviar_jugador_turno_unsuccesful(client):
 
-    with patch("src.main.get_db"):
-        with patch("src.main.jugador_en_turno") as mock_jugador_en_turno:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.jugador_en_turno") as mock_jugador_en_turno:
             mock_jugador_en_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
 
             response = client.get("/game/current-turn?game_id=1")

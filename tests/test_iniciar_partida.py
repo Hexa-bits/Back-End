@@ -24,11 +24,11 @@ def test_start_game():
     app.dependency_overrides[get_db] = mock_get_db
 
     # Mockea las funciones que se llaman dentro de start_game
-    with mock.patch("src.main.mezclar_fichas") as mock_mezclar_fichas, \
-         mock.patch("src.main.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
-         mock.patch("src.main.mezclar_figuras") as mock_mezclar_figuras, \
-         mock.patch("src.main.asignar_turnos") as mock_asignar_turnos, \
-         mock.patch("src.main.get_Partida") as mock_get_partida:
+    with mock.patch("src.routers.game.mezclar_fichas") as mock_mezclar_fichas, \
+         mock.patch("src.routers.game.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
+         mock.patch("src.routers.game.mezclar_figuras") as mock_mezclar_figuras, \
+         mock.patch("src.routers.game.asignar_turnos") as mock_asignar_turnos, \
+         mock.patch("src.routers.game.get_Partida") as mock_get_partida:
         
         # Configura el mock para get_Partida
         mock_partida = mock.Mock()
@@ -62,11 +62,11 @@ def test_start_game_exception():
     app.dependency_overrides[get_db] = mock_get_db
 
     # Mockea las funciones que se llaman dentro de start_game
-    with mock.patch("src.main.mezclar_fichas") as mock_mezclar_fichas, \
-         mock.patch("src.main.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
-         mock.patch("src.main.mezclar_figuras") as mock_mezclar_figuras, \
-         mock.patch("src.main.asignar_turnos") as mock_asignar_turnos, \
-         mock.patch("src.main.get_Partida") as mock_get_partida:
+    with mock.patch("src.routers.game.mezclar_fichas") as mock_mezclar_fichas, \
+         mock.patch("src.routers.game.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
+         mock.patch("src.routers.game.mezclar_figuras") as mock_mezclar_figuras, \
+         mock.patch("src.routers.game.asignar_turnos") as mock_asignar_turnos, \
+         mock.patch("src.routers.game.get_Partida") as mock_get_partida:
 
         # Simula que se lanza una excepción en mezclar_fichas
         mock_get_partida.side_effect = SQLAlchemyError()

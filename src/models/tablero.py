@@ -5,6 +5,7 @@ from sqlalchemy import Column, Integer, Enum
 from src.db import Base
 from src.models.partida import Partida
 from src.models.fichas_cajon import FichaCajon
+
 class Tablero(Base):
     __tablename__ = "tableros"
 

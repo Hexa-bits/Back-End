@@ -9,7 +9,8 @@ from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.main import app, end_turn 
+from src.main import app
+from src.routers.game import end_turn
 from src.consultas import mezclar_fichas, terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
@@ -41,8 +42,8 @@ def test_terminar_turno_succesful(test_db, client):
     #next_player = test_db.query(Jugador).filter(Jugador.partida_id == partida.id, Jugador.turno == id_next_player).first()
 
     #Testeo el endpoint usando la base de datos que cree
-    with patch("src.main.get_db"):
-        with patch("src.main.terminar_turno") as mock_terminar_turno:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.terminar_turno") as mock_terminar_turno:
             mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
             response = client.put("/game/end-turn", json={"game_id": partida.id})
@@ -53,8 +54,8 @@ def test_terminar_turno_succesful(test_db, client):
 
 def test_terminar_turno_unsuccesful(test_db, client):
 
-    with patch("src.main.get_db"):
-        with patch("src.main.terminar_turno") as mock_terminar_turno:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.terminar_turno") as mock_terminar_turno:
             mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
 
             response = client.put("/game/end-turn", json={"game_id": 1})

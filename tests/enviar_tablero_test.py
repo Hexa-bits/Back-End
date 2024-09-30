@@ -1,6 +1,5 @@
 import pytest
 from sqlalchemy.exc import IntegrityError
-from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
 from src.models.inputs_front import Partida_config
@@ -40,8 +39,8 @@ def test_enviar_tablero_succesful(test_db, client):
             test_db.refresh(ficha)
 
 
-    with patch("src.main.get_db"):
-        with patch("src.main.get_fichas") as mock_get_fichas:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.get_fichas") as mock_get_fichas:
             mock_get_fichas.return_value = get_fichas(partida.id, test_db)
 
             response = client.get("/game/board?game_id=" + str(partida.id))
@@ -59,8 +58,8 @@ def test_enviar_tablero_succesful(test_db, client):
 
 def test_enviar_tablero_unsuccesful(client):
 
-    with patch("src.main.get_db"):
-        with patch("src.main.get_fichas") as mock_terminar_turno:
+    with patch("src.routers.game.get_db"):
+        with patch("src.routers.game.get_fichas") as mock_terminar_turno:
             mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
 
             response = client.get("/game/board?game_id=1")

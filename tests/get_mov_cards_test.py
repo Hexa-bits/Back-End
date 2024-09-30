@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 client = TestClient(app)
 
 
-@patch("src.main.list_mov_cards")
+@patch("src.routers.game.list_mov_cards")
 def test_get_mov_cards_endpoint_3cards(mock_list_movs):
     cards_mov = [
         MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
@@ -45,7 +45,7 @@ def test_get_mov_cards_endpoint_3cards(mock_list_movs):
                                         ]
 
 
-@patch("src.main.list_mov_cards")
+@patch("src.routers.game.list_mov_cards")
 def test_get_mov_cards_endpoint_2cards(mock_list_movs):
     cards_mov = [
         MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
@@ -66,7 +66,7 @@ def test_get_mov_cards_endpoint_2cards(mock_list_movs):
                                         ]
 
 
-@patch("src.main.list_mov_cards")
+@patch("src.routers.game.list_mov_cards")
 def test_get_mov_cards_endpoint_1card(mock_list_movs):
     cards_mov = [MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano)]
 
@@ -82,7 +82,7 @@ def test_get_mov_cards_endpoint_1card(mock_list_movs):
 
 
 def test_get_mov_enpoint_exception_list():
-    with patch("src.main.list_mov_cards", side_effect=IntegrityError("Error de integridad", 
+    with patch("src.routers.game.list_mov_cards", side_effect=IntegrityError("Error de integridad", 
                                                             params=None, 
                                                             orig=None)) as mock_list_card:
         response = client.get("/game/my-mov-card?player_id=1")
