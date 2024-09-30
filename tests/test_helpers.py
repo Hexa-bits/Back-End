@@ -50,28 +50,28 @@ def mock_add_partida(config: Partida_config) -> int:
         return id_game 
     
 
-def mock_delete_players_partida(max_players: int):
+def mock_delete_players_partida(max_players: int, empezada: bool):
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
     with (SessionLocal() as test_db):
-        db_prueba(max_players, test_db)
+        db_prueba(max_players, empezada, test_db)
         partida = get_Partida(1, test_db)
         delete_players_partida(partida, test_db)
         assert player_in_partida(partida, test_db) == 0 
 
 
-def mock_delete_player(max_players: int):
+def mock_delete_player(max_players: int, empezada: bool):
     engine = create_engine('sqlite:///:memory:')
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
     with (SessionLocal() as test_db):
-        db_prueba(max_players, test_db)
+        db_prueba(max_players, empezada, test_db)
         jugador = get_Jugador(1, test_db)
         partida = get_Partida(jugador.partida_id, test_db)
         delete_player(jugador, test_db)
 
-        assert player_in_partida(partida, test_db) == (0 if partida.partida_iniciada and max_players <= 2 else max_players - 1)
+        assert player_in_partida(partida, test_db) == (0 if partida.partida_iniciada and max_players == 1 else max_players - 1)
         assert jugador.partida_id == None
 
 
@@ -81,7 +81,7 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
     SessionLocal = sessionmaker(bind=engine)
     
     with (SessionLocal() as test_db):
-        db_prueba(max_players, test_db)
+        db_prueba(max_players, True, test_db)
         repartir_cartas_figuras(game_id=1, figuras_list=figuras_list, db=test_db)
 
         for i in range(1, max_players+1):
@@ -90,9 +90,9 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
             assert len([x for x in cartas if x.estado == CardState.mano]) == 3            
         
 
-def db_prueba(max_players: int, db: Session):
+def db_prueba(max_players: int, emepezada: bool, db: Session):
     try:
-        partida = Partida(game_name="partida", max_players=max_players)
+        partida = Partida(game_name="partida", max_players=max_players, partida_iniciada=emepezada)
         db.add(partida)
         db.commit()
         db.refresh(partida)
@@ -100,6 +100,7 @@ def db_prueba(max_players: int, db: Session):
             jugador = Jugador(nombre=f'player_{i}', turno=i+1)
             jugador.partida_id = partida.id
             db.add(jugador)
+        partida.jugador_en_turno = 1
         db.commit()
     except SQLAlchemyError:
         db.rollback()

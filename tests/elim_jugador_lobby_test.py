@@ -26,7 +26,7 @@ client = TestClient(app)
 
 @patch("src.main.delete_players_partida")
 def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
-    mock_delete_jugadores.side_effect = lambda partida, db: mock_delete_players_partida(partida.max_players)
+    mock_delete_jugadores.side_effect = lambda partida, db: mock_delete_players_partida(partida.max_players, partida.partida_iniciada)
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
@@ -41,7 +41,7 @@ def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
 
 @patch("src.main.delete_player")
 def test_endpoint_leave_lobby (mock_delete_jugador):
-    mock_delete_jugador.side_effect = lambda partida, db: mock_delete_player(4)
+    mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(4, empezada=False)
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
@@ -56,7 +56,7 @@ def test_endpoint_leave_lobby (mock_delete_jugador):
 
 @patch("src.main.delete_player")
 def test_endpoint_leave_lobby_elim_partida (mock_delete_jugador):
-    mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(2)
+    mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(2, empezada=False)
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1)) as mock_get_partida:

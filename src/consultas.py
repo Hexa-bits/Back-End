@@ -5,12 +5,10 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from sqlalchemy import select, func, and_
-import random
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 import random
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
-import random
 from typing import List
 
 
@@ -115,14 +113,14 @@ def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
 def delete_player(jugador: Jugador, db: Session):
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
-    with db.begin():
-        if (partida.partida_iniciada):
-            cards_to_mazo(partida, jugador, db)
-            if (cant == 1):
-                delete_partida(partida, db)
-        else: 
-            jugador.partida_id = None
-            db.commit()
+    if (partida.partida_iniciada):
+        terminar_turno(partida.id, db)
+        cards_to_mazo(partida, jugador, db)
+        if (cant == 1):
+            delete_partida(partida, db)
+    
+    jugador.partida_id = None
+    db.commit()
 
 
 def delete_partida(partida: Partida, db: Session):
