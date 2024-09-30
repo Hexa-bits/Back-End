@@ -130,6 +130,7 @@ def delete_partida(partida: Partida, db: Session):
         for mov in movs:
             mov.partida_id = None
             db.delete(mov)
+        #A FUTURO SERA NECESARIO ELIMINAR EL TABLERO Y LAS FICHAS ASOCIADAS A LA PARTIDA TAMBIEN
 
     db.delete(partida)
     db.commit()

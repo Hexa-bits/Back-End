@@ -124,7 +124,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
         
-        if jugador.partida_id == None:
+        if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
         if partida.partida_iniciada:
