@@ -1,24 +1,20 @@
 # Back-End
 
-## EJECUTAR LA APP:
+## Ejecutar la app:
 
 ### Crear una imagen Docker
-    ```bash
-    docker build -t my-fastapi-app .
-    ```
+    
+    $ docker build -t my-fastapi-app .
+    
 
-### Construir la imagen de Docker
-    ```bash
-    docker build -t my-fastapi-app .
-    ```
 
 ### Ejecutar el contenedor
-    ```bash
-    docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
-    ```
+    
+    # docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
+    
 
 
-## EJECUTAR DESDE LA TERMINAL:
+## Ejecutar desde la terminal:
 
 ## Es necesario crear y activar un entorno virtual
 
@@ -26,33 +22,35 @@
 
 - installar el gestor de entornos virtuales
    ```bash
-   sudo apt install python3.12-venv
+   $ sudo apt install python3.12-venv
 
 - Crear y activar entorno virtual
 
     ```bash
-    python -m venv venv
-    source venv/bin/activate
+    $ python -m venv venv
+    $ source venv/bin/activate
     ```
 
 - Para instalar dependencias
 
     ```bash
-    pip install -r requirements.txt
+    $ pip install -r requirements.txt
     ```
 
 - Para actualizar las dependencias instaladas
     
     ```bash
-    pip freeze > requeriments.txt
+    $ pip freeze > requeriments.txt
     ```
 
 - Para salir del entorno virtual:
     ```bash
-    deactivate
+    $ deactivate
     ```
 ## Para correr el backend:
-    ```bash
-    uvicorn src.main:app --reload
+    
+    $ uvicorn src.main:app --reload
 
-    ```
+
+## Para correr los tests
+    $ pytest
