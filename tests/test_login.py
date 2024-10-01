@@ -31,7 +31,9 @@ def client():
 
 def test_login_success(client):
     # Mock de la sesión de la base de datos
-    with patch('src.main.get_db'):
+    with patch('src.main.add_player') as mock_add_player:
+        mock_add_player.return_value = Jugador(id= 1, nombre= "testuser", es_anfitrion=False)
+        
         response = client.post("/login", json={"username": "testuser"})
 
         assert response.status_code == 201
