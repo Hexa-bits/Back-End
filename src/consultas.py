@@ -118,7 +118,12 @@ def delete_player(jugador: Jugador, db: Session):
     if (partida.partida_iniciada):
         if (partida.jugador_en_turno == jugador.turno):
             terminar_turno(partida.id, db)
+
         cards_to_mazo(partida, jugador, db)
+
+        if (jugador.es_anfitrion):
+            jugador.es_anfitrion = False
+        
         if (cant == 1):
             delete_partida(partida, db)
     
