@@ -98,7 +98,7 @@ def add_partida(config: Partida_config, db: Session) -> int:
 
 
 def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
-    figs = get_cartasFigura_player(partida.id, db)
+    figs = get_cartasFigura_player(jugador.id, db)
     for fig in figs:
         fig.partida_id = None
         fig.jugador_id = None
