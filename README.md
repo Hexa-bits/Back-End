@@ -1,16 +1,16 @@
 # Back-End
 
-## Ejecutar la app:
+## Ejecutar en Docker:
 
 ### Crear una imagen Docker
     
-    $ docker build -t my-fastapi-app .
+    docker build -t switcher-backend .
     
 
 
 ### Ejecutar el contenedor
     
-    # docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
+    docker run -d -p 8000:8000 switcher-backend
     
 
 
@@ -22,35 +22,35 @@
 
 - installar el gestor de entornos virtuales
    ```bash
-   $ sudo apt install python3.12-venv
+    sudo apt install python3.12-venv
 
 - Crear y activar entorno virtual
 
     ```bash
-    $ python -m venv venv
-    $ source venv/bin/activate
+    python -m venv venv
+    source venv/bin/activate
     ```
 
 - Para instalar dependencias
 
     ```bash
-    $ pip install -r requirements.txt
+    pip install -r requirements.txt
     ```
 
 - Para actualizar las dependencias instaladas
     
     ```bash
-    $ pip freeze > requeriments.txt
+    pip freeze > requeriments.txt
     ```
 
 - Para salir del entorno virtual:
     ```bash
-    $ deactivate
+    deactivate
     ```
 ## Para correr el backend:
     
-    $ uvicorn src.main:app --reload
+    uvicorn src.main:app --reload
 
 
 ## Para correr los tests
-    $ pytest
+    pytest

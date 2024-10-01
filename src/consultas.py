@@ -7,6 +7,7 @@ from src.models.tablero import Tablero
 from sqlalchemy import select, func, and_
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 import random
+import json
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from typing import List
@@ -97,7 +98,7 @@ def add_partida(config: Partida_config, db: Session) -> int:
 
 
 def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
-    figs = get_cartasFigura_player(partida.id, db)
+    figs = get_cartasFigura_player(jugador.id, db)
     for fig in figs:
         fig.partida_id = None
         fig.jugador_id = None
@@ -117,7 +118,12 @@ def delete_player(jugador: Jugador, db: Session):
     if (partida.partida_iniciada):
         if (partida.jugador_en_turno == jugador.turno):
             terminar_turno(partida.id, db)
+
         cards_to_mazo(partida, jugador, db)
+
+        if (jugador.es_anfitrion):
+            jugador.es_anfitrion = False
+        
         if (cant == 1):
             delete_partida(partida, db)
     
@@ -168,8 +174,13 @@ def list_lobbies(db):
             "current_players": current_players,
             "max_players": lobby.max_players,
             })
-        
+
     return lobbies
+
+def list_lobbies_ws(db):
+    response_http = list_lobbies(db)
+    response_ws = json.dumps(response_http)
+    return response_ws
 
 def asignar_turnos(game_id: int, db: Session):
     player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
