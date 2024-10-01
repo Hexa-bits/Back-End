@@ -1,16 +1,16 @@
 # Back-End
 
-## Ejecutar la app:
+## Ejecutar en Docker:
 
 ### Crear una imagen Docker
     
-    $ docker build -t my-fastapi-app .
+    $ docker build -t switcher-backend .
     
 
 
 ### Ejecutar el contenedor
     
-    # docker run -d --name my-fastapi-container -p 8000:8000 my-fastapi-app
+    # docker run -d -p 8000:8000 switcher-backend
     
 
 
