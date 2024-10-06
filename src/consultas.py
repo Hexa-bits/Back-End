@@ -43,7 +43,7 @@ def get_lobby(game_id: int, db: Session):
     lobby_info = {
         "game_name": partida.game_name,
         "max_players": partida.max_players,
-        "game_status": partida.partida_iniciada,
+        "start_owner": partida.partida_iniciada,
         "cancel_owner": False,
         "name_players": lista_jugadores
     }

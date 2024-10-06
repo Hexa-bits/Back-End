@@ -127,7 +127,7 @@ async def get_lobbies(db: Session = Depends(get_db)):
 
         #Lo envio por websocket a todos los clientes conectados
         lobby_ws = list_lobbies_ws(db)      # calculas list_lobbies dos veces
-        await ws_manager.send_all_message(lobby_ws)
+        await ws_manager.send_message_game_id(lobby_ws, game_id=0)
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
@@ -210,7 +210,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 await ws_manager.send_message_game_id(json.dumps(lobby_info), partida.id)
         
             lobbies = list_lobbies_ws(db)
-            await ws_manager.send_all_message(lobbies)
+            await ws_manager.send_message_game_id(lobbies, game_id=0)
 
     
     except SQLAlchemyError:
@@ -230,7 +230,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
 
         lobbies = list_lobbies_ws(db)
-        await ws_manager.send_all_message(lobbies)
+        await ws_manager.send_message_game_id(lobbies, 0)
 
         loby_info = get_lobby(partida.id, db)
         await ws_manager.send_message_game_id(json.dumps(loby_info), partida.id)
@@ -326,7 +326,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             db.commit()
 
         lobbies = list_lobbies_ws(db)
-        await ws_manager.send_all_message(lobbies)
+        await ws_manager.send_message_game_id(lobbies, game_id=0)
+
+        lobby_info = get_lobby(game_id.game_id, db)
+        await ws_manager.send_message_game_id(json.dumps(lobby_info), game_id.game_id)
 
     except SQLAlchemyError:
         db.rollback()
