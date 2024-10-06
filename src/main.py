@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import List
+from typing import List, Dict
 
 from pydantic import ValidationError, BaseModel
 
@@ -61,25 +61,42 @@ class PlayerAndGameId(BaseModel):
 
 class WebSocketConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: Dict[int, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, game_id: int, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        if game_id not in self.active_connections:
+            self.active_connections[game_id] = []
+        self.active_connections[game_id].append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        for game_id, connections in self.active_connections.items():
+            if websocket in connections:
+                connections.remove(websocket)
+                if not connections:
+                    del self.active_connections[game_id]
+                break 
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
     async def send_all_message(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        for game_id, connections in self.active_connections.items():
+            for connection in connections:
+                await connection.send_text(message)
+    
+    async def send_message_game_id(self, message: str, game_id: int):
+        for id_game, connections in self.active_connections.items():
+            if id_game == game_id:
+                for connection in connections:
+                    await connection.send_text(message)
+                break
+
 
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
+"""
 @app.websocket("/home/get-lobbies")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
@@ -87,6 +104,27 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             #await ws_manager.send_all_message(data) #DUDA DE SI ESTO ES NECESARIO
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+        await ws_manager.send_all_message("Un usuario se ha desconectado")
+"""
+@app.websocket("/home/get-lobbies")
+async def websocket_endpoint(websocket: WebSocket):
+    await ws_manager.connect(game_id=0, websocket=websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+        await ws_manager.send_all_message("Un usuario se ha desconectado")
+
+
+@app.websocket("/game/info")
+async def websocket_endpoint(game_id: int, websocket: WebSocket):
+    await ws_manager.connect(game_id=game_id, websocket=websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
@@ -220,6 +258,10 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         next_jugador = terminar_turno(game_id.game_id, db)
+
+        #websocket
+        next_jugador_ws = json.dumps(next_jugador)
+        await ws_manager.send_message_game_id(str(next_jugador_ws), game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -271,10 +313,14 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
         jugador = jugador_en_turno(game_id, db)
+
+        jugador_actual_ws = json.dumps(jugador)
+        await ws_manager.send_message_game_id(str(jugador_actual_ws), game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
