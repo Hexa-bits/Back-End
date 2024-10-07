@@ -17,6 +17,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+import json
 
 from src.consultas import *
 
@@ -96,18 +97,6 @@ class WebSocketConnectionManager:
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
-"""
-@app.websocket("/home/get-lobbies")
-async def websocket_endpoint(websocket: WebSocket):
-    await ws_manager.connect(websocket)
-    try:
-        while True:
-            data = await websocket.receive_text()
-            #await ws_manager.send_all_message(data) #DUDA DE SI ESTO ES NECESARIO
-    except WebSocketDisconnect:
-        ws_manager.disconnect(websocket)
-        await ws_manager.send_all_message("Un usuario se ha desconectado")
-"""
 @app.websocket("/home/get-lobbies")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(game_id=0, websocket=websocket)
@@ -318,9 +307,8 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
         jugador = jugador_en_turno(game_id, db)
-
-        jugador_actual_ws = json.dumps(jugador)
-        await ws_manager.send_message_game_id(str(jugador_actual_ws), game_id)
+        #jugador_actual_ws = json.dumps(jugador)
+        #await ws_manager.send_message_game_id(str(jugador_actual_ws), game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
