@@ -35,6 +35,24 @@ async def test_websocket_connection(client):
 
 
 @pytest.mark.asyncio
+async def test_websocket_connections(client):
+    initial_connections = len(ws_manager.active_connections)
+    assert initial_connections == 0
+    
+    with client.websocket_connect("/game/info?game_id=1"):
+        with client.websocket_connect("/game/info?game_id=1"):
+            with client.websocket_connect("/game/info?game_id=2"):
+                
+                assert len(ws_manager.active_connections) == initial_connections + 2  
+                assert len(ws_manager.active_connections.get(1)) == 2
+                assert len(ws_manager.active_connections.get(2)) == 1    
+    
+    await asyncio.sleep(0.1)
+    
+    assert len(ws_manager.active_connections) == initial_connections
+
+
+@pytest.mark.asyncio
 async def test_websocket_broadcast_turno_siguiente(client):
     # Simular que un cliente se conecta al WebSocket
     with client.websocket_connect("/game/info?game_id=1") as websocket1:
