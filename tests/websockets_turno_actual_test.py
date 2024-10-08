@@ -66,11 +66,12 @@ async def test_websocket_broadcast_turno_siguiente(client):
                 response = client.put("/game/end-turn", json={"game_id": 1})
 
                 # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-                turno1 = websocket1.receive_text()
-                turno2 = websocket2.receive_text()
+                mensaje1 = websocket1.receive_text()
+                mensaje2 = websocket2.receive_text()
 
                 # Verificar que los mensajes recibidos son iguales para ambos
-                assert turno1 == turno2
+                assert mensaje1 == "Terminó turno"
+                assert mensaje1 == mensaje2
                 assert response.status_code == 200
                 assert response.json() == {"id_player": 1 , "name_player": "testuser"}
 
