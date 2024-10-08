@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from src.db import Base, engine, SessionLocal
 
+from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config, Leave_config
@@ -28,6 +29,8 @@ from src.repositories.cards_repository import *
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+event = Event()
 
 def get_db():
     db = SessionLocal()
@@ -80,7 +83,7 @@ class WebSocketConnectionManager:
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
-@app.websocket("/home/get-lobbies")
+@app.websocket("/home/")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(websocket)
     try:
