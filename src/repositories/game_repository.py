@@ -22,7 +22,7 @@ def get_Partida(id: int, db: Session) -> Partida:
 
 def get_lobby(game_id: int, db: Session):
     try:
-        partida = db.query(Partida).filter(Partida.id == game_id).first()
+        partida = db.get(Partida, game_id)
     except Exception:
         raise Exception("Error al obtener la partida")
     
@@ -50,7 +50,7 @@ def get_lobby(game_id: int, db: Session):
 
 def jugador_en_turno(game_id: int, db: Session) -> dict:
         
-    partida = db.query(Partida).filter(Partida.id == game_id).first()
+    partida = db.get(Partida, game_id)
 
     turno_actual = partida.jugador_en_turno
 
@@ -68,7 +68,7 @@ def jugador_en_turno(game_id: int, db: Session) -> dict:
 def terminar_turno(game_id: int, db: Session) -> dict:
     #Obtengo la partida
     try:
-        partida = db.query(Partida).filter(Partida.id == game_id).first()
+        partida = db.get(Partida, game_id)
         jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
 
     except Exception:

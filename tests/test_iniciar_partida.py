@@ -28,7 +28,6 @@ def test_start_game():
          mock.patch("src.main.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
          mock.patch("src.main.mezclar_figuras") as mock_mezclar_figuras, \
          mock.patch("src.main.asignar_turnos") as mock_asignar_turnos, \
-         mock.patch("src.main.list_lobbies_ws") as mock_list_lobbies_ws, \
          mock.patch("src.main.get_Partida") as mock_get_partida:
         
         # Configura el mock para get_Partida
@@ -67,7 +66,6 @@ def test_start_game_exception():
          mock.patch("src.main.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
          mock.patch("src.main.mezclar_figuras") as mock_mezclar_figuras, \
          mock.patch("src.main.asignar_turnos") as mock_asignar_turnos, \
-         mock.patch("src.main.list_lobbies_ws") as mock_list_lobbies_ws, \
          mock.patch("src.main.get_Partida") as mock_get_partida:
 
         # Simula que se lanza una excepción en mezclar_fichas
