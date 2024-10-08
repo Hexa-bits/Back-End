@@ -1,14 +1,16 @@
+import random
 from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
-
 from pydantic import ValidationError, BaseModel
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
-from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
+
+from src.db import Base, engine, SessionLocal
 
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
@@ -18,14 +20,12 @@ from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 
-from src.consultas import *
-
-from sqlalchemy.exc import IntegrityError
-
-import random
+from src.repositories.board_repository import *
+from src.repositories.game_repository import *
+from src.repositories.player_repository import *
+from src.repositories.cards_repository import *
 
 Base.metadata.create_all(bind=engine)
-
 
 app = FastAPI()
 
@@ -224,12 +224,6 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
     return next_jugador
-
-def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
-    figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
-    random.shuffle(figuras_list)
-    repartir_cartas_figuras(game_id, figuras_list, db)
-
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
