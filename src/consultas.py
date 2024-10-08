@@ -23,7 +23,7 @@ def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
 
 def get_lobby(game_id: int, db: Session):
     try:
-        partida = db.query(Partida).filter(Partida.id == game_id).first()
+        partida = get_Partida(game_id, db)
     except Exception:
         raise Exception("Error al obtener la partida")
     
@@ -34,7 +34,8 @@ def get_lobby(game_id: int, db: Session):
     
     try:
     #List of players name order by es_anfitrion==True first
-        jugadores_en_partida = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.es_anfitrion.desc()).all()
+        jugadores_en_partida = get_jugadores(game_id, db)
+        print(jugadores_en_partida)
         for jugador in jugadores_en_partida:
             lista_jugadores.append(jugador.nombre)
     except Exception:
@@ -378,6 +379,7 @@ def jugador_en_turno(game_id: int, db: Session):
     }
     
     return jugador_response
+
 def list_fig_cards(player_id: int, db: Session) -> List[int]:
     smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()

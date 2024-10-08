@@ -1,6 +1,7 @@
 import asyncio
 import pytest
 from fastapi import FastAPI, WebSocket
+from unittest.mock import patch
 from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import create_engine
@@ -20,7 +21,7 @@ async def test_websocket_connection(client):
     initial_connections = len(ws_manager.active_connections)
 
     #Simulo una conexión al WebSocket
-    with client.websocket_connect("/home/get-lobbies") as websocket:
+    with client.websocket_connect("/home") as websocket:
         # Verificar que el WebSocket se conectó correctamente
         assert websocket is not None
 
@@ -35,11 +36,16 @@ async def test_websocket_connection(client):
 @pytest.mark.asyncio
 async def test_websocket_broadcast_lobbies(client):
     # Simular que un cliente se conecta al WebSocket
-    with client.websocket_connect("/home/get-lobbies") as websocket1:
-        with client.websocket_connect("/home/get-lobbies") as websocket2:
-            # Simular una petición HTTP para obtener lobbies
-            response = client.get("/home/get-lobbies")
-            assert response.status_code == 200
+    with client.websocket_connect("/home") as websocket1, \
+         client.websocket_connect("/home") as websocket2:
+        # Simular una petición HTTP para obtener lobbies
+        with patch("src.main.add_partida") as mock_add_partida:
+            config = {"id_user": 1, "game_name": "partida", "max_players": 4}
+            mock_add_partida.return_value = 1
+
+            response = client.post("/home/create-config", json=config)
+
+            assert response.status_code == 201
 
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
             lobbies1 = websocket1.receive_text()
