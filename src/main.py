@@ -108,7 +108,7 @@ async def websocket_endpoint(websocket: WebSocket):
         await ws_manager.send_all_message("Un usuario se ha desconectado")
 
 
-@app.websocket("/game/info")
+@app.websocket("/game")
 async def websocket_endpoint(game_id: int, websocket: WebSocket):
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
@@ -249,8 +249,8 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         next_jugador = terminar_turno(game_id.game_id, db)
 
         #websocket
-        next_jugador_ws = json.dumps(next_jugador)
-        await ws_manager.send_message_game_id(str(next_jugador_ws), game_id.game_id)
+       
+        await ws_manager.send_message_game_id("Terminó turno", game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -307,8 +307,6 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
         jugador = jugador_en_turno(game_id, db)
-        #jugador_actual_ws = json.dumps(jugador)
-        #await ws_manager.send_message_game_id(str(jugador_actual_ws), game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
