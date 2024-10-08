@@ -119,11 +119,6 @@ def list_lobbies(db):
 
     return lobbies
 
-def list_lobbies_ws(db):
-    response_http = list_lobbies(db)
-    response_ws = json.dumps(response_http)
-    return response_ws
-
 def delete_partida(partida: Partida, db: Session):
     if (partida.partida_iniciada):
         movs = get_cartasMovimiento_game(partida.id, db)

@@ -27,9 +27,8 @@ def get_fichas(game_id: int, db: Session):
             "y": ficha.y_pos,
             "color": ficha.color
         })
-    response = { "fichas": lista_fichas }
     
-    return response
+    return lista_fichas
 
 def mezclar_fichas(db: Session, game_id: int):
 

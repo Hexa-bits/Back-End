@@ -86,7 +86,6 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            #await ws_manager.send_all_message(data) #DUDA DE SI ESTO ES NECESARIO
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
@@ -101,9 +100,6 @@ async def get_lobbies(db: Session = Depends(get_db)):
     try:
         lobbies = list_lobbies(db)
 
-        #Lo envio por websocket a todos los clientes conectados
-        lobby_ws = list_lobbies_ws(db)
-        await ws_manager.send_all_message(lobby_ws)
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
@@ -143,9 +139,6 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     try:
         id_game = add_partida(partida_config, db)
 
-        #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
-        lobbies = list_lobbies_ws(db)
-        await ws_manager.send_all_message(lobbies)
 
     except SQLAlchemyError:
         db.rollback()
@@ -174,9 +167,6 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             delete_player(jugador, db)
         else:
-            #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
-            lobbies = list_lobbies_ws(db)
-            await ws_manager.send_all_message(lobbies)
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
             else:
@@ -198,11 +188,6 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
         
-        #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
-        #Porque ahora tiene un jugador mas
-        lobbies = list_lobbies_ws(db)
-        await ws_manager.send_all_message(str(lobbies))
-
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
@@ -212,9 +197,12 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 async def get_board(game_id: int, db: Session = Depends(get_db)):
     try:
         tablero = get_fichas(game_id, db)
+        
+        response = { "fichas": tablero }
+
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
-    return tablero
+    return response
 
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
@@ -286,9 +274,6 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
 
-        #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
-        lobbies = list_lobbies_ws(db)
-        await ws_manager.send_all_message(str(lobbies))
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
