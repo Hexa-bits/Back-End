@@ -10,7 +10,7 @@ from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 
-from src.consultas import mezclar_fichas
+from src.repositories.board_repository import mezclar_fichas
 
 def test_mezclar_fichas(test_db):
     
