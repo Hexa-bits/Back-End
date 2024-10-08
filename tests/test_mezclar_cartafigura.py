@@ -19,32 +19,33 @@ from unittest.mock import ANY
 
 from sqlalchemy.exc import IntegrityError
 
+from tests.test_helpers import test_db
 
-@patch("src.main.repartir_cartas_figuras")
-def test_endpoint_mezclar_figuras_4players(mock_repartir_cartafigura):
+@patch("src.repositories.cards_repository.repartir_cartas_figuras")
+def test_endpoint_mezclar_figuras_4players(mock_repartir_cartafigura, test_db):
     mock_repartir_cartafigura.side_effect = lambda game_id, figuras_list, db: mock_repartir_figuras(4, figuras_list)
-    with patch("src.main.random.shuffle", side_effect=lambda x: x):
-        mezclar_figuras (game_id=1)
+    with patch("src.repositories.cards_repository.random.shuffle", side_effect=lambda x: x):
+        mezclar_figuras (1, test_db)
         figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
 
         mock_repartir_cartafigura.assert_called_once_with(1, figuras_list, ANY)
 
 
-@patch("src.main.repartir_cartas_figuras")
-def test_endpoint_mezclar_figuras_3players(mock_repartir_cartafigura):
+@patch("src.repositories.cards_repository.repartir_cartas_figuras")
+def test_endpoint_mezclar_figuras_3players(mock_repartir_cartafigura, test_db):
     mock_repartir_cartafigura.side_effect = lambda game_id, figuras_list, db: mock_repartir_figuras(3, figuras_list)
-    with patch("src.main.random.shuffle", side_effect=lambda x: x):
-        mezclar_figuras (game_id=1)
+    with patch("src.repositories.cards_repository.random.shuffle", side_effect=lambda x: x):
+        mezclar_figuras (1,test_db)
         figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
 
         mock_repartir_cartafigura.assert_called_once_with(1, figuras_list, ANY)
 
 
-@patch("src.main.repartir_cartas_figuras")
-def test_endpoint_mezclar_figuras_2players(mock_repartir_cartafigura):
+@patch("src.repositories.cards_repository.repartir_cartas_figuras")
+def test_endpoint_mezclar_figuras_2players(mock_repartir_cartafigura, test_db):
     mock_repartir_cartafigura.side_effect = lambda game_id, figuras_list, db: mock_repartir_figuras(2, figuras_list)
-    with patch("src.main.random.shuffle", side_effect=lambda x: x):
-        mezclar_figuras (game_id=1)
+    with patch("src.repositories.cards_repository.random.shuffle", side_effect=lambda x: x):
+        mezclar_figuras (1, test_db)
         figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
 
         mock_repartir_cartafigura.assert_called_once_with(1, figuras_list, ANY)

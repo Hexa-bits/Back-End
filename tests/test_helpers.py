@@ -5,11 +5,15 @@ from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
-from src.consultas import *
 from src.models.cartafigura import PictureCard, Picture, CardState
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.inputs_front import Partida_config
 from typing import List
+
+from src.repositories.cards_repository import get_cartasFigura_player, list_fig_cards, list_mov_cards, repartir_cartas_figuras
+from src.repositories.game_repository import  get_Partida
+from src.repositories.player_repository import add_partida
+from src.repositories.player_repository import delete_player, delete_players_partida, get_Jugador, player_in_partida
 
 
 @pytest.fixture(scope='function')
@@ -90,7 +94,7 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
             assert len([x for x in cartas if x.estado == CardState.mano]) == 3            
         
 
-def db_prueba(max_players: int, emepezada: bool, db: Session):
+def db_prueba(max_players: int, emepezada: bool, db: pytest.Session):
     try:
         partida = Partida(game_name="partida", max_players=max_players, partida_iniciada=emepezada)
         db.add(partida)
