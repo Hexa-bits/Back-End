@@ -48,7 +48,7 @@ def get_lobby(game_id: int, db: Session):
 
     return lobby_info
 
-def jugador_en_turno(game_id: int, db: Session):
+def jugador_en_turno(game_id: int, db: Session) -> dict:
         
     partida = db.query(Partida).filter(Partida.id == game_id).first()
 
@@ -65,7 +65,7 @@ def jugador_en_turno(game_id: int, db: Session):
     
     return jugador_response
 
-def terminar_turno(game_id: int, db: Session):
+def terminar_turno(game_id: int, db: Session) -> dict:
     #Obtengo la partida
     try:
         partida = db.query(Partida).filter(Partida.id == game_id).first()
@@ -99,7 +99,7 @@ def terminar_turno(game_id: int, db: Session):
     #Debo retornar lo que esta en la API formato JSON
     return json_jugador_turno
 
-def list_lobbies(db):
+def list_lobbies(db) -> List[dict]:
 
     raw_lobbies = db.query(Partida).all()
     
@@ -119,7 +119,7 @@ def list_lobbies(db):
 
     return lobbies
 
-def delete_partida(partida: Partida, db: Session):
+def delete_partida(partida: Partida, db: Session) -> None:
     if (partida.partida_iniciada):
         movs = get_cartasMovimiento_game(partida.id, db)
         for mov in movs:

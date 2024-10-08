@@ -33,12 +33,12 @@ def list_mov_cards(player_id: int, db: Session) -> List[int]:
         res.append(card.value)
     return res 
 
-def mezclar_figuras(game_id: int, db: Session):
+def mezclar_figuras(game_id: int, db: Session) -> None:
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
     repartir_cartas_figuras(game_id, figuras_list, db)
 
-def mezclar_cartas_movimiento(db: Session, game_id: int):
+def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
     #Creo las cartas de movimiento
     cards_mov_type = [Move.linea_contiguo,Move.linea_con_espacio,
                     Move.diagonal_contiguo,Move.diagonal_con_espacio,
@@ -71,7 +71,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int):
             db.refresh(carta)
     return
 
-def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session):
+def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
     num_jugadores = len(jugadores)
 
@@ -90,7 +90,7 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
 
     db.commit()
 
-def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session):
+def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
     figs = get_cartasFigura_player(jugador.id, db)
     for fig in figs:
         fig.partida_id = None

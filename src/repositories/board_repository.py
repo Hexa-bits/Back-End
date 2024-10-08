@@ -13,7 +13,7 @@ from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
-def get_fichas(game_id: int, db: Session):
+def get_fichas(game_id: int, db: Session) -> List[dict]:
 
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
 
@@ -30,7 +30,7 @@ def get_fichas(game_id: int, db: Session):
     
     return lista_fichas
 
-def mezclar_fichas(db: Session, game_id: int):
+def mezclar_fichas(db: Session, game_id: int) -> int:
 
     tablero = Tablero(partida_id=game_id)
     db.add(tablero)

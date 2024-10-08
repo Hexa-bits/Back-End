@@ -22,7 +22,7 @@ def get_Jugador(id: int, db: Session) -> Jugador:
     jugador = db.execute(smt).scalar()
     return jugador
 
-def get_jugadores(game_id: int, db: Session):
+def get_jugadores(game_id: int, db: Session) -> List[Jugador]:
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
 
@@ -40,7 +40,7 @@ def add_player_game(player_id: int, game_id: int, db: Session) -> Jugador:
     db.refresh(jugador)
     return jugador
 
-def asignar_turnos(game_id: int, db: Session):
+def asignar_turnos(game_id: int, db: Session) -> None:
     player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
     turnos = random.sample(range(len(player_list)), len(player_list))
@@ -50,7 +50,7 @@ def asignar_turnos(game_id: int, db: Session):
         db.commit()
         db.refresh(jugador)
 
-def delete_players_partida(partida: Partida, db: Session):
+def delete_players_partida(partida: Partida, db: Session) -> None:
     smt = select(Jugador).where(Jugador.partida_id == partida.id)
     jugadores = db.execute(smt).scalars().all()
     for jugador in jugadores:
@@ -63,7 +63,7 @@ def player_in_partida(partida: Partida, db: Session) -> int:
     smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
     return db.execute(smt).scalar()
 
-def delete_player(jugador: Jugador, db: Session):
+def delete_player(jugador: Jugador, db: Session) -> None:
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
     if (partida.partida_iniciada):
