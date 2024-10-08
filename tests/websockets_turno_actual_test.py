@@ -26,7 +26,8 @@ async def test_websocket_connection(client):
         assert websocket is not None
 
         # Verificar que la cantidad de conexiones activas aumentó
-        assert len(ws_manager.active_connections) == initial_connections + 1        
+        assert len(ws_manager.active_connections) == initial_connections + 1  
+        assert len(ws_manager.active_connections.get(1)) == 1    
     
     await asyncio.sleep(0.1)
     # Después de cerrar la conexión, verificar que la cantidad de conexiones activas disminuyó
@@ -38,6 +39,9 @@ async def test_websocket_broadcast_turno_siguiente(client):
     # Simular que un cliente se conecta al WebSocket
     with client.websocket_connect("/game/info?game_id=1") as websocket1:
         with client.websocket_connect("/game/info?game_id=1") as websocket2:
+            assert len(ws_manager.active_connections) == 1  
+            assert len(ws_manager.active_connections.get(1)) == 2 
+            
             with patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
                                                                   "name_player": "testuser"}):
                 # Simular una petición HTTP para obtener el siguiente turno
