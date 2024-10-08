@@ -75,24 +75,3 @@ async def test_websocket_broadcast_turno_siguiente(client):
                 assert response.status_code == 200
                 assert response.json() == {"id_player": 1 , "name_player": "testuser"}
 
-
-"""
-@pytest.mark.asyncio
-async def test_websocket_broadcast_turno_actual(client):
-    # Simular que un cliente se conecta al WebSocket
-    with client.websocket_connect("/game/info?game_id=1") as websocket1:
-        with client.websocket_connect("/game/info?game_id=1") as websocket2:
-            with patch('src.main.jugador_en_turno', return_value = {"id_player": 1 ,
-                                                                  "name_player": "testuser"}):
-                # Simular una petición HTTP para obtener el siguiente turno
-                response = client.get("/game/current-turn?game_id=1")
-
-                # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-                turno1 = websocket1.receive_text()
-                turno2 = websocket2.receive_text()
-
-                # Verificar que los mensajes recibidos son iguales para ambos
-                assert turno1 == turno2
-                assert response.status_code == 200
-                assert response.json() == {"id_player": 1 , "name_player": "testuser"}
-                """
