@@ -17,8 +17,6 @@ from src.repositories.cards_repository import cards_to_mazo
 from src.repositories.game_repository import delete_partida, get_Partida, terminar_turno
 
 
-
-
 def get_Jugador(id: int, db: Session) -> Jugador:
     smt = select(Jugador).where(Jugador.id == id)
     jugador = db.execute(smt).scalar()
@@ -27,11 +25,6 @@ def get_Jugador(id: int, db: Session) -> Jugador:
 def get_jugadores(game_id: int, db: Session):
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
-def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
-    smt = select(Jugador).where(Jugador.partida_id == id_game)
-    jugadores = db.execute(smt).scalars().all()
-    jugadores.sort(key=lambda jugador: jugador.turno)
-    return jugadores
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
@@ -88,3 +81,13 @@ def delete_player(jugador: Jugador, db: Session):
     jugador.partida_id = None
     db.commit()
 
+def add_partida(config: Partida_config, db: Session) -> int:
+    partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    jugador = get_Jugador(config.id_user, db)
+    db.add(partida)
+    db.commit()
+    db.refresh(partida)
+    jugador.es_anfitrion = True
+    jugador.partida_id = partida.id
+    db.commit()
+    return partida.id

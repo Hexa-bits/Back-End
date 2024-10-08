@@ -14,7 +14,6 @@ from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
 from src.repositories.cards_repository import get_cartasMovimiento_game
-from src.repositories.player_repository import get_Jugador
 
 def get_Partida(id: int, db: Session) -> Partida:
     smt = select(Partida).where(Partida.id == id)
@@ -136,13 +135,3 @@ def delete_partida(partida: Partida, db: Session):
     db.delete(partida)
     db.commit()
 
-def add_partida(config: Partida_config, db: Session) -> int:
-    partida = Partida(game_name=config.game_name, max_players=config.max_players)
-    jugador = get_Jugador(config.id_user, db)
-    db.add(partida)
-    db.commit()
-    db.refresh(partida)
-    jugador.es_anfitrion = True
-    jugador.partida_id = partida.id
-    db.commit()
-    return partida.id

@@ -11,7 +11,8 @@ from src.models.inputs_front import Partida_config
 from typing import List
 
 from src.repositories.cards_repository import get_cartasFigura_player, list_fig_cards, list_mov_cards, repartir_cartas_figuras
-from src.repositories.game_repository import add_partida, get_Partida
+from src.repositories.game_repository import  get_Partida
+from src.repositories.player_repository import add_partida
 from src.repositories.player_repository import delete_player, delete_players_partida, get_Jugador, player_in_partida
 
 

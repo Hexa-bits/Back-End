@@ -13,8 +13,6 @@ from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
-from src.repositories.player_repository import get_ordenes
-
 def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
     smt = select(PictureCard).where(PictureCard.id == id_carta_figura)
     return db.execute(smt).scalar() 
@@ -119,3 +117,9 @@ def get_cartasMovimiento_player(player_id: int, db: Session) -> List[MovementCar
 def get_cartasMovimiento_game(game_id: int, db: Session) -> List[MovementCard]:
     smt = select(MovementCard).where(MovementCard.partida_id == game_id)
     return db.execute(smt).scalars().all()
+
+def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
+    smt = select(Jugador).where(Jugador.partida_id == id_game)
+    jugadores = db.execute(smt).scalars().all()
+    jugadores.sort(key=lambda jugador: jugador.turno)
+    return jugadores
