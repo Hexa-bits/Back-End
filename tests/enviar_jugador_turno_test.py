@@ -1,7 +1,7 @@
 
 import pytest
 from sqlalchemy.exc import IntegrityError
-from src.consultas import jugador_en_turno
+from src.repositories.game_repository import jugador_en_turno
 from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador

@@ -10,7 +10,8 @@ from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.main import app, end_turn 
-from src.consultas import mezclar_fichas, terminar_turno
+from src.repositories.board_repository import mezclar_fichas
+from src.repositories.game_repository import terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 

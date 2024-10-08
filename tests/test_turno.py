@@ -7,7 +7,7 @@ from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 import unittest
 from unittest.mock import MagicMock, patch, ANY
-from src.consultas import asignar_turnos
+from src.repositories.player_repository import asignar_turnos
 import pdb
 
 class TestAsignarTurnos(unittest.TestCase):
