@@ -11,7 +11,7 @@ from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.main import app 
-from src.consultas import get_fichas
+from src.repositories.board_repository import get_fichas
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
