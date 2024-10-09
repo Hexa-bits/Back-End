@@ -249,7 +249,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
         #websocket
        
-        await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        await ws_manager.send_message_game_id(event.end_turn(), game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
