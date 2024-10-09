@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import List
+from typing import Dict, List
 from pydantic import ValidationError, BaseModel
 
 from sqlalchemy.exc import IntegrityError
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from src.db import Base, engine, SessionLocal
 
+from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config, Leave_config
@@ -28,6 +29,8 @@ from src.repositories.cards_repository import *
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+event = Event()
 
 def get_db():
     db = SessionLocal()
@@ -61,28 +64,43 @@ class PlayerAndGameId(BaseModel):
 
 class WebSocketConnectionManager:
     def __init__(self):
-        self.active_connections: List[WebSocket] = []
+        self.active_connections: Dict[int, List[WebSocket]] = {}
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, game_id: int, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections.append(websocket)
+        if game_id not in self.active_connections:
+            self.active_connections[game_id] = []
+        self.active_connections[game_id].append(websocket)
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        for game_id, connections in self.active_connections.items():
+            if websocket in connections:
+                connections.remove(websocket)
+                if not connections:
+                    del self.active_connections[game_id]
+                break 
 
     async def send_personal_message(self, message: str, websocket: WebSocket):
         await websocket.send_text(message)
 
     async def send_all_message(self, message: str):
-        for connection in self.active_connections:
-            await connection.send_text(message)
+        for game_id, connections in self.active_connections.items():
+            for connection in connections:
+                await connection.send_text(message)
+    
+    async def send_message_game_id(self, message: str, game_id: int):
+        for id_game, connections in self.active_connections.items():
+            if id_game == game_id:
+                for connection in connections:
+                    await connection.send_text(message)
+                break
 
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
-@app.websocket("/home/get-lobbies")
+@app.websocket("/home")
 async def websocket_endpoint(websocket: WebSocket):
-    await ws_manager.connect(websocket)
+    await ws_manager.connect(game_id=0, websocket=websocket)
     try:
         while True:
             data = await websocket.receive_text()
@@ -139,6 +157,8 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     try:
         id_game = add_partida(partida_config, db)
 
+        #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
+        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
 
     except SQLAlchemyError:
         db.rollback()
@@ -167,6 +187,8 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             delete_player(jugador, db)
         else:
+            #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
+            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
             else:
@@ -188,6 +210,10 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
         
+        #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
+        #Porque ahora tiene un jugador mas
+        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
@@ -274,6 +300,8 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
 
+        #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
