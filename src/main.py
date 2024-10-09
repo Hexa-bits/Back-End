@@ -20,6 +20,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+import json
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -101,6 +102,17 @@ ws_manager = WebSocketConnectionManager()
 @app.websocket("/home")
 async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(game_id=0, websocket=websocket)
+    try:
+        while True:
+            data = await websocket.receive_text()
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+        await ws_manager.send_all_message("Un usuario se ha desconectado")
+
+
+@app.websocket("/game")
+async def websocket_endpoint(game_id: int, websocket: WebSocket):
+    await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
             data = await websocket.receive_text()
@@ -234,6 +246,10 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         next_jugador = terminar_turno(game_id.game_id, db)
+
+        #websocket
+       
+        await ws_manager.send_message_game_id(event.end_turn(), game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -279,6 +295,7 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
