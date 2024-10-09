@@ -96,7 +96,7 @@ class WebSocketConnectionManager:
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
 
-@app.websocket("/home/get-lobbies")
+@app.websocket("/home")
 async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
     await ws_manager.connect(game_id=0, websocket=websocket)
     try:        
