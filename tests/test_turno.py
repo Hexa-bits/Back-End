@@ -7,12 +7,12 @@ from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 import unittest
 from unittest.mock import MagicMock, patch, ANY
-from src.consultas import asignar_turnos
+from src.repositories.player_repository import asignar_turnos
 import pdb
 
 class TestAsignarTurnos(unittest.TestCase):
 
-    @patch('src.consultas.get_jugadores')
+    @patch('src.repositories.player_repository.get_jugadores')
     def test_asignar_turnos(self, mock_get_jugadores):
         # Configuración del mock
         mock_db = MagicMock()  # Crea un mock para la base de datos
@@ -34,7 +34,7 @@ class TestAsignarTurnos(unittest.TestCase):
         self.assertEqual(mock_db.commit.call_count, len(jugadores_mock))
         self.assertEqual(mock_db.refresh.call_count, len(jugadores_mock))
 
-    @patch('src.consultas.get_jugadores')
+    @patch('src.repositories.player_repository.get_jugadores')
     def test_asignar_turnos1(self, mock_get_jugadores):
         mock_db = MagicMock()
         game_id = 1

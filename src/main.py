@@ -1,15 +1,18 @@
+import random
 from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List, Dict
-
 from pydantic import ValidationError, BaseModel
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
-from src.db import Base, engine, SessionLocal
 from sqlalchemy.orm import Session
 
+from src.db import Base, engine, SessionLocal
+
+from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.inputs_front import Partida_config, Leave_config
@@ -17,18 +20,17 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.models.events import events
 
-from src.consultas import *
-
-from sqlalchemy.exc import IntegrityError
-
-import random
+from src.repositories.board_repository import *
+from src.repositories.game_repository import *
+from src.repositories.player_repository import *
+from src.repositories.cards_repository import *
 
 Base.metadata.create_all(bind=engine)
 
-
 app = FastAPI()
+
+event = Event()
 
 def get_db():
     db = SessionLocal()
@@ -97,17 +99,18 @@ class WebSocketConnectionManager:
 ws_manager = WebSocketConnectionManager()
 
 @app.websocket("/home")
-async def websocket_endpoint(websocket: WebSocket, db: Session = Depends(get_db)):
+async def websocket_endpoint(websocket: WebSocket):
     await ws_manager.connect(game_id=0, websocket=websocket)
-    try:        
+    try:
         while True:
             data = await websocket.receive_text()
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
 
+
 @app.websocket("/game")
-async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = Depends(get_db)):
+async def websocket_endpoint(game_id: int, websocket: WebSocket):
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
@@ -161,7 +164,9 @@ async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
     try:
         id_game = add_partida(partida_config, db)
-        await ws_manager.send_message_game_id(events["lobbies"], game_id=0)
+
+        #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
+        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
 
     except SQLAlchemyError:
         db.rollback()
@@ -187,18 +192,20 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
+        game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
         else:
-
+            #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
-                await ws_manager.send_message_game_id(events["cancel_lobby"], game_id=partida.id)
+                print('hola')
+                await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
-                await ws_manager.send_message_game_id(events["abandona_lobby"], game_id=partida.id)
+                await ws_manager.send_message_game_id(event.leave_lobby, game_id=game_id)
         
-            await ws_manager.send_message_game_id(events["lobbies"], game_id=0)
+            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
 
     
     except SQLAlchemyError:
@@ -216,9 +223,11 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
-
-        await ws_manager.send_message_game_id(events["lobbies"], game_id=0)
-        await ws_manager.send_message_game_id(events["unirse"], game_id=partida.id)
+        
+        #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
+        #Porque ahora tiene un jugador mas
+        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+        await ws_manager.send_message_game_id(event.join_game, game_id=partida.id)
 
     except SQLAlchemyError:
         db.rollback()
@@ -230,25 +239,24 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 async def get_board(game_id: int, db: Session = Depends(get_db)):
     try:
         tablero = get_fichas(game_id, db)
+        
+        response = { "fichas": tablero }
+
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
-    return tablero
+    return response
 
 
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         next_jugador = terminar_turno(game_id.game_id, db)
+       
+        await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
     return next_jugador
-
-
-def mezclar_figuras(game_id: int, db: Session = Depends(get_db)):
-    figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
-    random.shuffle(figuras_list)
-    repartir_cartas_figuras(game_id, figuras_list, db)
 
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
@@ -292,7 +300,7 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-
+    
 
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
@@ -315,13 +323,9 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             asignar_turnos(game_id.game_id, db)
             partida.partida_iniciada = True
             db.commit()
-
-            await ws_manager.send_message_game_id(events["lobbies"], game_id=0)
-            await ws_manager.send_message_game_id(events["inicia"], game_id.game_id)
-        
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya fue empezada")
-
+            #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+            await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
