@@ -6,3 +6,6 @@ class Event:
     
     def end_turn(self):
         return "Terminó turno"
+
+    def winner(self):
+        return "Hay Ganador"

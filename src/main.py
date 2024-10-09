@@ -198,6 +198,9 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
         if partida.partida_iniciada:
             delete_player(jugador, db)
+            if len(get_jugadores(partida.id, db)) == 1:
+                #Mando ws
+                await ws_manager.send_message_game_id(event.winner(), partida.id)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
@@ -284,18 +287,14 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: int, db: Session = Depends(get_db)):
     try:
-        jugadores = get_jugadores(game_id, db)
-        if len(jugadores)==1:
-            winner = jugadores[0]
-            return JSONResponse(
-                content= {"id_player": winner.id, "name_player": winner.nombre}
-            )
-        else:
-            raise HTTPException(status_code=204, detail="No hay un ganador")
+        winner = get_jugadores(game_id, db)[0]
+  
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-    
+    return JSONResponse(
+                content= {"name_player": winner.nombre}
+            )
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
