@@ -3,7 +3,7 @@ from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
-from typing import Dict, List
+from typing import List, Dict
 from pydantic import ValidationError, BaseModel
 
 from sqlalchemy.exc import IntegrityError
@@ -20,7 +20,6 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-import json
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -129,7 +128,6 @@ def read_root():
 async def get_lobbies(db: Session = Depends(get_db)):
     try:
         lobbies = list_lobbies(db)
-
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
@@ -141,7 +139,6 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
 
 
 # Endpoint para jugador /login
-
 @app.post("/login", response_model=PlayerId, status_code=status.HTTP_201_CREATED)
 async def login(user: User, db: Session = Depends(get_db)):
     try:
@@ -152,12 +149,11 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(id=jugador.id)
 
 
-#Endpoint para get info lobby
+#Endpoint para get info lobby (creo que se podría ir si activa con otros endpoints)
 @app.get("/home/lobby")
 async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
     try:
-        lobby_info = get_lobby(game_id, db)
-    
+        lobby_info = get_lobby(game_id, db)    
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la partida")
     
@@ -196,16 +192,22 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
+        game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
-            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
+                print('hola')
+                await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
+                await ws_manager.send_message_game_id(event.leave_lobby, game_id=game_id)
         
+            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+
+    
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -225,11 +227,13 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
         await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+        await ws_manager.send_message_game_id(event.join_game, game_id=partida.id)
 
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
     return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
+
 
 @app.get("/game/board", status_code=status.HTTP_200_OK)
 async def get_board(game_id: int, db: Session = Depends(get_db)):
@@ -242,18 +246,18 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
     return response
 
+
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         next_jugador = terminar_turno(game_id.game_id, db)
-
-        #websocket
        
-        await ws_manager.send_message_game_id(event.end_turn(), game_id.game_id)
+        await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
     return next_jugador
+
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
@@ -281,6 +285,7 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: int, db: Session = Depends(get_db)):
     try:
@@ -296,6 +301,7 @@ async def get_winner(game_id: int, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     
+
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
     try:
@@ -304,6 +310,7 @@ async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
     return jugador
+
 
 @app.put("/game/start-game", status_code= status.HTTP_200_OK)
 async def start_game(game_id: GameId, db: Session = Depends(get_db)):
@@ -316,9 +323,9 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             asignar_turnos(game_id.game_id, db)
             partida.partida_iniciada = True
             db.commit()
-
-        #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
-        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+            #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+            await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
