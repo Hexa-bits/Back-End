@@ -25,7 +25,7 @@ class Event:
     
     @property
     def start_partida(self):
-        return "Inició la partida"
+        return "La partida inició"
     
     @property
     def join_game(self):
