@@ -198,7 +198,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
-                delete_players_partida(partida, db)
+                delete_players_lobby(partida, db)
                 print('hola')
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:

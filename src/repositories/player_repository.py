@@ -50,7 +50,7 @@ def asignar_turnos(game_id: int, db: Session) -> None:
         db.commit()
         db.refresh(jugador)
 
-def delete_players_partida(partida: Partida, db: Session) -> None:
+def delete_players_lobby(partida: Partida, db: Session) -> None:
     smt = select(Jugador).where(Jugador.partida_id == partida.id)
     jugadores = db.execute(smt).scalars().all()
     for jugador in jugadores:
