@@ -1,13 +1,15 @@
 import numpy as np
+import time
 
+inicio = time.perf_counter()
 # Ejemplo de matriz de 6x6 con 1s y 0s
 matriz = np.array([
     [0, 1, 0, 0, 1, 0],
     [1, 0, 0, 0, 1, 0],
     [1, 0, 0, 1, 1, 1],
     [1, 1, 0, 1, 0, 1],
-    [0, 0, 0, 1, 0, 1],
-    [0, 0, 0, 0, 0, 1]
+    [0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 0, 1]
 ])
 
 """Función para detectar figuras usando Sliding Window (No checkea que no tengan 1s adyacentes, solo si coinciden con el patrón)"""
@@ -72,4 +74,6 @@ for idx, figura in enumerate(figuras_detectadas, start=1):
     else:
         print("Figura inválida")
 
-    
+fin = time.perf_counter()
+duracion = fin - inicio
+print(f"El script tomó {duracion} segundos.")

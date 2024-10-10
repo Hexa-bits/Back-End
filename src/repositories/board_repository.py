@@ -59,3 +59,7 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         db.refresh(ficha)
         
     return tablero.id
+
+def get_valid_detected_figures(db: Session, game_id: int) -> List[dict]:
+
+    return

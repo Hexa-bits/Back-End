@@ -334,3 +334,11 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+@app.get("/game/resaltar-figuras", status_code=status.HTTP_200_OK)
+async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
+    try:
+        figuras = get_valid_detected_figures(game_id, db)
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
+    return figuras
