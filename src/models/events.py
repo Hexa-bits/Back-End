@@ -17,7 +17,7 @@ class Event:
     
     @property
     def get_winner(self):
-        return "Hay ganador"
+        return "Hay Ganador"
     
     @property
     def get_tablero(self):
