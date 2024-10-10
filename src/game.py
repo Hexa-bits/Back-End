@@ -1,6 +1,7 @@
-#Puede usarse tanto con una sola instancia de tablero e ir modificandola
-#como tambien con dos instancias de tablero, una real y una parcial
-#Esa decision se toma en ticket futuro, el GameManager sirve para ambos
+#Usamos una sola instancia de tablero en BD
+#Llevamos un registro en la clase GameManager
+#Para llevar un control de si es un tablero parcial o real
+#Y todas las cartas y fichas usadas en el tablero parcial
 
 class GameManager:
     def __init__(self):
@@ -47,6 +48,8 @@ class GameManager:
 
     #Desapilar carta y par de fichas sirve para deshacer el cambio parcial realizado
     #Si el stack queda vacio, me convierte el tablero en real
+    #Si termina el turno y no se formó figura, se debe desapilar, revertir el movimiento de fichas y devolver la carta_mov al jugador
+    #Hasta que el stack quede vacio, osea, hasta que el tablero sea real
     def desapilar_carta_y_ficha(self, game_id) -> tuple:
         # Desapilar la carta usada y par de ficha utilizada en el stack
         tupla_carta_fichas = self.games[game_id]['cartas_y_fichas_usadas'].pop()
@@ -56,7 +59,7 @@ class GameManager:
 
         return tupla_carta_fichas
 
-    #Limpiar cartas y fichas sirve para deshacernos del stack en caso de terminar turno o haber formado figura
+    #Limpiar cartas y fichas sirve para deshacernos del stack en caso haber formado figura
     #Nos convierte el tablero en real
     def limpiar_cartas_fichas(self, game_id) -> None:
         # Limpiar el stack de cartas y fichas
