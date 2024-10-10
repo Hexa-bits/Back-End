@@ -24,9 +24,9 @@ from sqlalchemy.exc import IntegrityError
 
 client = TestClient(app)
 
-@patch("src.main.delete_players_partida")
+@patch("src.main.delete_players_lobby")
 def test_endpoint_leave_lobby_anf (mock_delete_jugadores):
-    mock_delete_jugadores.side_effect = lambda partida, db: mock_delete_players_partida(partida.max_players, partida.partida_iniciada)
+    mock_delete_jugadores.side_effect = lambda partida, db: mock_delete_players_lobby(partida.max_players, partida.partida_iniciada)
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
         with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1)) as mock_get_partida:
