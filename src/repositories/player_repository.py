@@ -54,6 +54,9 @@ def delete_players_lobby(partida: Partida, db: Session) -> None:
     smt = select(Jugador).where(Jugador.partida_id == partida.id)
     jugadores = db.execute(smt).scalars().all()
     for jugador in jugadores:
+        if (jugador.es_anfitrion):
+            jugador.es_anfitrion = False
+            
         jugador.partida_id = None
     db.commit()
     delete_partida(partida, db)
