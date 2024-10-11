@@ -54,7 +54,10 @@ class GameManager:
         Hasta que el stack quede vacio, osea, hasta que el tablero sea real
         Desapilar la carta usada y par de ficha utilizada en el stack
         """
-        if self.games[game_id]['es_tablero_parcial']:
+
+        tupla_carta_fichas = None
+
+        if self.games[game_id]['is_tablero_parcial']:
             tupla_carta_fichas = self.games[game_id]['cartas_y_fichas_usadas'].pop()
             
             if self.games[game_id]['cartas_y_fichas_usadas'] == []:
