@@ -26,11 +26,16 @@ from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
 
+from src.models.patrones_figuras_matriz import generate_all_figures
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 event = Event()
+
+lista_patrones = generate_all_figures()
+lista_patrones = [np.array(patron) for patron in lista_patrones]
 
 def get_db():
     db = SessionLocal()
@@ -334,10 +339,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
-@app.get("/game/resaltar-figuras", status_code=status.HTTP_200_OK)
+@app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
     try:
-        figuras = get_valid_detected_figures(game_id, db)
+        figuras = get_valid_detected_figures(game_id, db, lista_patrones)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")

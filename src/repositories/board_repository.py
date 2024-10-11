@@ -1,4 +1,5 @@
 import random
+import numpy as np
 import json
 from typing import List
 from sqlalchemy.orm import Session
@@ -12,6 +13,8 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+
+from src.game import detectar_patrones, figura_valida, separar_matrices_por_color
 
 def get_fichas(game_id: int, db: Session) -> List[dict]:
 
@@ -60,6 +63,30 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         
     return tablero.id
 
-def get_valid_detected_figures(db: Session, game_id: int) -> List[dict]:
+def get_valid_detected_figures(db: Session, game_id: int, lista_patrones) -> List[dict]:
 
-    return
+    lista_fichas = get_fichas(game_id, db)
+
+    matriz = np.zeros((6,6))
+
+    for ficha in lista_fichas:
+        x = ficha["x"]
+        y = ficha["y"]
+        matriz[x-1][y-1] = ficha["color"]
+
+    lista_colores = [Color.ROJO, Color.VERDE, Color.AMARILLO, Color.AZUL]
+
+    lista_matrices_por_color = separar_matrices_por_color(matriz, lista_colores)
+
+    figuras_detectadas = []
+
+    for matriz_color in lista_matrices_por_color:
+        figuras_detectadas.extend(detectar_patrones(matriz_color, lista_patrones))
+
+    figuras_validas = []
+
+    for figura in figuras_detectadas:
+        if figura_valida(matriz, figura):
+            figuras_validas.append(figura)
+
+    return figuras_validas

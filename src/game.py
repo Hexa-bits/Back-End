@@ -1,19 +1,10 @@
 import numpy as np
-import time
 
-inicio = time.perf_counter()
-# Ejemplo de matriz de 6x6 con 1s y 0s
-matriz = np.array([
-    [0, 1, 0, 0, 1, 0],
-    [1, 0, 0, 0, 1, 0],
-    [1, 0, 0, 1, 1, 1],
-    [1, 1, 0, 1, 0, 1],
-    [0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 0, 1]
-])
+def detectar_patrones(matriz, patrones) -> list:
+    """Función para detectar figuras usando Sliding Window (No checkea que no tengan 1s adyacentes, solo si coinciden con el patrón)
+    Devuelve una lista de listas de coordenadas de las figuras detectadas.
+    """
 
-"""Función para detectar figuras usando Sliding Window (No checkea que no tengan 1s adyacentes, solo si coinciden con el patrón)"""
-def detectar_patrones(matriz, patrones):
     filas, columnas = matriz.shape
     figuras_detectadas = []  # Almacena las posiciones de las figuras encontradas
     
@@ -35,8 +26,9 @@ def detectar_patrones(matriz, patrones):
 
     return figuras_detectadas
 
-"""Funcion que retorna True si la figura es válida, False en caso contrario"""
-def figura_valida(matriz, coords_validas):
+def figura_valida(matriz, coords_validas) -> bool:
+    """Funcion que retorna True si la figura es válida, False en caso contrario"""
+
     filas, columnas = matriz.shape
     coordenadas_set = set(coords_validas)  # Convertir la lista en un set para búsquedas rápidas
     
@@ -57,23 +49,26 @@ def figura_valida(matriz, coords_validas):
                     return False  # Hay un 1 no válido adyacente
     return True  # Todos los vecinos son válidos
 
-from src.models.patrones_figuras_matriz import generate_all_figures
+def separar_matrices_por_color(matriz, lista_colores) -> list:
+    """Separa la matriz de colores en matrices individuales por color.
+    Toma como elementos:
+    matriz: Una matriz numpy donde cada elemento representa un color.
+    lista_colores: Una lista de colores presentes en la matriz.
+    
+    Devuelve una lista de matrices, donde cada matriz representa un color.
+    """
 
-lista_patrones = generate_all_figures()
+    # Obtener las dimensiones de la matriz
+    filas, columnas = matriz.shape
 
-lista_patrones = [np.array(patron) for patron in lista_patrones]
-
-# Detectar los patrones en la matriz
-figuras_detectadas = detectar_patrones(matriz, lista_patrones)
-
-# Imprimir las posiciones de los casilleros que forman cada figura "L"
-for idx, figura in enumerate(figuras_detectadas, start=1):
-    print(f"Figura L #{idx}: {figura}")
-    if figura_valida(matriz, figura):
-        print("Figura válida")
-    else:
-        print("Figura inválida")
-
-fin = time.perf_counter()
-duracion = fin - inicio
-print(f"El script tomó {duracion} segundos.")
+    # Crear una lista vacía para almacenar las matrices de colores
+    matrices_colores = []   
+    # Iterar sobre cada color
+    for color in lista_colores:
+        # Crear una matriz de ceros con las mismas dimensiones
+        matriz_color = np.zeros((filas, columnas))
+        # Asignar 1 en las posiciones donde el color coincide (matriz==color)
+        matriz_color[matriz == color] = 1
+        # Agregar la matriz de color a la lista
+        matrices_colores.append(matriz_color)   
+    return matrices_colores 
