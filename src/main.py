@@ -25,11 +25,12 @@ from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-
+from src.game import GameManager
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+game_manager = GameManager()
 event = Event()
 
 def get_db():
@@ -242,8 +243,10 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 async def get_board(game_id: int, db: Session = Depends(get_db)):
     try:
         tablero = get_fichas(game_id, db)
-        
-        response = { "fichas": tablero }
+        is_parcial = game_manager.is_tablero_parcial(game_id)
+
+        response = { "fichas": tablero,
+                    "parcial": is_parcial }
 
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
