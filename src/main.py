@@ -327,6 +327,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+
+            #Uso el game manager
+            game_manager.create_game(game_id.game_id)
+            
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:
