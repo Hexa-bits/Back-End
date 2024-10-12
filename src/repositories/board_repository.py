@@ -13,6 +13,16 @@ from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
+def get_tablero(game_id: int, db: Session) -> Tablero:
+    smt = select(Tablero).where(Tablero.partida_id == game_id)
+    return db.execute(smt).scalar()
+
+
+def get_fichasCajon(tablero_id: int, db: Session) -> List[FichaCajon]:
+    smt = select(FichaCajon).where(FichaCajon.tablero_id == tablero_id)
+    return db.execute(smt).scalars().all()
+
+
 def get_fichas(game_id: int, db: Session) -> List[dict]:
 
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
