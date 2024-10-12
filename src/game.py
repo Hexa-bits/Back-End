@@ -12,7 +12,7 @@ class GameManager:
         # Diccionario que guarda el estado de cada juego usando el game_id
         self.games = {}
 
-    def create_game(self, game_id) -> None:
+    def create_game(self, game_id: int) -> None:
         """Agregamos un nuevo juego al GameManager cuando se inicia la partida"""
         
         # Crear una entrada para un nuevo juego con game_id
@@ -23,21 +23,21 @@ class GameManager:
             'jugador_en_turno_id': 0  # player_id:int del jugador en turno actual
         }
 
-    def delete_game(self, game_id) -> None:
+    def delete_game(self, game_id: int) -> None:
         """Eliminamos un juego del GameManager cuando se termina la partida (Alguien gana por abandono por ahora)"""
         
         # Eliminar el juego con game_id
         del self.games[game_id]
 
 
-    def is_tablero_parcial(self, game_id) -> bool:
+    def is_tablero_parcial(self, game_id: int) -> bool:
         """Sirve para saber si el tablero es parcial o real al enviar el tablero a Frontend"""
         
         # Obtener si el tablero es parcial
         return self.games[game_id]['es_tablero_parcial']
 
 
-    def apilar_carta_y_ficha(self, game_id, carta_mov_id, dupla_coords_ficha) -> None:
+    def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, dupla_coords_ficha: tuple[tuple[int, int], tuple[int, int]]) -> None:
         """
         Apilar carta y par de fichas sirve para guardar cual fue el cambio parcial realizado
         Siempre me convierte el tablero en parcial
@@ -46,7 +46,7 @@ class GameManager:
         self.games[game_id]['cartas_y_fichas_usadas'].append((carta_mov_id, dupla_coords_ficha))
         self.games[game_id]['is_tablero_parcial'] = True
 
-    def desapilar_carta_y_ficha(self, game_id) -> tuple:
+    def desapilar_carta_y_ficha(self, game_id: int) -> tuple[tuple[int, int], tuple[int, int]]:
         """
         Desapilar carta y par de fichas sirve para deshacer el cambio parcial realizado
         Si el stack queda vacio, me convierte el tablero en real
@@ -64,8 +64,21 @@ class GameManager:
                 self.games[game_id]['is_tablero_parcial'] = False
 
         return tupla_carta_fichas
+    
+    def top_tupla_carta_y_fichas(self, game_id: int) -> tuple[tuple[int, int], tuple[int, int]]:
+        """
+        Obtiene la ultima carta y par de fichas parciales que se jugaron
+        Si no hay tableros parciales, devuelve None  
+        """
+        tupla_carta_fichas = None
+        
+        if self.games[game_id]['is_tablero_parcial']:
+            tupla_carta_fichas = self.games[game_id]['cartas_y_fichas_usadas'][-1]
+        
+        return tupla_carta_fichas
 
-    def limpiar_cartas_fichas(self, game_id) -> None:
+
+    def limpiar_cartas_fichas(self, game_id: int) -> None:
         """
         Limpiar cartas y fichas sirve para deshacernos del stack en caso haber formado figura
         Nos convierte el tablero en real
@@ -74,7 +87,7 @@ class GameManager:
         self.games[game_id]['cartas_y_fichas_usadas'] = []
         self.games[game_id]['is_tablero_parcial'] = False
 
-    def obtener_jugador_en_turno_id(self, game_id) -> int:
+    def obtener_jugador_en_turno_id(self, game_id: int) -> int:
         """
         Obtener el jugador en turno
         Sirve para saber que a que jugador devolverle la carta en caso de cancelar mov parcial
@@ -82,6 +95,6 @@ class GameManager:
 
         return self.games[game_id]['jugador_en_turno_id']
 
-    def set_jugador_en_turno_id(self, game_id, jugador_id) -> None:
+    def set_jugador_en_turno_id(self, game_id: int, jugador_id: int) -> None:
         """Cambiar el jugador en turno"""
         self.games[game_id]['jugador_en_turno_id'] = jugador_id

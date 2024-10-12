@@ -15,7 +15,7 @@ from src.db import Base, engine, SessionLocal
 from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config, Leave_config
+from src.models.inputs_front import *
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
@@ -48,20 +48,6 @@ app.add_middleware(
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permitir todos los headers
 )
-
-
-class PlayerId(BaseModel):
-    id: int
-
-class User(BaseModel):
-    username: str
-
-class GameId(BaseModel):
-    game_id: int
-
-class PlayerAndGameId(BaseModel):
-    game_id: int
-    player_id: int
 
 class WebSocketConnectionManager:
     def __init__(self):
@@ -147,14 +133,14 @@ async def login(user: User, db: Session = Depends(get_db)):
     except Exception:
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
-    return PlayerId(id=jugador.id)
+    return PlayerId(player_id=jugador.id)
 
 
 #Endpoint para get info lobby (creo que se podría ir si activa con otros endpoints)
 @app.get("/home/lobby")
-async def get_lobby_info(game_id: int, db: Session = Depends(get_db)):
+async def get_lobby_info(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     try:
-        lobby_info = get_lobby(game_id, db)    
+        lobby_info = get_lobby(game_id.game_id, db)    
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener la partida")
     
@@ -203,7 +189,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
                 delete_players_partida(partida, db)
-                print('hola')
+
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
@@ -240,10 +226,10 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 
 
 @app.get("/game/board", status_code=status.HTTP_200_OK)
-async def get_board(game_id: int, db: Session = Depends(get_db)):
+async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     try:
-        tablero = get_fichas(game_id, db)
-        is_parcial = game_manager.is_tablero_parcial(game_id)
+        tablero = get_fichas(game_id.game_id, db)
+        is_parcial = game_manager.is_tablero_parcial(game_id.game_id)
 
         response = { "fichas": tablero,
                     "parcial": is_parcial }
@@ -257,6 +243,7 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         next_jugador = terminar_turno(game_id.game_id, db)
+        game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
     except Exception:
@@ -266,22 +253,22 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
-async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
     try:
-        id_fig_cards = list_fig_cards(player_id, db)
+        id_fig_cards = list_fig_cards(player_id.player_id, db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-    return JSONResponse(    
+    return JSONResponse (    
         content={"id_fig_card": id_fig_cards},
         status_code=status.HTTP_200_OK
     )
 
 
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
-async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
+async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
     try:
-        id_mov_cards = list_mov_cards(player_id, db)
+        id_mov_cards = list_mov_cards(player_id.player_id, db)
 
     except SQLAlchemyError:
         db.rollback()
@@ -293,22 +280,22 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
 
 
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
-async def get_winner(game_id: int, db: Session = Depends(get_db)):
+async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     try:
-        winner = get_jugadores(game_id, db)[0]
+        winner = get_jugadores(game_id.game_id, db)[0]
   
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-                content= {"name_player": winner.nombre}
-            )
+        content= {"name_player": winner.nombre}
+    )
     
 
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
-async def get_current_turn(game_id: int, db: Session = Depends(get_db)):
+async def get_current_turn(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     try:
-        jugador = jugador_en_turno(game_id, db)
+        jugador = jugador_en_turno(game_id.game_id, db)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el jugador actual en turno")
@@ -337,3 +324,39 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+
+@app.post("/game/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
+async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+    try:
+        jugador = get_Jugador(playerAndGameId.player_id, db)
+        if jugador is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f'No existe el jugador: {playerAndGameId.player_id}')
+        
+        partida = get_Partida(playerAndGameId.game_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f'No exsite la partida: {playerAndGameId.game_id}')
+        
+        if jugador.partida_id == None or jugador.partida_id != partida.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f'No exsite la partida asociada a jugador: {playerAndGameId.player_id}')
+        
+        if jugador.id != partida.jugador_en_turno:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f'No es el turno del jugador: {jugador.id}, es de: {partida.jugador_en_turno}')
+
+        mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=jugador.id)
+        if mov_coords is not None:
+            cancelar_movimiento(partida=partida, jugador=jugador, mov=mov_coords[0], coords=mov_coords[1], db=db)
+
+            await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
+            await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
+        else:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No hay movimientos que deshacer')
+
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    
+    mov_coords = game_manager.desapilar_carta_y_ficha(game_id=jugador.id) #popeo cuando me aseguro que el se ha efectuado el efecto en la db

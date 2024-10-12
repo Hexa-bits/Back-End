@@ -90,6 +90,7 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
 
     db.commit()
 
+
 def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
     figs = get_cartasFigura_player(jugador.id, db)
     for fig in figs:
@@ -103,6 +104,7 @@ def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
         mov.estado = CardStateMov.mazo
     
     db.commit()
+
 
 def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
     smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
@@ -118,8 +120,21 @@ def get_cartasMovimiento_game(game_id: int, db: Session) -> List[MovementCard]:
     smt = select(MovementCard).where(MovementCard.partida_id == game_id)
     return db.execute(smt).scalars().all()
 
+
 def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     smt = select(Jugador).where(Jugador.partida_id == id_game)
     jugadores = db.execute(smt).scalars().all()
     jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
+
+
+def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
+    smt = select(MovementCard).where(MovementCard.id == mov_id)
+    return db.execute(smt).scalar()
+
+
+def mov_back_to_hand(player_id: int, mov_id: int, db: Session) -> None:
+    carta_mov = get_cartaMovId(mov_id, db)
+    if carta_mov.estado == CardStateMov.descartada:
+        carta_mov.estado = CardStateMov.mano
+        carta_mov.jugador_id = player_id

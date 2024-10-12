@@ -12,6 +12,34 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from src.models.inputs_front import Coords
+
+def get_tablero(game_id: int, db: Session) -> Tablero:
+    smt = select(Tablero).where(Tablero.partida_id == game_id)
+    return db.execute(smt).scalar()
+
+
+def get_fichasCajon(game_id: int, db: Session) -> List[FichaCajon]:
+    tablero = get_tablero(game_id, db)
+    smt = select(FichaCajon).where(FichaCajon.tablero_id == tablero.id)
+    return db.execute(smt).scalars().all()
+
+
+def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCajon:
+    tablero = get_tablero(game_id, db)
+    smt = select(FichaCajon).where (
+                                    (FichaCajon.tablero_id == tablero.id) &     
+                                    (FichaCajon.y_pos == coords.y) & 
+                                    (FichaCajon.x_pos == coords.x)
+    )
+    return db.execute(smt).scalar()
+
+
+def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+    ficha1 = get_fichaCajon_coords(game_id, tupla_coords[0], db)
+    ficha2 = get_fichaCajon_coords(game_id, tupla_coords[1], db)
+    ficha1, ficha2 = ficha2, ficha1    
+
 
 def get_fichas(game_id: int, db: Session) -> List[dict]:
 

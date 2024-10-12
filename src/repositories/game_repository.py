@@ -12,8 +12,10 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from src.models.inputs_front import *
 
-from src.repositories.cards_repository import get_cartasMovimiento_game
+from src.repositories.cards_repository import get_cartasMovimiento_game, mov_back_to_hand
+from src.repositories.board_repository import get_fichasCajon, swap_fichasCajon
 
 def get_Partida(id: int, db: Session) -> Partida:
     smt = select(Partida).where(Partida.id == id)
@@ -67,12 +69,8 @@ def jugador_en_turno(game_id: int, db: Session) -> dict:
 
 def terminar_turno(game_id: int, db: Session) -> dict:
     #Obtengo la partida
-    try:
-        partida = db.get(Partida, game_id)
-        jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
-
-    except Exception:
-        raise Exception("Error")
+    partida = db.get(Partida, game_id)
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
     
     #hago una lista con los indices de los jugadores
     lista_turnos = [x.turno for x in jugadores]
@@ -130,3 +128,8 @@ def delete_partida(partida: Partida, db: Session) -> None:
     db.delete(partida)
     db.commit()
 
+
+def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+    if (partida.partida_iniciada and jugador.partida_id == partida.id):
+        swap_fichasCajon(partida.id, tupla_coords, db)        
+        mov_back_to_hand(jugador.id, mov_id, db)
