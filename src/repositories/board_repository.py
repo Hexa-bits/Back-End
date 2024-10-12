@@ -1,6 +1,6 @@
 import random
 import json
-from typing import List
+from typing import List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
@@ -59,3 +59,25 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         db.refresh(ficha)
         
     return tablero.id
+
+def movimiento_parcial(game_id: int, coord: List[Tuple[int, int]], db: Session) -> None:
+
+    tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
+    
+    ficha0 = db.query(FichaCajon).filter(and_(
+        FichaCajon.tablero_id == tablero.id,
+        FichaCajon.x_pos == coord[0][0],
+        FichaCajon.y_pos == coord[0][1]
+    )).first()
+
+    ficha1 = db.query(FichaCajon).filter(and_(
+        FichaCajon.tablero_id == tablero.id,
+        FichaCajon.x_pos == coord[1][0],
+        FichaCajon.y_pos == coord[1][1]
+    )).first()
+
+    color_ficha0 = ficha0.color
+    ficha0.color = ficha1.color    
+    ficha1.color = color_ficha0
+
+    db.commit()

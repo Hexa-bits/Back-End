@@ -18,7 +18,7 @@ from src.models.partida import Partida
 from src.models.inputs_front import Partida_config, Leave_config
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
-from src.models.cartamovimiento import MovementCard
+from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
 
 from src.repositories.board_repository import *
@@ -26,6 +26,8 @@ from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
 from src.game import GameManager
+from src.utils_game import is_valid_move
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -62,6 +64,15 @@ class GameId(BaseModel):
 class PlayerAndGameId(BaseModel):
     game_id: int
     player_id: int
+
+class Ficha(BaseModel):
+    x_pos: int
+    y_pos: int
+    color: int
+class MovementData(BaseModel):
+    player_id: int
+    id_mov_card: int
+    fichas: List[Ficha]
 
 class WebSocketConnectionManager:
     def __init__(self):
@@ -332,8 +343,35 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    game_manager.create_game(game_id.game_id)
     return JSONResponse(
         content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
         status_code=status.HTTP_200_OK
     )
 
+
+@app.put("/game/use-mov-card", status_code= status.HTTP_200_OK)
+async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)):
+    try:
+        jugador = get_Jugador(movementData.player_id, db)
+        movementCards = get_cartasMovimiento_player(jugador.id, db)
+        
+        movementCard = None
+        for card in movementCards:
+            if card.movimiento == Move(movementData.id_mov_card):
+                movementCard = card
+                break
+        
+        game_id = jugador.partida_id
+        coord = [(movementData.fichas[0].x_pos, movementData.fichas[0].y_pos), 
+                  (movementData.fichas[1].x_pos, movementData.fichas[1].y_pos)]
+        
+        if is_valid_move(movementCard, coord):
+            movimiento_parcial(game_id, coord, db)
+            game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
+            await ws_manager.send_message_game_id(event.get_tablero, game_id)
+        else:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")  

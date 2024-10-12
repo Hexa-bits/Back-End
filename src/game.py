@@ -1,4 +1,4 @@
-
+from typing import List, Dict, Any
 
 class GameManager:
     """
@@ -10,7 +10,7 @@ class GameManager:
 
     def __init__(self):
         # Diccionario que guarda el estado de cada juego usando el game_id
-        self.games = {}
+        self.games: Dict[int, Any] = {}
 
     def create_game(self, game_id) -> None:
         """Agregamos un nuevo juego al GameManager cuando se inicia la partida"""
@@ -44,7 +44,7 @@ class GameManager:
         """
         # Apilar la carta usada y par de ficha utilizada en el stack
         self.games[game_id]['cartas_y_fichas_usadas'].append((carta_mov_id, dupla_coords_ficha))
-        self.games[game_id]['is_tablero_parcial'] = True
+        self.games[game_id]['es_tablero_parcial'] = True
 
     def desapilar_carta_y_ficha(self, game_id) -> tuple:
         """
