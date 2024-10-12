@@ -15,7 +15,7 @@ from src.db import Base, engine, SessionLocal
 from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import *
+from src.models.utils import *
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
@@ -50,6 +50,11 @@ app.add_middleware(
 )
 
 class WebSocketConnectionManager:
+    """
+    Maneger de conexiones con ws, se utiliza para establecer conexiones entrantes,
+    manejar las desconexiones y enviar mensajes a todos aquellos en una misma
+    partida/home.
+    """
     def __init__(self):
         self.active_connections: Dict[int, List[WebSocket]] = {}
 
@@ -87,6 +92,10 @@ ws_manager = WebSocketConnectionManager()
 
 @app.websocket("/home")
 async def websocket_endpoint(websocket: WebSocket):
+    """
+    Le permite al front escucha los mensajes entrantes, que se envían a
+    todos aquellos en home
+    """
     await ws_manager.connect(game_id=0, websocket=websocket)
     try:
         while True:
@@ -98,6 +107,10 @@ async def websocket_endpoint(websocket: WebSocket):
 
 @app.websocket("/game")
 async def websocket_endpoint(game_id: int, websocket: WebSocket):
+    """
+    Le permite al front escucha los mensajes entrantes, que se envían a
+    todos aquellos en juego, ya sea lobby o en partida inciada por game_id
+    """
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
@@ -122,10 +135,14 @@ async def get_lobbies(db: Session = Depends(get_db)):
 
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
+    """
+    En casos de error en la validación de tipos de los modelos Pydantic, el handler 
+    captura la excepción y probee un error HTTP personalizado, especificando a detalle
+    el error.  
+    """
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.errors())
 
 
-# Endpoint para jugador /login
 @app.post("/login", response_model=PlayerId, status_code=status.HTTP_201_CREATED)
 async def login(user: User, db: Session = Depends(get_db)):
     try:
@@ -136,7 +153,6 @@ async def login(user: User, db: Session = Depends(get_db)):
     return PlayerId(player_id=jugador.id)
 
 
-#Endpoint para get info lobby (creo que se podría ir si activa con otros endpoints)
 @app.get("/home/lobby")
 async def get_lobby_info(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     try:
@@ -327,6 +343,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 
 @app.post("/game/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+    """
+    Reestablece las últimas fichas cajon intercambiadas y devuelve la carta de 
+    movimiento descartada a la mano del jugador en turno.
+    """
     try:
         jugador = get_Jugador(playerAndGameId.player_id, db)
         if jugador is None:
@@ -348,7 +368,8 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
 
         mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=jugador.id)
         if mov_coords is not None:
-            cancelar_movimiento(partida=partida, jugador=jugador, mov=mov_coords[0], coords=mov_coords[1], db=db)
+            cancelar_movimiento(partida=partida, jugador=jugador, mov=mov_coords[0],
+                                 coords=(Coords(**mov_coords[1][0]), Coords(**mov_coords[1][1])), db=db)
 
             await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
             await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)

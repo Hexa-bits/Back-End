@@ -5,14 +5,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config, Coords
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.models.inputs_front import Coords
 
 def get_tablero(game_id: int, db: Session) -> Tablero:
     smt = select(Tablero).where(Tablero.partida_id == game_id)

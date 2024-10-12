@@ -7,7 +7,7 @@ from src.models.partida import Partida
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, Picture, CardState
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from typing import List
 
 from src.repositories.cards_repository import get_cartasFigura_player, list_fig_cards, list_mov_cards, repartir_cartas_figuras

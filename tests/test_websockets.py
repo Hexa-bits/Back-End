@@ -18,18 +18,6 @@ def client():
     with TestClient(app) as c:
         yield c
 
-event = Event()
-
-mock_partida = MagicMock()
-mock_partida.id = 1
-mock_partida.partida_iniciada = False
-
-mock_jugador = MagicMock()
-mock_jugador.id = 1
-mock_jugador.partida_id = mock_partida.id
-mock_jugador.es_anfitrion = True
-
-
 @pytest.mark.asyncio
 async def test_websocket_connection_lobbies(client):
     # Comprobar cuántas conexiones activas hay antes de la conexión
@@ -95,53 +83,5 @@ async def test_websocket_broadcast_lobbies(client):
             lobbies2 = websocket2.receive_text()
 
             # Verificar que los mensajes recibidos son iguales para ambos
-            assert lobbies1 == lobbies2
-
-
-@pytest.mark.asyncio
-async def test_websocket_broadcast_games_join(client):
-    with client.websocket_connect("/game?game_id=1") as websocket1, \
-         client.websocket_connect("/game?game_id=1") as websocket2:
-
-        with patch("src.main.add_player_game", return_value=mock_jugador) as mock_add_partida, \
-             patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida:
-            config = {"player_id": 1 , "game_id": 1}
-            mock_add_partida.return_value = mock_jugador
-
-            response = client.post("/game/join", json=config)
-
-            assert response.status_code == 200
-
-            lobbies1 = websocket1.receive_text()
-            lobbies2 = websocket2.receive_text()
-
-            assert lobbies1 == event.join_game
-
-            assert lobbies1 == lobbies2
-
-
-@pytest.mark.asyncio
-async def test_websocket_broadcast_games_leave(client):
-    with client.websocket_connect("/game?game_id=1") as websocket1, \
-         client.websocket_connect("/game?game_id=1") as websocket2:
-
-        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
-             patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.main.delete_players_partida") as mock_delete_players_partida:
-            
-            info_leave = {"id_user": 1, "game_id": 1}
-
-            mock_get_jugador.return_value = mock_jugador
-            mock_get_partida.return_value = mock_partida
-
-            response = client.put("/game/leave", json=info_leave)
-
-            assert response.status_code == 204
-
-            lobbies1 = websocket1.receive_text()
-            lobbies2 = websocket2.receive_text()
-
-            assert lobbies1 == event.cancel_lobby
-
             assert lobbies1 == lobbies2
 

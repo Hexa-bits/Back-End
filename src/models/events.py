@@ -1,4 +1,8 @@
 class Event:
+    """
+    Se utiliza para garantizar el correcto envió de mensajes (eventos) entre el
+    back y el front.
+    """
     @property
     def get_lobbies(self):
         return "Actualizar lista de partidas"

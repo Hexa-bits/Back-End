@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
@@ -14,10 +14,16 @@ from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
 def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
+    """
+    Obtiene una carta de figura por su id
+    """
     smt = select(PictureCard).where(PictureCard.id == id_carta_figura)
     return db.execute(smt).scalar() 
 
 def list_fig_cards(player_id: int, db: Session) -> List[int]:
+    """
+    Lista el tipo de cartas de figura en mano de un jugador  
+    """
     smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()
     res = []
@@ -26,6 +32,9 @@ def list_fig_cards(player_id: int, db: Session) -> List[int]:
     return res 
 
 def list_mov_cards(player_id: int, db: Session) -> List[int]:
+    """
+    Lista el tipo de cartas de figura en mano de un jugador  
+    """
     smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
     cards = db.execute(smt).scalars().all()
     res = []
@@ -34,8 +43,13 @@ def list_mov_cards(player_id: int, db: Session) -> List[int]:
     return res 
 
 def mezclar_figuras(game_id: int, db: Session) -> None:
+    """
+    Mezcla las cartas de figuras de una partida y las reparte entre los 
+    jugadores de la partida.
+    """
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
+    # TO DO: remover repartir_cartas_figuras, nombre confuso y sólo se usa al mezclar las cartas
     repartir_cartas_figuras(game_id, figuras_list, db)
 
 def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
@@ -69,7 +83,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
             carta.estado = CardStateMov.mano
             db.commit()
             db.refresh(carta)
-    return
+
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
@@ -129,12 +143,8 @@ def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
 
 
 def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
+    """
+    Obtiene una carta de movimiento por su id
+    """
     smt = select(MovementCard).where(MovementCard.id == mov_id)
     return db.execute(smt).scalar()
-
-
-def mov_back_to_hand(player_id: int, mov_id: int, db: Session) -> None:
-    carta_mov = get_cartaMovId(mov_id, db)
-    if carta_mov.estado == CardStateMov.descartada:
-        carta_mov.estado = CardStateMov.mano
-        carta_mov.jugador_id = player_id

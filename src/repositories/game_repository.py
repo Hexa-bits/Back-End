@@ -5,16 +5,15 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config, Coords
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.models.inputs_front import *
 
-from src.repositories.cards_repository import get_cartasMovimiento_game, mov_back_to_hand
+from src.repositories.cards_repository import get_cartasMovimiento_game, get_cartaMovId
 from src.repositories.board_repository import get_fichasCajon, swap_fichasCajon
 
 def get_Partida(id: int, db: Session) -> Partida:
@@ -129,7 +128,20 @@ def delete_partida(partida: Partida, db: Session) -> None:
     db.commit()
 
 
-def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
-    if (partida.partida_iniciada and jugador.partida_id == partida.id):
+def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
+                        tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+    """
+    Cancela un movimiento revertiendo la posición de las fichasCajon usadas 
+    (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
+    movimiento usada.
+    """
+    if (partida.partida_iniciada and jugador.partida_id == partida.id 
+        and jugador.id == partida.jugador_en_turno):
+
         swap_fichasCajon(partida.id, tupla_coords, db)        
-        mov_back_to_hand(jugador.id, mov_id, db)
+        carta_mov = get_cartaMovId(mov_id, db)
+        if carta_mov.estado == CardStateMov.descartada:
+            carta_mov.estado = CardStateMov.mano
+            carta_mov.jugador_id = jugador.id
+    
+        db.commit()
