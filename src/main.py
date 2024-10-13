@@ -333,6 +333,9 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             asignar_turnos(game_id.game_id, db)
             partida.partida_iniciada = True
             db.commit()
+
+            game_manager.create_game(game_id.game_id)
+            
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
@@ -366,11 +369,11 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                                 detail=f'No exsite la partida asociada a jugador: {playerAndGameId.player_id}')
         
-        if jugador.id != partida.jugador_en_turno:
+        if jugador.turno != partida.jugador_en_turno:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f'No es el turno del jugador: {jugador.id}, es de: {partida.jugador_en_turno}')
+                                detail=f'No es el turno del jugador: {jugador.turno}, es de: {partida.jugador_en_turno}')
 
-        mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=jugador.id)
+        mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=partida.id)
         if mov_coords is not None:
             cancelar_movimiento(partida=partida, jugador=jugador, mov=mov_coords[0],
                                  coords=(Coords(**mov_coords[1][0]), Coords(**mov_coords[1][1])), db=db)

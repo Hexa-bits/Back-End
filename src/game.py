@@ -17,7 +17,7 @@ class GameManager:
         
         # Crear una entrada para un nuevo juego con game_id
         self.games[game_id] = {
-            'es_tablero_parcial': False,  # booleano que indica si el tablero usado es parcial o real
+            'is_tablero_parcial': False,  # booleano que indica si el tablero usado es parcial o real
             'cartas_y_fichas_usadas': [],  # stack para apilar el carta_mov_id:int usada y par de coord(x,y) de fichas utilizadas ((x,y), (x,y))
                                             # e.g.: [(carta_mov_id, ((x,y),(x,y)), (carta_mov_id, ((x,y),(x,y)), ...]
             'jugador_en_turno_id': 0  # player_id:int del jugador en turno actual
@@ -34,7 +34,7 @@ class GameManager:
         """Sirve para saber si el tablero es parcial o real al enviar el tablero a Frontend"""
         
         # Obtener si el tablero es parcial
-        return self.games[game_id]['es_tablero_parcial']
+        return self.games[game_id]['is_tablero_parcial']
 
 
     def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, dupla_coords_ficha: tuple[tuple[int, int], tuple[int, int]]) -> None:

@@ -11,7 +11,7 @@ class TestGameManager(unittest.TestCase):
         """Pruebo si el juego se crea correctamente."""
         self.game_manager.create_game(self.game_id)
         self.assertIn(self.game_id, self.game_manager.games)
-        self.assertEqual(self.game_manager.games[self.game_id]['es_tablero_parcial'], False)
+        self.assertEqual(self.game_manager.games[self.game_id]['is_tablero_parcial'], False)
         self.assertEqual(self.game_manager.games[self.game_id]['cartas_y_fichas_usadas'], [])
         self.assertEqual(self.game_manager.games[self.game_id]['jugador_en_turno_id'], 0)
 
