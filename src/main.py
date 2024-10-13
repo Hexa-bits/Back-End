@@ -150,7 +150,10 @@ async def login(user: User, db: Session = Depends(get_db)):
     except Exception:
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
-    return PlayerId(player_id=jugador.id)
+    return JSONResponse(
+        content={"id": jugador.id},
+        status_code=status.HTTP_201_CREATED
+    )
 
 
 @app.get("/home/lobby")
@@ -304,7 +307,8 @@ async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db))
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content= {"name_player": winner.nombre}
+        content= {"name_player": winner.nombre},
+        status_code=status.HTTP_200_OK
     )
     
 
@@ -341,7 +345,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     )
 
 
-@app.post("/game/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
+@app.put("/game/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
     """
     Reestablece las últimas fichas cajon intercambiadas y devuelve la carta de 
