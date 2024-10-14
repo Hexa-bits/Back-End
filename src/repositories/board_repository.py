@@ -101,7 +101,7 @@ def get_valid_detected_figures(db: Session, game_id: int, lista_patrones) -> Lis
 
     return figuras_validas
 
-def get_color_of_ficha(db: Session, game_id: int, x: int, y: int) -> Color:
+def get_color_of_ficha( x: int, y: int, game_id: int, db: Session) -> Color:
 
     tablero = get_tablero(game_id, db)
 

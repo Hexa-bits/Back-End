@@ -352,10 +352,27 @@ async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
         #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
         figuras = get_valid_detected_figures(game_id, db, lista_patrones)
 
-        # Convertir cada tupla en un diccionario {x: int, y: int}
-        figuras_response = [[{'x': x, 'y': y} for (x, y) in figura] for figura in figuras]
+        # Creo una lista para adaptarme al formato de respuesta
+        figuras_response = []
+        
+        # Iterar sobre cada figura en la lista de figuras
+        for figura in figuras:
+            lista_dicc_fig = []  # Lista para almacenar los diccionarios de una figura
+        
+            # Iterar sobre cada tupla (x, y) en la figura
+            for (x, y) in figura:
+                # Convertir la tupla en un diccionario y agregarla a la nueva figura
+                lista_dicc_fig.append({
+                                    'x': x,
+                                    'y': y,
+                                    'color': get_color_of_ficha(x, y, game_id, db)
+                                    })
+            
+            # Agregar la nueva figura a la lista de figuras con diccionarios
+            figuras_response.append(lista_dicc_fig)
 
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
+    
     return figuras_response
