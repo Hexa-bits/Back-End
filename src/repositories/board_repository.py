@@ -28,9 +28,21 @@ def get_fichasCajon(tablero_id: int, db: Session) -> List[FichaCajon]:
 
 def get_fichas(game_id: int, db: Session) -> List[dict]:
 
+    print("Hola get ficha")
+
+    print(db)
+    print(db.is_active)  # Esto imprime si la sesión está activa
+
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
 
+    print(db.is_active)  # Esto imprime si la sesión está activa
+
+    print(db)
+    print(tablero)
+
     all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+
+    print(all_fichas)
 
     lista_fichas = []
     for ficha in all_fichas:
@@ -73,9 +85,14 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         
     return tablero.id
 
-def get_valid_detected_figures(db: Session, game_id: int, lista_patrones) -> List[dict]:
+def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[dict]:
+
+    print("Hola entro a valid")
 
     lista_fichas = get_fichas(game_id, db)
+
+    print("Hola")
+    print(lista_fichas)
 
     matriz = np.zeros((6,6))
 

@@ -40,10 +40,12 @@ lista_patrones = generate_all_figures()
 lista_patrones = [np.array(patron) for patron in lista_patrones]
 
 def get_db():
+    print("get_db")
     db = SessionLocal()
     try:
         yield db
     finally:
+        print("close db")
         db.close()
 
 # Configuración de CORS
@@ -349,9 +351,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
     try:
+        print("highlight_figures")
         #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
-        figuras = get_valid_detected_figures(game_id, db, lista_patrones)
-
+        figuras = get_valid_detected_figures(game_id, lista_patrones, db)
+        print(figuras)
         # Creo una lista para adaptarme al formato de respuesta
         figuras_response = []
         
