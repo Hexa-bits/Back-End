@@ -27,11 +27,13 @@ from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
 
 from src.models.patrones_figuras_matriz import generate_all_figures
+from src.game import GameManager
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+game_manager = GameManager()
 event = Event()
 
 lista_patrones = generate_all_figures()
@@ -200,11 +202,13 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
+            if len(get_jugadores(partida.id, db)) == 1:
+                #Mando ws
+                await ws_manager.send_message_game_id(event.get_winner, partida.id)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
-                delete_players_partida(partida, db)
-                print('hola')
+                delete_players_lobby(partida, db)
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
@@ -244,8 +248,10 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 async def get_board(game_id: int, db: Session = Depends(get_db)):
     try:
         tablero = get_fichas(game_id, db)
-        
-        response = { "fichas": tablero }
+        is_parcial = game_manager.is_tablero_parcial(game_id)
+
+        response = { "fichas": tablero,
+                    "parcial": is_parcial }
 
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tablero")
@@ -294,17 +300,14 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: int, db: Session = Depends(get_db)):
     try:
-        jugadores = get_jugadores(game_id, db)
-        if len(jugadores)==1:
-            winner = jugadores[0]
-            return JSONResponse(
-                content= {"id_player": winner.id, "name_player": winner.nombre}
-            )
-        else:
-            raise HTTPException(status_code=204, detail="No hay un ganador")
+        winner = get_jugadores(game_id, db)[0]
+  
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    return JSONResponse(
+                content= {"name_player": winner.nombre}
+            )
     
 
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
@@ -329,6 +332,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+
+            #Uso el game manager
+            game_manager.create_game(game_id.game_id)
+            
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:

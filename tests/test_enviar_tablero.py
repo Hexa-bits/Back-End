@@ -10,7 +10,8 @@ from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
-from src.main import app 
+from src.main import app
+from src.main import game_manager
 from src.repositories.board_repository import get_fichas
 from fastapi.testclient import TestClient
 from unittest.mock import patch
@@ -19,12 +20,14 @@ from unittest.mock import patch
 def client():
     return TestClient(app)
 
-def test_enviar_tablero_succesful(test_db, client):
+def test_enviar_tablero_succesful_real(test_db, client):
     
     partida = Partida(game_name="partida", max_players=4, jugador_en_turno=0, partida_iniciada=True)
     test_db.add(partida)
     test_db.commit()
-        
+    
+    game_manager.create_game(partida.id)
+
     #Agrego un tablero a la partida
     tablero = Tablero(partida_id=partida.id)
     test_db.add(tablero)
@@ -53,7 +56,8 @@ def test_enviar_tablero_succesful(test_db, client):
                 for j in range(1, 7):
                     list_expected.append({"x": i, "y": j, "color": 1})
             
-            response_expected = {"fichas": list_expected}
+            #Se espera un parcial: False ya que por defecto el tablero es real
+            response_expected = {"fichas": list_expected, "parcial": False}
             assert response.json() == response_expected
 
 
