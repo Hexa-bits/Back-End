@@ -349,8 +349,13 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
     try:
+        #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
         figuras = get_valid_detected_figures(game_id, db, lista_patrones)
+
+        # Convertir cada tupla en un diccionario {x: int, y: int}
+        figuras_response = [[{'x': x, 'y': y} for (x, y) in figura] for figura in figuras]
+
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
-    return figuras
+    return figuras_response

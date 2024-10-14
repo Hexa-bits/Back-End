@@ -100,3 +100,11 @@ def get_valid_detected_figures(db: Session, game_id: int, lista_patrones) -> Lis
             figuras_validas.append(figura)
 
     return figuras_validas
+
+def get_color_of_ficha(db: Session, game_id: int, x: int, y: int) -> Color:
+
+    tablero = get_tablero(game_id, db)
+
+    ficha = db.query(FichaCajon).filter(and_(FichaCajon.tablero_id == tablero.id, FichaCajon.x_pos == x, FichaCajon.y_pos == y)).first()
+
+    return ficha.color
