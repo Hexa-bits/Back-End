@@ -28,21 +28,9 @@ def get_fichasCajon(tablero_id: int, db: Session) -> List[FichaCajon]:
 
 def get_fichas(game_id: int, db: Session) -> List[dict]:
 
-    print("Hola get ficha")
-
-    print(db)
-    print(db.is_active)  # Esto imprime si la sesión está activa
-
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
 
-    print(db.is_active)  # Esto imprime si la sesión está activa
-
-    print(db)
-    print(tablero)
-
     all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
-
-    print(all_fichas)
 
     lista_fichas = []
     for ficha in all_fichas:
@@ -87,51 +75,28 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
 
 def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[dict]:
 
-    print("Hola entro a valid")
-
     lista_fichas = get_fichas(game_id, db)
 
-    print("Hola")
-    print(lista_fichas)
-
     matriz = np.zeros((6,6))
-    print("Hola matriz")
-    print(matriz)
     for ficha in lista_fichas:
         x = ficha["x"]
         y = ficha["y"]
         matriz[x-1][y-1] = ficha["color"].value
 
-    print(matriz)
-
     lista_colores = [Color.ROJO.value, Color.VERDE.value, Color.AMARILLO.value, Color.AZUL.value]
 
-    print("Hola colores")
-    print(lista_colores)
-
     lista_matrices_por_color = separar_matrices_por_color(matriz, lista_colores)
-
-    print("Hola matrices")
-    print(lista_matrices_por_color)
 
     figuras_detectadas = []
 
     for matriz_color in lista_matrices_por_color:
         figuras_detectadas.extend(detectar_patrones(matriz_color, lista_patrones))
 
-    print("Hola figuras")
-    print(figuras_detectadas)
-
     figuras_validas = []
 
     for figura in figuras_detectadas:
-        print("Hola figura")
-        print(figura)
         if figura_valida(matriz, figura):
             figuras_validas.append(figura)
-
-    print("Hola validas")
-    print(figuras_validas)
 
     return figuras_validas
 
