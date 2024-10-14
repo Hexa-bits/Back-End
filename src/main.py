@@ -366,9 +366,9 @@ async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
             for (x, y) in figura:
                 # Convertir la tupla en un diccionario y agregarla a la nueva figura
                 lista_dicc_fig.append({
-                                    'x': x,
-                                    'y': y,
-                                    'color': get_color_of_ficha(x, y, game_id, db)
+                                    'x': x+1,
+                                    'y': y+1,
+                                    'color': get_color_of_ficha(x+1, y+1, game_id, db)
                                     })
             
             # Agregar la nueva figura a la lista de figuras con diccionarios
