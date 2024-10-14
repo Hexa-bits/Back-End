@@ -44,8 +44,8 @@ def figura_valida(matriz, coords_validas) -> bool:
             
             # Si el vecino está dentro de los límites de la matriz
             if 0 <= nx < filas and 0 <= ny < columnas:
-                # Si el vecino es un 1 y no está en la lista de coordenadas válidas
-                if matriz[nx, ny] == 1 and (nx, ny) not in coordenadas_set:
+                # Si el vecino es del mismo color y no está en la lista de coordenadas válidas
+                if matriz[nx, ny] == matriz[x, y] and (nx, ny) not in coordenadas_set:
                     return False  # Hay un 1 no válido adyacente
     return True  # Todos los vecinos son válidos
 

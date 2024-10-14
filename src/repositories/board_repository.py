@@ -95,26 +95,43 @@ def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> Li
     print(lista_fichas)
 
     matriz = np.zeros((6,6))
-
+    print("Hola matriz")
+    print(matriz)
     for ficha in lista_fichas:
         x = ficha["x"]
         y = ficha["y"]
-        matriz[x-1][y-1] = ficha["color"]
+        matriz[x-1][y-1] = ficha["color"].value
 
-    lista_colores = [Color.ROJO, Color.VERDE, Color.AMARILLO, Color.AZUL]
+    print(matriz)
+
+    lista_colores = [Color.ROJO.value, Color.VERDE.value, Color.AMARILLO.value, Color.AZUL.value]
+
+    print("Hola colores")
+    print(lista_colores)
 
     lista_matrices_por_color = separar_matrices_por_color(matriz, lista_colores)
+
+    print("Hola matrices")
+    print(lista_matrices_por_color)
 
     figuras_detectadas = []
 
     for matriz_color in lista_matrices_por_color:
         figuras_detectadas.extend(detectar_patrones(matriz_color, lista_patrones))
 
+    print("Hola figuras")
+    print(figuras_detectadas)
+
     figuras_validas = []
 
     for figura in figuras_detectadas:
+        print("Hola figura")
+        print(figura)
         if figura_valida(matriz, figura):
             figuras_validas.append(figura)
+
+    print("Hola validas")
+    print(figuras_validas)
 
     return figuras_validas
 
