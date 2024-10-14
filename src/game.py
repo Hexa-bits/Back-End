@@ -57,11 +57,11 @@ class GameManager:
 
         tupla_carta_fichas = None
 
-        if self.games[game_id]['is_tablero_parcial']:
+        if self.games[game_id]['es_tablero_parcial']:
             tupla_carta_fichas = self.games[game_id]['cartas_y_fichas_usadas'].pop()
             
             if self.games[game_id]['cartas_y_fichas_usadas'] == []:
-                self.games[game_id]['is_tablero_parcial'] = False
+                self.games[game_id]['es_tablero_parcial'] = False
 
         return tupla_carta_fichas
 
@@ -72,7 +72,7 @@ class GameManager:
         """
         # Limpiar el stack de cartas y fichas
         self.games[game_id]['cartas_y_fichas_usadas'] = []
-        self.games[game_id]['is_tablero_parcial'] = False
+        self.games[game_id]['es_tablero_parcial'] = False
 
     def obtener_jugador_en_turno_id(self, game_id) -> int:
         """

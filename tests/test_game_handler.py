@@ -29,7 +29,7 @@ class TestGameManager(unittest.TestCase):
         # Verificamos que la carta y fichas fueron apiladas
         self.assertEqual(self.game_manager.games[self.game_id]['cartas_y_fichas_usadas'], [(1, ((0, 0), (1, 1)))])
         # Verificamos que el tablero se convirtió en parcial
-        self.assertTrue(self.game_manager.games[self.game_id]['is_tablero_parcial'])
+        self.assertTrue(self.game_manager.games[self.game_id]['es_tablero_parcial'])
 
     def test_desapilar_carta_y_ficha(self):
         """Pruebo si desapilar una carta y fichas convierte el tablero en real si el stack está vacío."""
@@ -41,7 +41,7 @@ class TestGameManager(unittest.TestCase):
         self.assertEqual(carta_ficha, (1, ((0, 0), (1, 1))))
         # Verificamos que el stack está vacío y el tablero es real
         self.assertEqual(self.game_manager.games[self.game_id]['cartas_y_fichas_usadas'], [])
-        self.assertFalse(self.game_manager.games[self.game_id]['is_tablero_parcial'])
+        self.assertFalse(self.game_manager.games[self.game_id]['es_tablero_parcial'])
 
     def test_limpiar_cartas_fichas(self):
         """Pruebo si limpiar el stack convierte el tablero en real."""
@@ -51,7 +51,7 @@ class TestGameManager(unittest.TestCase):
 
         # Verificamos que el stack esté vacío y el tablero sea real
         self.assertEqual(self.game_manager.games[self.game_id]['cartas_y_fichas_usadas'], [])
-        self.assertFalse(self.game_manager.games[self.game_id]['is_tablero_parcial'])
+        self.assertFalse(self.game_manager.games[self.game_id]['es_tablero_parcial'])
 
     def test_jugador_en_turno(self):
         """Pruebo si se obtiene y cambia el jugador en turno correctamente."""
