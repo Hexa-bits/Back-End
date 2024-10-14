@@ -30,13 +30,13 @@ def is_valid_move(movementCard: MovementCard, coords: List[Tuple[int, int]]) -> 
     elif movementCard.movimiento == Move.diagonal_con_espacio:
         return distancia_y == 2 and distancia_x == 2
     
-    elif movementCard.movimiento in Move.L_derecha:
-        return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY>0))      #Desde la perspectiva de la 
+    elif movementCard.movimiento == Move.L_derecha:
+        return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY>0)) #<-- Desde la perspectiva de la 
                 or ((distancia_y == 2 and distancia_x == 1) and distancia_entre_fichas_ejeY<0) )    #ficha de mas abajo del tablero
                                                                                                     #es como que "volves"
                                                                                                     #en columna
-    elif movementCard.movimiento in Move.L_izquierda:
-        return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY<0))     #Idem pero al contrario
+    elif movementCard.movimiento == Move.L_izquierda:
+        return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY<0)) #<-- Idem pero al contrario
                 or ((distancia_y == 2 and distancia_x == 1) and distancia_entre_fichas_ejeY>0) )   #es como que "vas para adelante"
     
     elif movementCard.movimiento == Move.linea_al_lateral:

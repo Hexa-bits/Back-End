@@ -292,13 +292,15 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
     try:
-        id_mov_cards = list_mov_cards(player_id, db)
-
+        mov_cards = list_mov_cards(player_id, db)
+        mov_cards_list = []
+        for card in mov_cards:
+            mov_cards_list.append({"id": card.id, "move": card.movimiento.value})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content={"id_mov_card": id_mov_cards},
+        content={"mov_cards": mov_cards_list},
         status_code=status.HTTP_200_OK
     )
 
@@ -354,14 +356,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)):
     try:
         jugador = get_Jugador(movementData.player_id, db)
-        movementCards = get_cartasMovimiento_player(jugador.id, db)
-        
-        movementCard = None
-        for card in movementCards:
-            if card.movimiento == Move(movementData.id_mov_card):
-                movementCard = card
-                break
-        
+        movementCard = get_CartaMovimiento(movementData.id_mov_card, db)
         game_id = jugador.partida_id
         coord = [(movementData.fichas[0].x_pos, movementData.fichas[0].y_pos), 
                   (movementData.fichas[1].x_pos, movementData.fichas[1].y_pos)]
