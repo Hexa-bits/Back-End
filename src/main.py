@@ -25,7 +25,7 @@ from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-from src.game import GameManager, is_valid_move 
+from src.game import GameManager, is_valid_move
 
 Base.metadata.create_all(bind=engine)
 
