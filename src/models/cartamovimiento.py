@@ -6,12 +6,12 @@ import enum
 
 
 class Move(enum.Enum):
-    linea_contiguo = 1
+    diagonal_con_espacio = 1
     linea_con_espacio = 2
-    diagonal_contiguo = 3
-    diagonal_con_espacio = 4
-    L_derecha = 5
-    L_izquierda = 6
+    linea_contiguo = 3
+    diagonal_contiguo = 4
+    L_izquierda = 5
+    L_derecha = 6
     linea_al_lateral = 7 # Ver si existe 
 
 class CardStateMov(enum.Enum):
