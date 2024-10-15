@@ -135,13 +135,15 @@ def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
     (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
     movimiento usada.
     """
-    if (partida.partida_iniciada and jugador.partida_id == partida.id 
-        and jugador.id == partida.jugador_en_turno):
-
+    with db.begin():
+        #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
         swap_fichasCajon(partida.id, tupla_coords, db)        
         carta_mov = get_cartaMovId(mov_id, db)
-        if carta_mov.estado == CardStateMov.descartada:
-            carta_mov.estado = CardStateMov.mano
-            carta_mov.jugador_id = jugador.id
-    
-        db.commit()
+        
+        if carta_mov is None:
+            raise Exception("La carta de movimiento no existe en la partida")
+        elif carta_mov.estado == CardStateMov.mano:
+            raise Exception("La carta de movimiento esta en mano")
+        
+        carta_mov.estado = CardStateMov.mano
+        carta_mov.jugador_id = jugador.id

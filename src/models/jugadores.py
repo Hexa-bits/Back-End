@@ -14,9 +14,6 @@ class Jugador(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     nombre = Column(String(50), nullable=False)
     es_anfitrion = Column(Boolean, default=False)
-
-    # TO DO: ver si se puede sacar el atributo turno, ya usamos un jugador_en_turno
-    # en partida que usa el mismo id del jugador para indicar el turno del mismo. 
     turno = Column(Integer, default=0)
 
     partida_id = Column(Integer, ForeignKey('partidas.id'), nullable=True)

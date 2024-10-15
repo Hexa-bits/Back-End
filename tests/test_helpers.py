@@ -1,12 +1,15 @@
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
 from src.db import Base
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, Picture, CardState
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from src.models.tablero import Tablero
+from src.models.color_enum import Color
+from src.models.fichas_cajon import FichaCajon
 from src.models.utils import Partida_config
 from typing import List
 
@@ -94,17 +97,31 @@ def mock_repartir_figuras(max_players: int, figuras_list: List[int]):
             assert len([x for x in cartas if x.estado == CardState.mano]) == 3            
         
 
-def db_prueba(max_players: int, emepezada: bool, db: pytest.Session):
+def db_prueba(max_players: int, emepezada: bool, db: Session):
     try:
         partida = Partida(game_name="partida", max_players=max_players, partida_iniciada=emepezada)
         db.add(partida)
-        db.commit()
-        db.refresh(partida)
+        db.flush()
         for i in range(0, max_players):
             jugador = Jugador(nombre=f'player_{i}', turno=i+1)
             jugador.partida_id = partida.id
             db.add(jugador)
-        partida.jugador_en_turno = 1
+        
+        if (emepezada):
+            partida.jugador_en_turno = 1
+            tablero = Tablero()
+            tablero.partida_id = partida.id
+            db.add(tablero)
+            db.flush()
+
+            colores = [Color.ROJO]*9 + [Color.VERDE]*9 + [Color.AMARILLO]*9 + [Color.AZUL]*9
+            coordenadas = [(x, y) for x in range(1, 7) for y in range(1, 7)]
+            for coord in coordenadas:
+                x, y = coord
+                color = colores.pop()
+                ficha = FichaCajon(x_pos=x, y_pos=y, color=color, tablero_id=tablero.id)
+                db.add(ficha)
+
         db.commit()
     except SQLAlchemyError:
         db.rollback()

@@ -26,6 +26,7 @@ from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
 from src.game import GameManager
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -361,7 +362,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                                 detail=f'No existe el jugador: {playerAndGameId.player_id}')
         
         partida = get_Partida(playerAndGameId.game_id, db)
-        if partida is None:
+        if partida is None or not partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail=f'No exsite la partida: {playerAndGameId.game_id}')
         
@@ -380,6 +381,8 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
 
             await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
             await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
+        
+            game_manager.desapilar_carta_y_ficha(game_id=jugador.id) #popeo cuando me aseguro que el se ha efectuado el efecto en la db
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No hay movimientos que deshacer')
 
@@ -387,4 +390,3 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     
-    mov_coords = game_manager.desapilar_carta_y_ficha(game_id=jugador.id) #popeo cuando me aseguro que el se ha efectuado el efecto en la db
