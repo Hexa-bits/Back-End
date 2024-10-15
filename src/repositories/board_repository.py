@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.inputs_front import *
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
@@ -60,24 +60,25 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         
     return tablero.id
 
-def movimiento_parcial(game_id: int, coord: List[Tuple[int, int]], db: Session) -> None:
+def movimiento_parcial(game_id: int, moveCard: MovementCard, coord: Tuple[Ficha], db: Session) -> None:
 
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
     
     ficha0 = db.query(FichaCajon).filter(and_(
         FichaCajon.tablero_id == tablero.id,
-        FichaCajon.x_pos == coord[0][0],
-        FichaCajon.y_pos == coord[0][1]
+        FichaCajon.x_pos == coord[0].x_pos,
+        FichaCajon.y_pos == coord[0].y_pos
     )).first()
 
     ficha1 = db.query(FichaCajon).filter(and_(
         FichaCajon.tablero_id == tablero.id,
-        FichaCajon.x_pos == coord[1][0],
-        FichaCajon.y_pos == coord[1][1]
+        FichaCajon.x_pos == coord[1].x_pos,
+        FichaCajon.y_pos == coord[1].y_pos
     )).first()
 
     color_ficha0 = ficha0.color
     ficha0.color = ficha1.color    
     ficha1.color = color_ficha0
+    moveCard.estado = CardStateMov.descartada
 
     db.commit()

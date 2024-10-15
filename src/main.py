@@ -15,7 +15,7 @@ from src.db import Base, engine, SessionLocal
 from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config, Leave_config
+from src.models.inputs_front import *
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move
@@ -49,28 +49,6 @@ app.add_middleware(
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, etc.)
     allow_headers=["*"],  # Permitir todos los headers
 )
-
-
-class PlayerId(BaseModel):
-    id: int
-
-class User(BaseModel):
-    username: str
-
-class GameId(BaseModel):
-    game_id: int
-
-class PlayerAndGameId(BaseModel):
-    game_id: int
-    player_id: int
-
-class Ficha(BaseModel):
-    x_pos: int
-    y_pos: int
-class MovementData(BaseModel):
-    player_id: int
-    id_mov_card: int
-    fichas: List[Ficha]
 
 class WebSocketConnectionManager:
     def __init__(self):
@@ -356,11 +334,10 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
         jugador = get_Jugador(movementData.player_id, db)
         movementCard = get_CartaMovimiento(movementData.id_mov_card, db)
         game_id = jugador.partida_id
-        coord = [(movementData.fichas[0].x_pos, movementData.fichas[0].y_pos), 
-                  (movementData.fichas[1].x_pos, movementData.fichas[1].y_pos)]
+        coord = (movementData.fichas[0], movementData.fichas[1])
         
         if is_valid_move(movementCard, coord):
-            movimiento_parcial(game_id, coord, db)
+            movimiento_parcial(game_id, movementCard, coord, db)
             game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
             await ws_manager.send_message_game_id(event.get_tablero, game_id)
         else:

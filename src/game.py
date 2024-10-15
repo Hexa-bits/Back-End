@@ -5,6 +5,8 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
+from src.models.inputs_front import *
+from pydantic import BaseModel
 from typing import List, Dict, Tuple, Any
 
 class GameManager:
@@ -94,10 +96,9 @@ class GameManager:
         self.games[game_id]['jugador_en_turno_id'] = jugador_id
 
 
-def is_valid_move(movementCard: MovementCard, coords: List[Tuple[int, int]]) -> bool:
-    
-    distancia_x = abs(coords[0][0]-coords[1][0])
-    distancia_y = abs(coords[0][1]-coords[1][1])
+def is_valid_move(movementCard: MovementCard, coords: Tuple[Ficha]) -> bool:
+    distancia_x = abs(coords[0].x_pos-coords[1].x_pos)
+    distancia_y = abs(coords[0].y_pos-coords[1].y_pos)
 
     if movementCard.movimiento == Move.linea_contiguo:
         return (distancia_y == 0 and distancia_x == 1) or (distancia_y == 1 and distancia_x == 0)
@@ -113,16 +114,16 @@ def is_valid_move(movementCard: MovementCard, coords: List[Tuple[int, int]]) -> 
     
     elif movementCard.movimiento == Move.linea_al_lateral:
         return ((distancia_y == 0 and 1 <= distancia_x <= 5 and 
-                (coords[0][0]==1 or coords[1][0]==1 or coords[0][0]==6 or coords[1][0]==6)) #Alguna de las fichas tiene que estar
-                or                                                                          #en los extremos
+                (coords[0].x_pos==1 or coords[1].x_pos==1 or coords[0].x_pos==6 or coords[1].x_pos==6)) #Alguna de las fichas tiene
+                or                                                                                      #que estar en los extremos
                 (1 <= distancia_y <= 5 and distancia_x == 0 and
-                (coords[0][1]==1 or coords[1][1]==1 or coords[0][1]==6 or coords[1][1]==6))) #Idem
+                (coords[0].y_pos==1 or coords[1].y_pos==1 or coords[0].y_pos==6 or coords[1].y_pos==6))) #Idem
     
     else:
-        max_x_tuple = max(coords, key=lambda coord: coord[0])       #
-        min_x_tuple = min(coords, key=lambda coord: coord[0])       #Para poder diferenciar los movimientos L
+        max_x_tuple = max(coords, key=lambda coord: coord.x_pos)       #
+        min_x_tuple = min(coords, key=lambda coord: coord.x_pos)       #Para poder diferenciar los movimientos L
 
-        distancia_entre_fichas_ejeY = max_x_tuple[1]-min_x_tuple[1]
+        distancia_entre_fichas_ejeY = max_x_tuple.y_pos-min_x_tuple.y_pos
         
         if movementCard.movimiento == Move.L_derecha:
             return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY>0)) #<-- Desde la perspectiva de la 
