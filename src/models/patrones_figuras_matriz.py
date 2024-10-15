@@ -1,6 +1,6 @@
 import numpy as np
 
-def generar_rotaciones(patron) -> list:
+def generar_rotaciones(patron) -> list[np.ndarray]:
     """Dado un patrón, genera las 4 rotaciones posibles"""
 
     rotaciones = [patron]
@@ -8,7 +8,7 @@ def generar_rotaciones(patron) -> list:
         rotaciones.append(np.rot90(rotaciones[-1]))  # Rotar 90 grados en sentido antihorario
     return rotaciones
 
-def generate_all_figures() -> list:
+def generate_all_figures() -> list[np.ndarray]:
     """Proceso que genera las 100 rotaciones de figuras posibles para detectar en la matriz"""
 
     #Generamos todas las figuras rotadas posibles (100 en total)

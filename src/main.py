@@ -348,6 +348,14 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint para resaltar las figuras detectadas en el tablero
+    args:
+        game_id: int - id del juego
+    return:
+        list - Lista de figuras(cada figura es una lista de diccionarios) detectadas en el tablero
+    """
+
     try:
         #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
         figuras = get_valid_detected_figures(game_id, lista_patrones, db)

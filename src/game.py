@@ -1,6 +1,7 @@
+from typing import List, Tuple
 import numpy as np
 
-def detectar_patrones(matriz, patrones) -> list:
+def detectar_patrones(matriz, patrones) -> List[List[Tuple[int, int]]]:
     """Función para detectar figuras usando Sliding Window (No checkea que no tengan 1s adyacentes, solo si coinciden con el patrón)
     Devuelve una lista de listas de coordenadas de las figuras detectadas.
     """
@@ -49,13 +50,13 @@ def figura_valida(matriz, coords_validas) -> bool:
                     return False  # Hay un 1 no válido adyacente
     return True  # Todos los vecinos son válidos
 
-def separar_matrices_por_color(matriz, lista_colores) -> list:
+def separar_matrices_por_color(matriz, lista_colores) -> List[np.ndarray]:
     """Separa la matriz de colores en matrices individuales por color.
     Toma como elementos:
     matriz: Una matriz numpy donde cada elemento representa un color.
     lista_colores: Una lista de colores presentes en la matriz.
     
-    Devuelve una lista de matrices, donde cada matriz representa un color.
+    Devuelve una lista de matrices numpy, donde cada matriz representa un color.
     """
 
     # Obtener las dimensiones de la matriz
