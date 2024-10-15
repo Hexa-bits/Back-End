@@ -68,7 +68,6 @@ class PlayerAndGameId(BaseModel):
 class Ficha(BaseModel):
     x_pos: int
     y_pos: int
-    color: int
 class MovementData(BaseModel):
     player_id: int
     id_mov_card: int
