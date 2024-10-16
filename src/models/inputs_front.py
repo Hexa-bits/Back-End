@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, conint, constr 
 
 class Partida_config(BaseModel):
@@ -9,3 +9,24 @@ class Partida_config(BaseModel):
 class Leave_config(BaseModel):
     id_user: conint(gt=0)
     game_id: conint(gt=0)
+
+class PlayerId(BaseModel):
+    id: int
+
+class User(BaseModel):
+    username: str
+
+class GameId(BaseModel):
+    game_id: int
+
+class PlayerAndGameId(BaseModel):
+    game_id: int
+    player_id: int
+
+class Ficha(BaseModel):
+    x_pos: int
+    y_pos: int
+class MovementData(BaseModel):
+    player_id: int
+    id_mov_card: int
+    fichas: List[Ficha]

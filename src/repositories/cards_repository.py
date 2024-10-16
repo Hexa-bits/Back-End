@@ -17,6 +17,10 @@ def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
     smt = select(PictureCard).where(PictureCard.id == id_carta_figura)
     return db.execute(smt).scalar() 
 
+def get_CartaMovimiento(id_carta_movimiento: int, db: Session) -> MovementCard:
+    smt = select(MovementCard).where(MovementCard.id == id_carta_movimiento)
+    return db.execute(smt).scalar() 
+
 def list_fig_cards(player_id: int, db: Session) -> List[int]:
     smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
     cards = db.execute(smt).scalars().all()
@@ -25,13 +29,9 @@ def list_fig_cards(player_id: int, db: Session) -> List[int]:
         res.append(card.value)
     return res 
 
-def list_mov_cards(player_id: int, db: Session) -> List[int]:
-    smt = select(MovementCard.movimiento).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
-    cards = db.execute(smt).scalars().all()
-    res = []
-    for card in cards:
-        res.append(card.value)
-    return res 
+def list_mov_cards(player_id: int, db: Session) -> List[MovementCard]:
+    smt = select(MovementCard).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
+    return db.execute(smt).scalars().all()
 
 def mezclar_figuras(game_id: int, db: Session) -> None:
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
