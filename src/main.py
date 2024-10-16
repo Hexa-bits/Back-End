@@ -340,6 +340,7 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
             movimiento_parcial(game_id, movementCard, coord, db)
             game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
             await ws_manager.send_message_game_id(event.get_tablero, game_id)
+            await ws_manager.send_message_game_id(event.get_cartas_mov, game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
     except SQLAlchemyError:
