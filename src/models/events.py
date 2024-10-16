@@ -38,3 +38,7 @@ class Event:
     @property
     def get_movimientos(self):
         return "Actualizar cartas de movimientos"
+    
+    @property
+    def get_figuras(self):
+        return "Actualizar cartas de figuras"

@@ -84,4 +84,3 @@ async def test_websocket_broadcast_lobbies(client):
 
             # Verificar que los mensajes recibidos son iguales para ambos
             assert lobbies1 == lobbies2
-
