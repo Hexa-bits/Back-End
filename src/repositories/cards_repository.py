@@ -123,3 +123,32 @@ def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     jugadores = db.execute(smt).scalars().all()
     jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
+
+def others_cards(game_id: int, player_id: int, db: Session) -> List[dict]:
+
+    #obtengo los jugadores de la partida
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+
+    jugadores_info = []
+    for jugador in jugadores:
+        if jugador.id != player_id:
+            jugador_info = {}
+            jugador_info["nombre"] = jugador.nombre
+
+            cartas_figura = get_cartasFigura_player(jugador.id, db)
+            cartas_mov = get_cartasMovimiento_player(jugador.id, db)
+
+            jugador_info["fig_cards"] = []
+            for carta in cartas_figura:
+                #Solo quiero enviar las cartas figura visibles
+                if carta.estado == CardState.mano:
+                    carta_info = {}
+                    carta_info["id"] = carta.id
+                    carta_info["fig"] = carta.figura.value
+                    jugador_info["fig_cards"].append(carta_info)
+            
+            jugador_info["mov_cant"] = len(cartas_mov)
+
+            jugadores_info.append(jugador_info)
+    
+    return jugadores_info
