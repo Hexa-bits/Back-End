@@ -71,6 +71,53 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
             db.refresh(carta)
     return
 
+def repartir_cartas(game_id: int, db: Session) -> None:
+    partida = db.query(Partida).filter(Partida.id == game_id).first()
+
+    turno_actual = partida.jugador_en_turno
+
+    jugador_en_turno = db.query(Jugador).filter(and_(Jugador.partida_id == game_id, Jugador.turno == turno_actual)).first()
+
+    cartas_mov_en_mano = db.query(MovementCard).filter(and_(MovementCard.jugador_id == jugador_en_turno.id, 
+                                                        MovementCard.estado == CardStateMov.mano)).all()
+    
+    cartas_fig_en_mano = db.query(PictureCard).filter(and_(PictureCard.jugador_id == jugador_en_turno.id, 
+                                                           PictureCard.estado == CardState.mano)).all()
+
+    if len(cartas_mov_en_mano) < 3:
+        
+        all_cards_mov = db.query(MovementCard).filter(MovementCard.partida_id == game_id).all()
+        cant_cartas = None
+        
+        try:
+            cant_cartas = 3 % len(cartas_mov_en_mano)
+        except ZeroDivisionError:
+            cant_cartas = 3
+
+        for i in range(cant_cartas):
+            carta = all_cards_mov.pop()
+            carta.jugador_id = jugador_en_turno.id
+            carta.estado = CardStateMov.mano
+            db.commit()
+            db.refresh(carta)
+    
+    if len(cartas_fig_en_mano) < 3:
+        
+        all_cards_fig = db.query(PictureCard).filter(PictureCard.partida_id == game_id).all()
+        cant_cartas = None
+        
+        try:
+            cant_cartas = 3 % len(cartas_fig_en_mano)
+        except ZeroDivisionError:
+            cant_cartas = 3
+
+        for i in range(cant_cartas):
+            carta = all_cards_fig.pop()
+            carta.jugador_id = jugador_en_turno.id
+            carta.estado = CardState.mano
+            db.commit()
+            db.refresh(carta)
+
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
     num_jugadores = len(jugadores)

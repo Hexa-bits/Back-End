@@ -261,6 +261,7 @@ async def get_board(game_id: int, db: Session = Depends(get_db)):
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
+        repartir_cartas(game_id.game_id, db)
         next_jugador = terminar_turno(game_id.game_id, db)
        
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
