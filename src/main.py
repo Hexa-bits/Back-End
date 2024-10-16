@@ -25,13 +25,19 @@ from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
+
+from src.models.patrones_figuras_matriz import generate_all_figures
 from src.game import GameManager
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 game_manager = GameManager()
 event = Event()
+
+lista_patrones = generate_all_figures()
+lista_patrones = [np.array(patron) for patron in lista_patrones]
 
 def get_db():
     db = SessionLocal()
@@ -340,3 +346,37 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
         status_code=status.HTTP_200_OK
     )
 
+@app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
+async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint para resaltar las figuras detectadas en el tablero
+    args:
+        game_id: int - id del juego
+    return:
+        list - Lista de figuras(cada figura es una lista de diccionarios) detectadas en el tablero
+    """
+
+    try:
+        #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
+        figuras = get_valid_detected_figures(game_id, lista_patrones, db)
+
+        # Creo una lista para adaptarme al formato de respuesta
+        figuras_response = []    
+        for figura in figuras:
+            lista_dicc_fig = []  # Lista para almacenar los diccionarios de una figura
+            for (x, y) in figura:
+                # Convertir la tupla en un diccionario y agregarla a la nueva figura
+                #Sumo 1 a x,y para que empiece en 1,1 como en el tablero
+                lista_dicc_fig.append({
+                                    'x': x+1,
+                                    'y': y+1,
+                                    'color': get_color_of_ficha(x+1, y+1, game_id, db)
+                                    })
+                
+            figuras_response.append(lista_dicc_fig)
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
+    
+    return figuras_response
