@@ -57,7 +57,7 @@ def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Sess
     ficha2 = get_fichaCajon_coords(game_id, tupla_coords[1], db)
     
     if ficha1 is None or ficha2 is None:
-        raise Exception("Una o ambas fichasCajon no existe en la db")
+        raise ValueError("Una o ambas fichasCajon no existe en la db")
     
     ficha1, ficha2 = ficha2, ficha1
 

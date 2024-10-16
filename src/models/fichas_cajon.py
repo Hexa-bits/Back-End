@@ -26,6 +26,15 @@ class FichaCajon(Base):
     tablero_id = Column(Integer, ForeignKey('tableros.id'))
     tablero = relationship("Tablero", back_populates="fichas_cajon")
 
+    def __eq__(self, other):
+        if not isinstance(other, FichaCajon):
+            return False
+        return (self.id == other.id and
+                self.x_pos == other.x_pos and
+                self.y_pos == other.y_pos and
+                self.color == other.color and
+                self.tablero_id == other.tablero_id)
+
     def __repr__(self) -> str:
         id = f'id={self.id!r}'
         x_pos = f'x_pos={self.x_pos!r}'

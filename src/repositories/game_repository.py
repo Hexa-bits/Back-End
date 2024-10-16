@@ -12,8 +12,8 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.repositories.cards_repository import get_cartasMovimiento_game, get_cartaMovId
-from src.repositories.board_repository import get_tablero, get_fichasCajon, swap_fichasCajon
+from src.repositories.cards_repository import get_cartasMovimiento_game
+from src.repositories.board_repository import get_tablero, get_fichasCajon
 
 def get_Partida(id: int, db: Session) -> Partida:
     smt = select(Partida).where(Partida.id == id)
@@ -133,24 +133,3 @@ def delete_partida(partida: Partida, db: Session) -> None:
 
     db.delete(partida)
     db.commit()
-
-
-def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
-                        tupla_coords: tuple[Coords, Coords], db: Session) -> None:
-    """
-    Cancela un movimiento revertiendo la posición de las fichasCajon usadas 
-    (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
-    movimiento usada.
-    """
-    with db.begin():
-        #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
-        swap_fichasCajon(partida.id, tupla_coords, db)        
-        carta_mov = get_cartaMovId(mov_id, db)
-        
-        if carta_mov is None:
-            raise Exception("La carta de movimiento no existe en la partida")
-        elif carta_mov.estado == CardStateMov.mano:
-            raise Exception("La carta de movimiento esta en mano")
-        
-        carta_mov.estado = CardStateMov.mano
-        carta_mov.jugador_id = jugador.id

@@ -372,11 +372,11 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
         partida = get_Partida(playerAndGameId.game_id, db)
         if partida is None or not partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                detail=f'No exsite la partida: {playerAndGameId.game_id}')
+                                detail=f'No existe la partida: {playerAndGameId.game_id}')
         
         if jugador.partida_id == None or jugador.partida_id != partida.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f'No exsite la partida asociada a jugador: {playerAndGameId.player_id}')
+                                detail=f'No existe la partida asociada a jugador: {playerAndGameId.player_id}')
         
         if jugador.turno != partida.jugador_en_turno:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
@@ -384,16 +384,23 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
 
         mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=partida.id)
         if mov_coords is not None:
-            cancelar_movimiento(partida=partida, jugador=jugador, mov=mov_coords[0],
-                                 coords=(Coords(**mov_coords[1][0]), Coords(**mov_coords[1][1])), db=db)
+            mov = mov_coords [0]
+            coords = (Coords(x=mov_coords[1][0][0], y=mov_coords[1][0][1]),
+                      Coords(x=mov_coords[1][1][0], y=mov_coords[1][1][1]))
+            try:
+                cancelar_movimiento(partida=partida, jugador=jugador, mov=mov, coords=coords, db=db)
+                
+                await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
+                await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
 
-            await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
-            await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
-        
-            game_manager.desapilar_carta_y_ficha(game_id=jugador.id) #popeo cuando me aseguro que el se ha efectuado el efecto en la db
+                #popeo cuando me aseguro que el se ha efectuado el efecto en la db
+                game_manager.desapilar_carta_y_ficha(game_id=jugador.id) 
+            except Exception:
+                db.rollback()
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
         else:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No hay movimientos que deshacer')
-
+        
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
