@@ -27,12 +27,18 @@ from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
 from src.game import GameManager, is_valid_move
 
+from src.models.patrones_figuras_matriz import generate_all_figures
+from src.game import GameManager
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 game_manager = GameManager()
 event = Event()
+
+lista_patrones = generate_all_figures()
+lista_patrones = [np.array(patron) for patron in lista_patrones]
 
 def get_db():
     db = SessionLocal()
@@ -189,8 +195,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
-                delete_players_partida(partida, db)
-                print('hola')
+                delete_players_lobby(partida, db)
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
@@ -316,6 +321,10 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+
+            #Uso el game manager
+            game_manager.create_game(game_id.game_id)
+            
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:
@@ -346,3 +355,37 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")  
+@app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
+async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint para resaltar las figuras detectadas en el tablero
+    args:
+        game_id: int - id del juego
+    return:
+        list - Lista de figuras(cada figura es una lista de diccionarios) detectadas en el tablero
+    """
+
+    try:
+        #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
+        figuras = get_valid_detected_figures(game_id, lista_patrones, db)
+
+        # Creo una lista para adaptarme al formato de respuesta
+        figuras_response = []    
+        for figura in figuras:
+            lista_dicc_fig = []  # Lista para almacenar los diccionarios de una figura
+            for (x, y) in figura:
+                # Convertir la tupla en un diccionario y agregarla a la nueva figura
+                #Sumo 1 a x,y para que empiece en 1,1 como en el tablero
+                lista_dicc_fig.append({
+                                    'x': x+1,
+                                    'y': y+1,
+                                    'color': get_color_of_ficha(x+1, y+1, game_id, db)
+                                    })
+                
+            figuras_response.append(lista_dicc_fig)
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
+    
+    return figuras_response

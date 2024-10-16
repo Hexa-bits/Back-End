@@ -127,7 +127,7 @@ async def test_websocket_broadcast_games_leave(client):
 
         with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
              patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.main.delete_players_partida") as mock_delete_players_partida:
+             patch("src.main.delete_players_lobby") as mock_delete_players_lobby:
             
             info_leave = {"id_user": 1, "game_id": 1}
 

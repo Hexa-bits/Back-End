@@ -14,13 +14,14 @@ from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 
 from src.repositories.cards_repository import get_cartasMovimiento_game
+from src.repositories.board_repository import get_tablero, get_fichasCajon
 
 def get_Partida(id: int, db: Session) -> Partida:
     smt = select(Partida).where(Partida.id == id)
     partida = db.execute(smt).scalar()
     return partida
 
-def get_lobby(game_id: int, db: Session):
+def get_lobby(game_id: int, db: Session) -> List[dict]:
     try:
         partida = db.get(Partida, game_id)
     except Exception:
@@ -91,13 +92,13 @@ def terminar_turno(game_id: int, db: Session) -> dict:
     partida.jugador_en_turno = lista_turnos[new_index]
     db.commit()
     
-    json_jugador_turno = {
+    info_jugador_turno = {
         "id_player": jugadores[new_index].id ,
         "name_player": jugadores[new_index].nombre
     }
     
     #Debo retornar lo que esta en la API formato JSON
-    return json_jugador_turno
+    return info_jugador_turno
 
 def list_lobbies(db) -> List[dict]:
 
@@ -125,7 +126,15 @@ def delete_partida(partida: Partida, db: Session) -> None:
         for mov in movs:
             mov.partida_id = None
             db.delete(mov)
-        #A FUTURO SERA NECESARIO ELIMINAR EL TABLERO Y LAS FICHAS ASOCIADAS A LA PARTIDA TAMBIEN
+        
+        tablero = get_tablero(partida.id, db)
+        fichas = get_fichasCajon(tablero.id, db)
+        for ficha in fichas:
+            ficha.tablero_id = None
+            db.delete(ficha)
+        
+        tablero.partida_id = None
+        db.delete(tablero)
 
     db.delete(partida)
     db.commit()
