@@ -67,3 +67,64 @@ async def test_highlight_figures_db_error(mock_get_db, mock_get_valid_detected_f
     # Verificar el contenido del mensaje de error
     assert response.json() == {"detail": "Error al obtener las figuras"}
 
+@pytest.mark.asyncio
+@patch("src.main.others_cards")  # Simula la función others_cards
+@patch("src.main.get_db")  # Simula la dependencia de la base de datos
+async def test_get_others_cards(mock_get_db, mock_others_cards):
+    # Crear un mock de la base de datos
+    mock_db = MagicMock(spec=Session)
+    mock_get_db.return_value = mock_db
+
+    # Mockear la respuesta de others_cards
+    mock_others_cards.return_value = [
+        {
+            "nombre": "Jugador 1",
+            "fig_cards": [
+                {"id": 1, "fig": "Figura 1"},
+            ],
+            "mov_cant": 2
+        }
+    ]
+
+    # Parámetros para la llamada al endpoint
+    game_id = 1
+    player_id = 2
+    response = client.get(f"/game/others-cards?game_id={game_id}&player_id={player_id}")
+
+    # Verificar el status code
+    assert response.status_code == 200
+
+    # Verificar la estructura de la respuesta
+    expected_response = [
+        {
+            "nombre": "Jugador 1",
+            "fig_cards": [
+                {"id": 1, "fig": "Figura 1"},
+            ],
+            "mov_cant": 2
+        }
+    ]
+    assert response.json() == expected_response
+
+
+@pytest.mark.asyncio
+@patch("src.main.others_cards")
+@patch("src.main.get_db")
+async def test_get_others_cards_db_error(mock_get_db, mock_others_cards):
+    # Crear un mock de la base de datos
+    mock_db = MagicMock(spec=Session)
+    mock_get_db.return_value = mock_db
+
+    # Simular un error en la función others_cards
+    mock_others_cards.side_effect = Exception("Database error")
+
+    # Parámetros para la llamada al endpoint
+    game_id = 1
+    player_id = 2
+    response = client.get(f"/game/others-cards?game_id={game_id}&player_id={player_id}")
+
+    # Verificar que se devuelva un error 500
+    assert response.status_code == 500
+
+    # Verificar el contenido del mensaje de error
+    assert response.json() == {"detail": "Error al obtener las cartas de los demás jugadores"}
