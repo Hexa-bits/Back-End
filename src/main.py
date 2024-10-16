@@ -330,7 +330,6 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-    game_manager.create_game(game_id.game_id)
     return JSONResponse(
         content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
         status_code=status.HTTP_200_OK
