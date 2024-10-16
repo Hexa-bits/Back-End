@@ -266,10 +266,22 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
+        jugador = get_current_turn_player(game_id.game_id)
+
+        while game_manager.is_tablero_parcial(game_id.game_id):
+            mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
+            mov = mov_coords [0]
+            coords = (Coords(x=mov_coords[1][0][0], y=mov_coords[1][0][1]),
+                      Coords(x=mov_coords[1][1][0], y=mov_coords[1][1][1]))
+
+            cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
+            game_manager.desapilar_carta_y_ficha(game_id.game_id)
+
         next_jugador = terminar_turno(game_id.game_id, db)
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        await ws_manager.send_message_game_id(event.get_movimientos, game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -388,7 +400,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
             coords = (Coords(x=mov_coords[1][0][0], y=mov_coords[1][0][1]),
                       Coords(x=mov_coords[1][1][0], y=mov_coords[1][1][1]))
             try:
-                cancelar_movimiento(partida=partida, jugador=jugador, mov=mov, coords=coords, db=db)
+                cancelar_movimiento(partida=partida.id, jugador=jugador.id, mov=mov, coords=coords, db=db)
                 
                 await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
                 await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)

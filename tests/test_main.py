@@ -96,8 +96,8 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
     mock_get_partida.assert_called_once_with(1, ANY)
     mock_get_jugador.assert_called_once_with(1, ANY)
     mock_manager.top_tupla_carta_y_fichas.assert_called_once_with(game_id=1)
-    mock_cancel_movimiento.assert_called_with (partida=mock_partida,
-                                              jugador=mock_jugador, 
+    mock_cancel_movimiento.assert_called_with (partida=mock_partida.id,
+                                              jugador=mock_jugador.id, 
                                               mov=1,
                                               coords=(Coords(x=1, y=1), Coords(x=2, y=2)), 
                                               db=ANY)

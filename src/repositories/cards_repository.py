@@ -152,7 +152,7 @@ def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
     return db.execute(smt).scalar()
 
 
-def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
+def cancelar_movimiento(partida_id: int, jugador_id: int, mov_id: int,
                         tupla_coords: tuple[Coords, Coords], db: Session) -> None:
     """
     Cancela un movimiento revertiendo la posición de las fichasCajon usadas 
@@ -161,7 +161,7 @@ def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
     """
     with db.begin():
         #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
-        swap_fichasCajon(partida.id, tupla_coords, db)        
+        swap_fichasCajon(partida_id, tupla_coords, db)        
         carta_mov = get_cartaMovId(mov_id, db)
         
         if carta_mov is None:
@@ -170,4 +170,4 @@ def cancelar_movimiento(partida: Partida, jugador: Jugador, mov_id: int,
             raise ValueError("La carta de movimiento esta en mano de alguien")
         
         carta_mov.estado = CardStateMov.mano
-        carta_mov.jugador_id = jugador.id
+        carta_mov.jugador_id = jugador_id

@@ -29,19 +29,17 @@ def test_cancelar_movimiento_OK(mock_swap, movs_test):
     parametros adecuados.
     """
     mock_swap.return_value = None
-    partida = MagicMock(id=1)
-    jugador = MagicMock(id=1)
     tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
 
-    result = cancelar_movimiento(partida, jugador, 1, tupla_coords, movs_test)
+    result = cancelar_movimiento(1, 1, 1, tupla_coords, movs_test)
     assert result is None, f'No devuelve None, sino {result}'
 
     mov_card = get_cartaMovId(1, movs_test)
     assert mov_card is not None, "'mov_card' no debería de ser None"
     assert isinstance(mov_card, MovementCard), f'El tipo no debería ser {type(mov_card)}'
     assert mov_card.estado == CardStateMov.mano, f'La carta esta en {mov_card.estado}'
-    assert mov_card.jugador_id == jugador.id, "No tiene el jugador asoc esperado"
-    assert mov_card.partida_id == partida.id, "No tiene la partida asoc esperada"
+    assert mov_card.jugador_id == 1, "No tiene el jugador asoc esperado"
+    assert mov_card.partida_id == 1, "No tiene la partida asoc esperada"
 
 @patch("src.repositories.cards_repository.swap_fichasCajon")
 def test_cancelar_movimiento_not_in_db(mock_swap, movs_test):
@@ -50,12 +48,10 @@ def test_cancelar_movimiento_not_in_db(mock_swap, movs_test):
     movimiento en la db.  
     """
     mock_swap.return_value = None
-    partida = MagicMock(id=1)
-    jugador = MagicMock(id=1)
     tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento no existe en la partida"):
-        cancelar_movimiento(partida, jugador, 0, tupla_coords, movs_test)
+        cancelar_movimiento(1, 1, 0, tupla_coords, movs_test)
 
 @patch("src.repositories.cards_repository.swap_fichasCajon")
 def test_cancelar_movimiento_mov_mano(mock_swap, movs_test):
@@ -64,9 +60,7 @@ def test_cancelar_movimiento_mov_mano(mock_swap, movs_test):
     en mano.
     """
     mock_swap.return_value = None
-    partida = MagicMock(id=1)
-    jugador = MagicMock(id=1)
     tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento esta en mano de alguien"):
-        cancelar_movimiento(partida, jugador, 2, tupla_coords, movs_test)
+        cancelar_movimiento(1, 1, 2, tupla_coords, movs_test)

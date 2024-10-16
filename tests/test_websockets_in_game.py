@@ -76,25 +76,28 @@ async def test_websocket_connections(client):
 @pytest.mark.asyncio
 async def test_websocket_broadcast_turno_siguiente(client):
     # Simular que un cliente se conecta al WebSocket
-    with client.websocket_connect("/game?game_id=1") as websocket1:
-        with client.websocket_connect("/game?game_id=1") as websocket2:
-            assert len(ws_manager.active_connections) == 1  
-            assert len(ws_manager.active_connections.get(1)) == 2 
-            
-            with patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
-                                                                  "name_player": "testuser"}):
-                # Simular una petición HTTP para obtener el siguiente turno
-                response = client.put("/game/end-turn", json={"game_id": 1})
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
 
-                # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-                mensaje1 = websocket1.receive_text()
-                mensaje2 = websocket2.receive_text()
+        assert len(ws_manager.active_connections) == 1  
+        assert len(ws_manager.active_connections.get(1)) == 2 
+        
+        with patch("src.main.get_current_turn_player"), \
+             patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
+             patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
+                                                                "name_player": "testuser"}):
+            # Simular una petición HTTP para obtener el siguiente turno
+            response = client.put("/game/end-turn", json={"game_id": 1})
 
-                # Verificar que los mensajes recibidos son iguales para ambos
-                assert mensaje1 == "Terminó turno"
-                assert mensaje1 == mensaje2
-                assert response.status_code == 200
-                assert response.json() == {"id_player": 1 , "name_player": "testuser"}
+            # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            # Verificar que los mensajes recibidos son iguales para ambos
+            assert mensaje1 == "Terminó turno"
+            assert mensaje1 == mensaje2
+            assert response.status_code == 200
+            assert response.json() == {"id_player": 1 , "name_player": "testuser"}
 
 
 @pytest.mark.asyncio
