@@ -5,6 +5,9 @@ import enum
 
 
 class Picture(enum.Enum):
+    """
+    Enum que representa los 25 tipos de carta de figura del juego
+    """
     figura1 = 1
     figura2 = 2
     figura3 = 3
@@ -32,15 +35,24 @@ class Picture(enum.Enum):
     figura25 = 25
 
 class CardState(enum.Enum):
+    """
+    Enum que representa los 3 estados de una carta de figura en el juego
+    """
     mano = 1
     mazo = 2
     bloqueada = 3
 
 class PictureCard(Base):
+    """
+    Entidad que representa las cartas de movimiento de la partida. Posee un
+    id único, un estado y tipo de figura que se representan por medio de
+    enums. Guarda relación uno a muchos con partida y jugador.
+    """
     __tablename__ = "cartasFigura"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     figura = Column(Enum(Picture))
+    #TO DO: eliminar is_simple
     is_simple = Column(Boolean, default=True)
     estado = Column(Enum(CardState), default=CardState.mazo)
 

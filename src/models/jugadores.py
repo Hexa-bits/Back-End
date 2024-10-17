@@ -4,6 +4,11 @@ from src.db import Base
 from src.models.partida import Partida
 
 class Jugador(Base):
+    """
+    Entidad que representa al usuario/jugador. Posee un id unico, un nombre no nulo,
+    un identificar de si es anfitrion de la partida. Guarda relación uno a muchos con
+    partida, y de muchos a uno con carta figura y carta movimiento. 
+    """
     __tablename__ = "jugador"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

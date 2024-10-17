@@ -6,6 +6,9 @@ import enum
 
 
 class Move(enum.Enum):
+    """
+    Enum que representa los 7 tipos de carta de movimiento del juego
+    """
     linea_contiguo = 1
     linea_con_espacio = 2
     diagonal_contiguo = 3
@@ -15,11 +18,19 @@ class Move(enum.Enum):
     linea_al_lateral = 7 # Ver si existe 
 
 class CardStateMov(enum.Enum):
+    """
+    Enum que representa los 3 estados de una carta de movimiento en el juego
+    """
     mano = 1
     mazo = 2
     descartada = 3
 
 class MovementCard(Base):
+    """
+    Entidad que representa las cartas de movimiento de la partida. Posee un
+    id único, un estado y tipo de movimiento que se representan por medio de
+    enums. Guarda relación uno a muchos con partida y jugador.
+    """
     __tablename__ = "cartasMovimiento"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

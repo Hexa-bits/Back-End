@@ -5,7 +5,13 @@ from sqlalchemy import Column, Integer, Enum
 from src.db import Base
 from src.models.partida import Partida
 from src.models.fichas_cajon import FichaCajon
+
 class Tablero(Base):
+    """
+    Esta entidad representa el tablero de la partida. Posee un id único y
+    un color prohibido que se repesenta mediante un enum. Guarda relación
+    uno a uno con partida y uno a muchos con fichas cajon. (1 a 36).
+    """
     __tablename__ = "tableros"
 
     id = Column(Integer, primary_key=True)
