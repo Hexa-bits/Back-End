@@ -380,3 +380,22 @@ async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las figuras")
     
     return figuras_response
+
+@app.get("/game/others-cards", status_code=status.HTTP_200_OK)
+async def get_others_cards(game_id: int, player_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint para obtener nombre, las cartas de figuras y cant de cartas movimiento de los demás jugadores
+    args:
+        game_id: int - id del juego
+        player_id: int - id del jugador
+    """
+
+    try:
+        # Obtengo las cartas de figuras y movimiento de los demás jugadores junto con el nombre del jugador
+        cartas = others_cards(game_id, player_id, db)
+
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las cartas de los demás jugadores")
+    
+    return cartas
