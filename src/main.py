@@ -18,7 +18,7 @@ from src.models.partida import Partida
 from src.models.inputs_front import *
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
-from src.models.cartamovimiento import MovementCard, Move
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.fichas_cajon import FichaCajon
 
 from src.repositories.board_repository import *
@@ -343,7 +343,13 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
 
     Respuesta:
     - 200: Sin contenido en caso de que el movimiento sea válido.
-    - 400: Con contenido "Movimiento invalido".
+    - 400: Una request incorrecta con contenido: 
+            * "Movimiento invalido" en caso de que las fichas a swapear no coincidan
+              con el movimiento.
+            * "La carta no pertenece a la partida"
+            * "No es turno del jugador"
+            * "La carta no está en mano"
+            * "La carta no pertenece al jugador" 
     - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
     
     Ejemplo de uso:
@@ -363,6 +369,9 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
         id_jugador_en_turno = get_jugador_en_turno(game_id, db).id
         if id_jugador_en_turno!=jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="No es turno del jugador")
+        
+        if movementCard.estado != CardStateMov.mano:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
         
         if movementCard.jugador_id!=jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")

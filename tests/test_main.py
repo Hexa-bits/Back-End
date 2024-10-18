@@ -89,13 +89,13 @@ def test_use_mov_card_invalid_card():
                             assert response.json() == {'detail': "La carta no pertenece a la partida"}
                             game_manager_mock.apilar_carta_y_ficha.assert_not_called()
 
-def test_use_mov_card_invalid_player():
+def test_use_mov_card_invalid_player_or_not_in_hand():
     with patch('src.main.game_manager') as game_manager_mock:
         with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
             with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
                                                                                 movimiento= Move.diagonal_con_espacio,
-                                                                                partida_id=1, jugador_id=2)):
-                with patch('src.main.get_jugador_en_turno', return_value= Jugador(id=2, partida_id= 1)):
+                                                                                partida_id=1, jugador_id=2)) as mock_get_carta:
+                with patch('src.main.get_jugador_en_turno', return_value= Jugador(id=2, partida_id= 1)) as mock_get_jugador_turno:
                     with patch('src.main.is_valid_move', return_value = False):
                         with patch('src.main.movimiento_parcial', return_value = None):
                             response = client.put("/game/use-mov-card", json = {"player_id": 1,
@@ -106,6 +106,22 @@ def test_use_mov_card_invalid_player():
                                 
                             assert response.status_code == 400
                             assert response.json() == {'detail': "No es turno del jugador"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
+
+                            mock_get_carta.return_value = MovementCard(id=1, estado= CardStateMov.descartada, 
+                                                                        movimiento= Move.diagonal_con_espacio,
+                                                                        partida_id=1, jugador_id=2)
+                            
+                            mock_get_jugador.return_value = mock_get_jugador_turno.return_value 
+
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 2, "y_pos": 3}]
+                                                                                })
+                                
+                            assert response.status_code == 400
+                            assert response.json() == {'detail': "La carta no está en mano"}
                             game_manager_mock.apilar_carta_y_ficha.assert_not_called()
 
 def test_use_mov_card_error():
