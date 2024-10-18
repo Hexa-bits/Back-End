@@ -12,23 +12,9 @@ from src.models.tablero import Tablero
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.repositories.cards_repository import *
-import pdb
+from tests.test_helpers import test_db
 
 #Helpers --
-@pytest.fixture(scope='module')
-def test_db():
-    # Crea un motor de base de datos en memoria para pruebas
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(engine)
-
-    # Crea una sesión
-    SessionLocal = sessionmaker(bind=engine)
-    with SessionLocal() as db:
-        try:
-            yield db
-        finally:
-            db.close()
-
 
 def cartas_mov_jugador_en_mano(jugador_id: int, test_db) -> List[MovementCard]:
     return test_db.query(MovementCard).filter(and_(MovementCard.jugador_id == jugador_id,
