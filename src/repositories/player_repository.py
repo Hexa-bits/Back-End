@@ -25,6 +25,11 @@ def get_Jugador(id: int, db: Session) -> Jugador:
 def get_jugadores(game_id: int, db: Session) -> List[Jugador]:
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
+def get_jugador_en_turno(game_id:int, db: Session) -> Jugador:
+    partida = db.query(Partida).filter(Partida.id == game_id).first()
+    return db.query(Jugador).filter(and_(Jugador.partida_id == game_id,
+                                         Jugador.turno == partida.jugador_en_turno)).first()
+
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
