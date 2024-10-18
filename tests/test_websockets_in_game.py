@@ -70,18 +70,19 @@ async def test_websocket_broadcast_turno_siguiente(client):
             
             with patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
                                                                   "name_player": "testuser"}):
-                # Simular una petición HTTP para obtener el siguiente turno
-                response = client.put("/game/end-turn", json={"game_id": 1})
+                with patch('src.main.repartir_cartas', return_value= None):
+                    # Simular una petición HTTP para obtener el siguiente turno
+                    response = client.put("/game/end-turn", json={"game_id": 1})
 
-                # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-                mensaje1 = websocket1.receive_text()
-                mensaje2 = websocket2.receive_text()
+                    # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
+                    mensaje1 = websocket1.receive_text()
+                    mensaje2 = websocket2.receive_text()
 
-                # Verificar que los mensajes recibidos son iguales para ambos
-                assert mensaje1 == "Terminó turno"
-                assert mensaje1 == mensaje2
-                assert response.status_code == 200
-                assert response.json() == {"id_player": 1 , "name_player": "testuser"}
+                    # Verificar que los mensajes recibidos son iguales para ambos
+                    assert mensaje1 == "Terminó turno"
+                    assert mensaje1 == mensaje2
+                    assert response.status_code == 200
+                    assert response.json() == {"id_player": 1 , "name_player": "testuser"}
 
 
 @pytest.mark.asyncio
