@@ -96,6 +96,7 @@ def movimiento_parcial(game_id: int, moveCard: MovementCard, coord: Tuple[Ficha]
     ficha0.color = ficha1.color    
     ficha1.color = color_ficha0
     moveCard.estado = CardStateMov.descartada
+    moveCard.jugador_id = None
 
     db.commit()
 def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[List[Tuple[int, int]]]:

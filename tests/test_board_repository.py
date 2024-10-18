@@ -14,23 +14,9 @@ from unittest.mock import Mock
 from sqlalchemy.orm import Session
 from src.repositories.board_repository import get_valid_detected_figures, get_color_of_ficha, movimiento_parcial
 from src.models.fichas_cajon import FichaCajon, Color  # Ajustar importación según tu estructura
+from tests.test_helpers import test_db
 import numpy as np
 
-
-
-@pytest.fixture(scope='module')
-def test_db():
-    # Crea un motor de base de datos en memoria para pruebas
-    engine = create_engine('sqlite:///:memory:')
-    Base.metadata.create_all(engine)
-
-    # Crea una sesión
-    SessionLocal = sessionmaker(bind=engine)
-    with SessionLocal() as db:
-        try:
-            yield db
-        finally:
-            db.close()
 
 def test_movimiento_parcial(test_db):
     partida = Partida(id=1, game_name = 'test_board')
@@ -58,6 +44,7 @@ def test_movimiento_parcial(test_db):
     assert ficha0_actualizada.color == Color.AZUL
     assert ficha1_actualizada.color == Color.ROJO
     assert moveCard.estado == CardStateMov.descartada
+    assert moveCard.jugador_id == None
     
 
 # Mock de la función get_fichas

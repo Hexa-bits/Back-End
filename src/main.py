@@ -338,10 +338,35 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 
 @app.put("/game/use-mov-card", status_code= status.HTTP_200_OK)
 async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)):
+    """
+    Descripción: Este endpoint maneja la lógica de usar una carta de movimiento.
+
+    Respuesta:
+    - 200: Sin contenido en caso de que el movimiento sea válido.
+    - 400: Con contenido "Movimiento invalido".
+    - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
+    
+    Ejemplo de uso:
+    PUT /game/use-mov-card, con body:
+        {player_id: int
+        id_mov_card: int
+        fichas: [{x_pos: int, y_pos: int}]}
+    """
+
     try:
         jugador = get_Jugador(movementData.player_id, db)
         movementCard = get_CartaMovimiento(movementData.id_mov_card, db)
         game_id = jugador.partida_id
+        if game_id != movementCard.partida_id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
+        
+        id_jugador_en_turno = get_jugador_en_turno(game_id, db).id
+        if id_jugador_en_turno!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="No es turno del jugador")
+        
+        if movementCard.jugador_id!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
+        
         coord = (movementData.fichas[0], movementData.fichas[1])
         
         if is_valid_move(movementCard, coord):
@@ -354,6 +379,8 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")  
+    
+
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
     """

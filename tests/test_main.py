@@ -18,55 +18,114 @@ client = TestClient(app)
 def test_use_mov_card():
  
     with patch('src.main.game_manager') as game_manager_mock:
-        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)):
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
             with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
-                                                                                movimiento= Move.diagonal_con_espacio)):
-                with patch('src.main.is_valid_move', return_value = True):
-                    with patch('src.main.movimiento_parcial', return_value = None):
-                        response = client.put("/game/use-mov-card", json = {"player_id": 1,
-                                                                            "id_mov_card": 1,
-                                                                            "fichas": [{"x_pos": 2, "y_pos": 2},
-                                                                                    {"x_pos": 4, "y_pos": 4}]
-                                                                            })
-                            
-                        assert response.status_code == 200
-        game_manager_mock.apilar_carta_y_ficha.assert_called_once_with(1, 1, (Ficha(x_pos=2, y_pos=2), Ficha(x_pos=4, y_pos=4)))
+                                                                                movimiento= Move.diagonal_con_espacio, 
+                                                                                partida_id=1, jugador_id=1)):
+                with patch('src.main.get_jugador_en_turno', return_value= mock_get_jugador.return_value):
+                    with patch('src.main.is_valid_move', return_value = True):
+                        with patch('src.main.movimiento_parcial', return_value = None):
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 4, "y_pos": 4}]
+                                                                                })
+                                
+                            assert response.status_code == 200
+                            game_manager_mock.apilar_carta_y_ficha.assert_called_once_with(1, 1, 
+                                                                                           (Ficha(x_pos=2, y_pos=2), 
+                                                                                            Ficha(x_pos=4, y_pos=4)))
 
 
-def test_use_mov_card_invalid():
+def test_use_mov_card_invalid_move():
     with patch('src.main.game_manager') as game_manager_mock:
-        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)):
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
             with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
-                                                                                movimiento= Move.diagonal_con_espacio)):
-                with patch('src.main.is_valid_move', return_value = False):
-                    with patch('src.main.movimiento_parcial', return_value = None):
-                        response = client.put("/game/use-mov-card", json = {"player_id": 1,
-                                                                            "id_mov_card": 1,
-                                                                            "fichas": [{"x_pos": 2, "y_pos": 2},
-                                                                                    {"x_pos": 2, "y_pos": 3}]
-                                                                            })
+                                                                                movimiento= Move.diagonal_con_espacio,
+                                                                                partida_id=1, jugador_id=1)):
+                with patch('src.main.get_jugador_en_turno', return_value= mock_get_jugador.return_value):
+                    with patch('src.main.is_valid_move', return_value = False):
+                        with patch('src.main.movimiento_parcial', return_value = None):
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 2, "y_pos": 3}]
+                                                                                })
+                                
+                            assert response.status_code == 400
+                            assert response.json() == {'detail': "Movimiento invalido"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
+
+def test_use_mov_card_invalid_card():
+    with patch('src.main.game_manager') as game_manager_mock:
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
+            with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
+                                                                                movimiento= Move.diagonal_con_espacio,
+                                                                                partida_id=1, jugador_id=2)) as mock_get_carta:
+                with patch('src.main.get_jugador_en_turno', return_value= mock_get_jugador.return_value):
+                    with patch('src.main.is_valid_move', return_value = False):
+                        with patch('src.main.movimiento_parcial', return_value = None):
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 2, "y_pos": 3}]
+                                                                                })
+                                
+                            assert response.status_code == 400
+                            assert response.json() == {'detail': "La carta no pertenece al jugador"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
+
+                            mock_get_carta.return_value = MovementCard(id=1, estado= CardStateMov.mano, 
+                                                                        movimiento= Move.diagonal_con_espacio,
+                                                                        partida_id=2, jugador_id=1)
                             
-                        assert response.status_code == 400
-                        assert response.json() == {'detail': "Movimiento invalido"}
-        game_manager_mock.apilar_carta_y_ficha.assert_not_called()
-    
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 2, "y_pos": 3}]
+                                                                                })
+                            
+                            assert response.status_code == 400
+                            assert response.json() == {'detail': "La carta no pertenece a la partida"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
+
+def test_use_mov_card_invalid_player():
+    with patch('src.main.game_manager') as game_manager_mock:
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
+            with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
+                                                                                movimiento= Move.diagonal_con_espacio,
+                                                                                partida_id=1, jugador_id=2)):
+                with patch('src.main.get_jugador_en_turno', return_value= Jugador(id=2, partida_id= 1)):
+                    with patch('src.main.is_valid_move', return_value = False):
+                        with patch('src.main.movimiento_parcial', return_value = None):
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 2, "y_pos": 3}]
+                                                                                })
+                                
+                            assert response.status_code == 400
+                            assert response.json() == {'detail': "No es turno del jugador"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
 
 def test_use_mov_card_error():
     with patch('src.main.game_manager') as game_manager_mock:
-        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)):
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
             with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
-                                                                                movimiento= Move.diagonal_con_espacio)):
-                with patch('src.main.is_valid_move', return_value = True):
-                    with patch('src.main.movimiento_parcial', side_effect = SQLAlchemyError):
-                        response = client.put("/game/use-mov-card", json = {"player_id": 1,
-                                                                            "id_mov_card": 1,
-                                                                            "fichas": [{"x_pos": 2, "y_pos": 2},
-                                                                                    {"x_pos": 4, "y_pos": 4}]
-                                                                            })
-                            
-                        assert response.status_code == 500
-                        assert response.json() == {'detail': "Fallo en la base de datos"}
-        game_manager_mock.apilar_carta_y_ficha.assert_not_called()
+                                                                                movimiento= Move.diagonal_con_espacio,
+                                                                                partida_id=1, jugador_id=1)):
+                with patch('src.main.get_jugador_en_turno', return_value= mock_get_jugador.return_value):
+                    with patch('src.main.is_valid_move', return_value = True):
+                        with patch('src.main.movimiento_parcial', side_effect = SQLAlchemyError):
+                            response = client.put("/game/use-mov-card", json = {"player_id": 1,
+                                                                                "id_mov_card": 1,
+                                                                                "fichas": [{"x_pos": 2, "y_pos": 2},
+                                                                                        {"x_pos": 4, "y_pos": 4}]
+                                                                                })
+                                
+                            assert response.status_code == 500
+                            assert response.json() == {'detail': "Fallo en la base de datos"}
+                            game_manager_mock.apilar_carta_y_ficha.assert_not_called()
 
 @pytest.mark.asyncio
 @patch("src.main.get_valid_detected_figures")
