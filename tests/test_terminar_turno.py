@@ -42,7 +42,7 @@ def test_terminar_turno_succesful(test_db, client):
     #next_player = test_db.query(Jugador).filter(Jugador.partida_id == partida.id, Jugador.turno == id_next_player).first()
 
     #Testeo el endpoint usando la base de datos que cree
-    with patch("src.main.get_db"):
+    with patch("src.main.repartir_cartas", return_value= None):
         with patch("src.main.terminar_turno") as mock_terminar_turno:
             mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 

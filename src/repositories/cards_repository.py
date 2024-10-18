@@ -86,12 +86,11 @@ def repartir_cartas(game_id: int, db: Session) -> None:
 
     if len(cartas_mov_en_mano) < 3:
         
-        all_cards_mov = db.query(MovementCard).filter(MovementCard.partida_id == game_id).all()
-        cant_cartas = None
+        all_cards_mov = db.query(MovementCard).filter(and_(MovementCard.partida_id == game_id,
+                                                           MovementCard.estado == CardStateMov.mazo)).all()
         
-        try:
-            cant_cartas = 3 % len(cartas_mov_en_mano)
-        except ZeroDivisionError:
+        cant_cartas = (3 - len(cartas_mov_en_mano)) % 3
+        if cant_cartas == 0:
             cant_cartas = 3
 
         for i in range(cant_cartas):
@@ -103,12 +102,11 @@ def repartir_cartas(game_id: int, db: Session) -> None:
     
     if len(cartas_fig_en_mano) < 3:
         
-        all_cards_fig = db.query(PictureCard).filter(PictureCard.partida_id == game_id).all()
-        cant_cartas = None
+        all_cards_fig = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
+                                                          PictureCard.estado == CardState.mazo)).all()
         
-        try:
-            cant_cartas = 3 % len(cartas_fig_en_mano)
-        except ZeroDivisionError:
+        cant_cartas = (3 - len(cartas_fig_en_mano)) % 3
+        if cant_cartas == 0:
             cant_cartas = 3
 
         for i in range(cant_cartas):
