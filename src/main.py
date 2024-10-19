@@ -18,13 +18,14 @@ from src.models.partida import Partida
 from src.models.utils import *
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
-from src.models.cartamovimiento import MovementCard
+from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.fichas_cajon import FichaCajon
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
+from src.game import GameManager, is_valid_move
 
 from src.models.patrones_figuras_matriz import generate_all_figures
 from src.game import GameManager
@@ -271,8 +272,8 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         while game_manager.is_tablero_parcial(game_id.game_id):
             mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
             mov = mov_coords [0]
-            coords = (Coords(x=mov_coords[1][0][0], y=mov_coords[1][0][1]),
-                      Coords(x=mov_coords[1][1][0], y=mov_coords[1][1][1]))
+            coords = (Coords(x_pos=mov_coords[1][0][0], y_pos=mov_coords[1][0][1]),
+                      Coords(x_pos=mov_coords[1][1][0], y_pos=mov_coords[1][1][1]))
 
             cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.desapilar_carta_y_ficha(game_id.game_id)
@@ -304,13 +305,15 @@ async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
     try:
-        id_mov_cards = list_mov_cards(player_id.player_id, db)
-
+        mov_cards = list_mov_cards(player_id.player_id, db)
+        mov_cards_list = []
+        for card in mov_cards:
+            mov_cards_list.append({"id": card.id, "move": card.movimiento.value})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-        content={"id_mov_card": id_mov_cards},
+        content={"mov_cards": mov_cards_list},
         status_code=status.HTTP_200_OK
     )
 
@@ -391,14 +394,14 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                                 detail=f'No existe la partida asociada a jugador: {playerAndGameId.player_id}')
         
         if jugador.turno != partida.jugador_en_turno:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f'No es el turno del jugador: {jugador.turno}, es de: {partida.jugador_en_turno}')
 
         mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=partida.id)
         if mov_coords is not None:
             mov = mov_coords [0]
-            coords = (Coords(x=mov_coords[1][0][0], y=mov_coords[1][0][1]),
-                      Coords(x=mov_coords[1][1][0], y=mov_coords[1][1][1]))
+            coords = (Coords(x_pos=mov_coords[1][0][0], y_pos=mov_coords[1][0][1]),
+                      Coords(x_pos=mov_coords[1][1][0], y_pos=mov_coords[1][1][1]))
             try:
                 cancelar_movimiento(partida=partida.id, jugador=jugador.id, mov=mov, coords=coords, db=db)
                 
@@ -411,11 +414,64 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                 db.rollback()
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
         else:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='No hay movimientos que deshacer')
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='No hay movimientos que deshacer')
         
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+
+@app.put("/game/use-mov-card", status_code= status.HTTP_200_OK)
+async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)):
+    """
+    Descripción: Este endpoint maneja la lógica de usar una carta de movimiento.
+
+    Respuesta:
+    - 200: Sin contenido en caso de que el movimiento sea válido.
+    - 400: Una request incorrecta con contenido: 
+            * "Movimiento invalido" en caso de que las fichas a swapear no coincidan
+              con el movimiento.
+            * "La carta no pertenece a la partida"
+            * "No es turno del jugador"
+            * "La carta no está en mano"
+            * "La carta no pertenece al jugador" 
+    - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
+    
+    Ejemplo de uso:
+    PUT /game/use-mov-card, con body:
+        {player_id: int
+        id_mov_card: int
+        fichas: [{x_pos: int, y_pos: int}]}
+    """
+
+    try:
+        jugador = get_Jugador(movementData.player_id, db)
+        movementCard = get_CartaMovimiento(movementData.id_mov_card, db)
+        game_id = jugador.partida_id
+        if game_id != movementCard.partida_id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
+        
+        id_jugador_en_turno = get_current_turn_player(game_id, db).id
+        if id_jugador_en_turno!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="No es turno del jugador")
+        
+        if movementCard.estado != CardStateMov.mano:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
+        
+        if movementCard.jugador_id!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
+        
+        coord = (movementData.fichas[0], movementData.fichas[1])
+        
+        if is_valid_move(movementCard, coord):
+            movimiento_parcial(game_id, movementCard, coord, db)
+            game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
+            await ws_manager.send_message_game_id(event.get_tablero, game_id)
+            await ws_manager.send_message_game_id(event.get_cartas_mov, game_id)
+        else:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")  
     
 
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)

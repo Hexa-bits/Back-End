@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.utils import Partida_config, Coords
+from src.models.utils import *
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
@@ -42,8 +42,8 @@ def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCaj
     if (tablero is not None):
         smt = select(FichaCajon).where (
                                         (FichaCajon.tablero_id == tablero.id) &     
-                                        (FichaCajon.y_pos == coords.y) & 
-                                        (FichaCajon.x_pos == coords.x)
+                                        (FichaCajon.y_pos == coords.y_pos) & 
+                                        (FichaCajon.x_pos == coords.x_pos)
         )
         return db.execute(smt).scalar()
     return None
@@ -122,6 +122,15 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         
     return tablero.id
 
+def movimiento_parcial(game_id: int, moveCard: MovementCard, coord: Tuple[Coords], db: Session) -> None:
+
+    swap_fichasCajon(game_id, coord, db)
+
+    moveCard.estado = CardStateMov.descartada
+    moveCard.jugador_id = None
+
+    db.commit()
+
 def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[List[Tuple[int, int]]]:
     """Función que retorna las figuras detectadas en el tablero que son válidas según los patrones dados y game_id"""
     lista_fichas = get_fichas(game_id, db)
@@ -160,6 +169,5 @@ def get_color_of_ficha( x_pos: int, y_pos: int, game_id: int, db: Session) -> Co
 
     if ficha:
         color = ficha.color
-
 
     return color

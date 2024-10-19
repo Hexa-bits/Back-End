@@ -25,9 +25,9 @@ client = TestClient(app)
 @patch("src.main.list_mov_cards")
 def test_get_mov_cards_endpoint_3cards(mock_list_movs):
     cards_mov = [
-        MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
-        MovementCard(movimiento=Move.linea_contiguo, estado=CardStateMov.mano),
-        MovementCard(movimiento=Move.linea_con_espacio, estado=CardStateMov.mano)
+        MovementCard(id=1, movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
+        MovementCard(id=2, movimiento=Move.linea_contiguo, estado=CardStateMov.mano),
+        MovementCard(id=3, movimiento=Move.linea_con_espacio, estado=CardStateMov.mano)
     ]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
@@ -37,19 +37,19 @@ def test_get_mov_cards_endpoint_3cards(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp["id_mov_card"]) == 3
-    assert json_resp ["id_mov_card"] == [
-                                        Move.diagonal_con_espacio.value,
-                                        Move.linea_contiguo.value,
-                                        Move.linea_con_espacio.value 
+    assert len(json_resp["mov_cards"]) == 3
+    assert json_resp ["mov_cards"] == [
+                                        {"id": 1, "move": Move.diagonal_con_espacio.value},
+                                        {"id": 2, "move": Move.linea_contiguo.value},
+                                        {"id": 3, "move": Move.linea_con_espacio.value} 
                                         ]
 
 
 @patch("src.main.list_mov_cards")
 def test_get_mov_cards_endpoint_2cards(mock_list_movs):
     cards_mov = [
-        MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
-        MovementCard(movimiento=Move.linea_contiguo, estado=CardStateMov.mano)
+        MovementCard(id=1, movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano),
+        MovementCard(id=2, movimiento=Move.linea_contiguo, estado=CardStateMov.mano)
     ]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
@@ -59,16 +59,16 @@ def test_get_mov_cards_endpoint_2cards(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_mov_card"]) == 2 
-    assert json_resp ["id_mov_card"] == [
-                                        Move.diagonal_con_espacio.value,
-                                        Move.linea_contiguo.value
+    assert len(json_resp ["mov_cards"]) == 2 
+    assert json_resp ["mov_cards"] == [
+                                        {"id": 1, "move": Move.diagonal_con_espacio.value},
+                                        {"id": 2, "move": Move.linea_contiguo.value} 
                                         ]
 
 
 @patch("src.main.list_mov_cards")
 def test_get_mov_cards_endpoint_1card(mock_list_movs):
-    cards_mov = [MovementCard(movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano)]
+    cards_mov = [MovementCard(id=1, movimiento=Move.diagonal_con_espacio, estado=CardStateMov.mano)]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_mov_cards(cards_mov)
 
@@ -77,8 +77,10 @@ def test_get_mov_cards_endpoint_1card(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_mov_card"]) == 1
-    assert json_resp ["id_mov_card"] == [Move.diagonal_con_espacio.value]
+    assert len(json_resp ["mov_cards"]) == 1
+    assert json_resp ["mov_cards"] == [
+                                        {"id": 1, "move": Move.diagonal_con_espacio.value}, 
+                                        ]
 
 
 def test_get_mov_enpoint_exception_list():

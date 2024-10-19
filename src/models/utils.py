@@ -44,13 +44,16 @@ class PlayerAndGameId(BaseModel):
     game_id: int = Field (..., gt=0)
     player_id: int = Field (..., gt=0)
 
-#Agrego este modelo por las dudas, para manipular el tablero de forma consistente, en caso
-# de considerarlo innescesario avisenme, se lo quito y trabajo con los indices de las tuplas
-# nomas. 
+
 class Coords(BaseModel):
     """
     Se usa para presentar las coordenas del tablero, las coordenas deben ser enteros entre
     1 y 36.
     """
-    x: int = Field (..., gt=0, lt=37)
-    y: int = Field (..., gt=0, lt=37)
+    x_pos: int = Field (..., gt=0, lt=37)
+    y_pos: int = Field (..., gt=0, lt=37)
+    
+class MovementData(BaseModel):
+    player_id: int = Field (..., gt=0)
+    id_mov_card: int = Field (..., gt=0)
+    fichas: tuple[Coords, Coords]

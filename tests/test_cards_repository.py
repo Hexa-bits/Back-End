@@ -29,7 +29,7 @@ def test_cancelar_movimiento_OK(mock_swap, movs_test):
     parametros adecuados.
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
+    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
     result = cancelar_movimiento(1, 1, 1, tupla_coords, movs_test)
     assert result is None, f'No devuelve None, sino {result}'
@@ -48,7 +48,7 @@ def test_cancelar_movimiento_not_in_db(mock_swap, movs_test):
     movimiento en la db.  
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
+    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento no existe en la partida"):
         cancelar_movimiento(1, 1, 0, tupla_coords, movs_test)
@@ -60,7 +60,7 @@ def test_cancelar_movimiento_mov_mano(mock_swap, movs_test):
     en mano.
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x=1, y=1), Coords(x=2, y=2))
+    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento esta en mano de alguien"):
         cancelar_movimiento(1, 1, 2, tupla_coords, movs_test)
