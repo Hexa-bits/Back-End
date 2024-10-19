@@ -32,36 +32,6 @@ def initial_fichas() -> tuple[FichaCajon, FichaCajon]:
         FichaCajon(id=2, x_pos=2, y_pos=2, color=Color.VERDE, tablero_id=1),
     )
 
-"""
-def test_movimiento_parcial(test_db):
-    partida = Partida(id=1, game_name = 'test_board')
-    game_id = partida.id
-    moveCard = MovementCard(id=1, estado=CardStateMov.mano)
-
-    tablero = Tablero(id=1, partida_id = 1)
-    fichacajon0 = FichaCajon(x_pos=1, y_pos=1, color=Color.ROJO, tablero_id=1)
-    fichacajon1 = FichaCajon(x_pos=2, y_pos=2, color=Color.AZUL, tablero_id=1)
-
-    test_db.add(tablero)
-    test_db.add(fichacajon0)
-    test_db.add(fichacajon1)
-    test_db.commit()
-
-    ficha0 = Ficha(x = 1, y_pos = 1)
-    ficha1 = Ficha(x = 2, y_pos = 2)
-    coord = (ficha0, ficha1)
-
-    movimiento_parcial(game_id, moveCard, coord, test_db)
-
-    ficha0_actualizada = test_db.query(FichaCajon).filter_by(x_pos=1, y_pos=1).first()
-    ficha1_actualizada = test_db.query(FichaCajon).filter_by(x_pos=2, y_pos=2).first()
-
-    assert ficha0_actualizada.color == Color.AZUL
-    assert ficha1_actualizada.color == Color.ROJO
-    assert moveCard.estado == CardStateMov.descartada
-    assert moveCard.jugador_id == None
-"""
-
 # Mock de la función get_fichas
 def mock_get_fichas(game_id, db):
     return [

@@ -128,6 +128,9 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
 
 @app.get("/")
 def read_root():
+    """
+    Verifica que el back este andando
+    """
     return {"mensaje": "¡Hola, FastAPI!"}
 
 
@@ -267,18 +270,18 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
-        jugador = get_current_turn_player(game_id.game_id)
-
+        jugador = get_current_turn_player(game_id.game_id, db)
+        
         while game_manager.is_tablero_parcial(game_id.game_id):
             mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
             mov = mov_coords [0]
-            coords = (Coords(x_pos=mov_coords[1][0][0], y_pos=mov_coords[1][0][1]),
-                      Coords(x_pos=mov_coords[1][1][0], y_pos=mov_coords[1][1][1]))
+            coords = (mov_coords [1][0], mov_coords [1][1])
 
             cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.desapilar_carta_y_ficha(game_id.game_id)
-
+        
         next_jugador = terminar_turno(game_id.game_id, db)
+        #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
@@ -353,9 +356,6 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             asignar_turnos(game_id.game_id, db)
             partida.partida_iniciada = True
             db.commit()
-
-            game_manager.create_game(game_id.game_id)
-            
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
 
             #Uso el game manager
@@ -375,8 +375,14 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 @app.put("/game/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
     """
-    Reestablece las últimas fichas cajon intercambiadas y devuelve la carta de 
-    movimiento descartada a la mano del jugador en turno.
+    Descripción: Maneja la lógica de cancelar movimiento.
+
+    Respuesta:
+    - 204: OK sin contenido en caso de que todo salga bien.
+    - 400: Una request donde no hay movimientos que deshacer o
+           no es el turno del jugador en cuestión.
+    - 404: La partida, el juego o la relacione entre ambos no existe.
+    - 500: Ocurre un error interno. 
     """
     try:
         jugador = get_Jugador(playerAndGameId.player_id, db)
@@ -400,15 +406,13 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
         mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=partida.id)
         if mov_coords is not None:
             mov = mov_coords [0]
-            coords = (Coords(x_pos=mov_coords[1][0][0], y_pos=mov_coords[1][0][1]),
-                      Coords(x_pos=mov_coords[1][1][0], y_pos=mov_coords[1][1][1]))
+            coords = (mov_coords [1][0], mov_coords [1][1])
             try:
                 cancelar_movimiento(partida=partida.id, jugador=jugador.id, mov=mov, coords=coords, db=db)
                 
                 await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
                 await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
 
-                #popeo cuando me aseguro que el se ha efectuado el efecto en la db
                 game_manager.desapilar_carta_y_ficha(game_id=jugador.id) 
             except Exception:
                 db.rollback()
@@ -450,8 +454,8 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
         if game_id != movementCard.partida_id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
         
-        id_jugador_en_turno = get_current_turn_player(game_id, db).id
-        if id_jugador_en_turno!=jugador.id:
+        jugador_en_turno = get_current_turn_player(game_id, db)
+        if jugador_en_turno.id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="No es turno del jugador")
         
         if movementCard.estado != CardStateMov.mano:

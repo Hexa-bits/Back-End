@@ -29,7 +29,7 @@ def get_current_turn_player(game_id: int, db: Session) -> Jugador:
     partida = get_Partida(game_id, db)
     if partida is not None:
         smt = select(Jugador).where(and_(
-                                        Jugador.id == game_id, 
+                                        Jugador.partida_id == game_id, 
                                         Jugador.turno == partida.jugador_en_turno
                                         )
                                     )

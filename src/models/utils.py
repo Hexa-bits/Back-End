@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 from pydantic import BaseModel, Field
 
 class Partida_config(BaseModel):
@@ -54,6 +54,10 @@ class Coords(BaseModel):
     y_pos: int = Field (..., gt=0, lt=37)
     
 class MovementData(BaseModel):
+    """
+    Se usa para representar la configuración necesaría para usar una carta de movimiento, el
+    jugador y el id de carta debe ser mayor a 0 y las fichas de tipo Coords (con sus limitaciones).
+    """
     player_id: int = Field (..., gt=0)
     id_mov_card: int = Field (..., gt=0)
-    fichas: tuple[Coords, Coords]
+    fichas: Tuple[Coords, Coords]

@@ -122,7 +122,8 @@ class GameManager:
         return self.games[game_id]['es_tablero_parcial']
 
 
-    def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, dupla_coords_ficha: tuple[tuple[int, int], tuple[int, int]]) -> None:
+    def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, 
+                            dupla_coords_ficha: tuple[int, tuple[Coords, Coords]]) -> None:
         """
         Apilar carta y par de fichas sirve para guardar cual fue el cambio parcial realizado
         Siempre me convierte el tablero en parcial
@@ -131,7 +132,7 @@ class GameManager:
         self.games[game_id]['cartas_y_fichas_usadas'].append((carta_mov_id, dupla_coords_ficha))
         self.games[game_id]['es_tablero_parcial'] = True
 
-    def desapilar_carta_y_ficha(self, game_id: int) -> tuple[tuple[int, int], tuple[int, int]]:
+    def desapilar_carta_y_ficha(self, game_id: int) -> tuple[int, tuple[Coords, Coords]]:
         """
         Desapilar carta y par de fichas sirve para deshacer el cambio parcial realizado
         Si el stack queda vacio, me convierte el tablero en real
@@ -150,7 +151,7 @@ class GameManager:
 
         return tupla_carta_fichas
     
-    def top_tupla_carta_y_fichas(self, game_id: int) -> tuple[tuple[int, int], tuple[int, int]]:
+    def top_tupla_carta_y_fichas(self, game_id: int) -> tuple[int, tuple[Coords, Coords]]:
         """
         Obtiene la ultima carta y par de fichas parciales que se jugaron
         Si no hay tableros parciales, devuelve None  

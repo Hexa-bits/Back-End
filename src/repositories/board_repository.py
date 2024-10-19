@@ -51,15 +51,19 @@ def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCaj
 def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
     """
     Swappea dos fichasCajon de acuerdo a sus coordenadas y juego.
-    Efectua el cambio en la transacción no persiste aún (necesita commit)
     """
     ficha1 = get_fichaCajon_coords(game_id, tupla_coords[0], db)
     ficha2 = get_fichaCajon_coords(game_id, tupla_coords[1], db)
-    
+
     if ficha1 is None or ficha2 is None:
         raise ValueError("Una o ambas fichasCajon no existe en la db")
-    
-    ficha1, ficha2 = ficha2, ficha1
+
+    ficha1.x_pos, ficha2.x_pos = ficha2.x_pos, ficha1.x_pos
+    ficha1.y_pos, ficha2.y_pos = ficha2.y_pos, ficha1.y_pos
+
+    ficha1.color, ficha2.color = ficha2.color, ficha1.color
+
+    db.commit()
 
 
 def get_tablero(game_id: int, db: Session) -> Tablero:
@@ -121,15 +125,6 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
         db.refresh(ficha)
         
     return tablero.id
-
-def movimiento_parcial(game_id: int, moveCard: MovementCard, coord: Tuple[Coords], db: Session) -> None:
-
-    swap_fichasCajon(game_id, coord, db)
-
-    moveCard.estado = CardStateMov.descartada
-    moveCard.jugador_id = None
-
-    db.commit()
 
 def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[List[Tuple[int, int]]]:
     """Función que retorna las figuras detectadas en el tablero que son válidas según los patrones dados y game_id"""

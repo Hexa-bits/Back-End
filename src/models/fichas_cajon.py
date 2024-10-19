@@ -29,8 +29,7 @@ class FichaCajon(Base):
     def __eq__(self, other):
         if not isinstance(other, FichaCajon):
             return False
-        return (self.id == other.id and
-                self.x_pos == other.x_pos and
+        return (self.x_pos == other.x_pos and
                 self.y_pos == other.y_pos and
                 self.color == other.color and
                 self.tablero_id == other.tablero_id)

@@ -159,15 +159,30 @@ def cancelar_movimiento(partida_id: int, jugador_id: int, mov_id: int,
     (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
     movimiento usada.
     """
-    with db.begin():
-        #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
-        swap_fichasCajon(partida_id, tupla_coords, db)        
-        carta_mov = get_cartaMovId(mov_id, db)
-        
-        if carta_mov is None:
-            raise ValueError("La carta de movimiento no existe en la partida")
-        elif carta_mov.estado == CardStateMov.mano:
-            raise ValueError("La carta de movimiento esta en mano de alguien")
-        
-        carta_mov.estado = CardStateMov.mano
-        carta_mov.jugador_id = jugador_id
+    #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
+    swap_fichasCajon(partida_id, tupla_coords, db)        
+    carta_mov = get_cartaMovId(mov_id, db)
+    
+    if carta_mov is None:
+        raise ValueError("La carta de movimiento no existe en la partida")
+    elif carta_mov.estado == CardStateMov.mano:
+        raise ValueError("La carta de movimiento esta en mano de alguien")
+    
+    carta_mov.estado = CardStateMov.mano
+    carta_mov.jugador_id = jugador_id
+    
+    db.commit()
+
+def movimiento_parcial(game_id: int, moveCard: MovementCard, 
+                       coord: tuple[Coords, Coords], db: Session) -> None:
+    """
+    Realiza movimiento en el tablero, intercambiando fichas cajon 
+    (usa swap_fichasCajon), y llevando la carta de movimiento usada al estado
+    de descartada.
+    """
+    swap_fichasCajon(game_id, coord, db)
+
+    moveCard.estado = CardStateMov.descartada
+    moveCard.jugador_id = None
+
+    db.commit()

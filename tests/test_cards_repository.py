@@ -64,3 +64,20 @@ def test_cancelar_movimiento_mov_mano(mock_swap, movs_test):
 
     with pytest.raises(ValueError, match="La carta de movimiento esta en mano de alguien"):
         cancelar_movimiento(1, 1, 2, tupla_coords, movs_test)
+
+@patch("src.repositories.cards_repository.swap_fichasCajon")
+def test_movimiento_parcial(mock_swap, movs_test):
+
+    mock_swap.return_value = None
+    
+    ficha0 = Coords(x_pos = 1, y_pos = 1)
+    ficha1 = Coords(x_pos = 2, y_pos = 2)
+    coord = (ficha0, ficha1)
+    moveCard = get_cartaMovId(1, movs_test)
+
+    assert moveCard is not None
+
+    movimiento_parcial(1, moveCard, coord, movs_test)
+
+    assert moveCard.estado == CardStateMov.descartada
+    assert moveCard.jugador_id == None
