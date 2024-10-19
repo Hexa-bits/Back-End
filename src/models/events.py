@@ -22,6 +22,10 @@ class Event:
     @property
     def get_tablero(self):
         return "Hay modificación de Tablero"
+
+    @property
+    def get_cartas_mov(self):
+        return "Actualizar cartas de movimientos"
     
     @property
     def start_partida(self):
