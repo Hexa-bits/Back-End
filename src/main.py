@@ -260,12 +260,15 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
     try:
-        id_fig_cards = list_fig_cards(player_id, db)
+        fig_cards = list_fig_cards(player_id, db)
+        fig_cards_list = []
+        for card in fig_cards:
+            fig_cards_list.append({"id": card.id, "figure": card.figura.value})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(    
-        content={"id_fig_card": id_fig_cards},
+        content={"fig_cards": fig_cards_list},
         status_code=status.HTTP_200_OK
     )
 

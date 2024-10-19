@@ -21,14 +21,10 @@ def get_CartaMovimiento(id_carta_movimiento: int, db: Session) -> MovementCard:
     smt = select(MovementCard).where(MovementCard.id == id_carta_movimiento)
     return db.execute(smt).scalar() 
 
-def list_fig_cards(player_id: int, db: Session) -> List[int]:
-    smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
-    cards = db.execute(smt).scalars().all()
-    res = []
-    for card in cards:
-        res.append(card.value)
-    return res 
-
+def list_fig_cards(player_id: int, db: Session) -> List[PictureCard]:
+    smt = select(PictureCard).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
+    return db.execute(smt).scalars().all()
+ 
 def list_mov_cards(player_id: int, db: Session) -> List[MovementCard]:
     smt = select(MovementCard).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
     return db.execute(smt).scalars().all()
