@@ -30,3 +30,7 @@ class MovementData(BaseModel):
     player_id: int
     id_mov_card: int
     fichas: List[Ficha]
+class FigureData(BaseModel):
+    player_id: int
+    id_fig_card: int
+    figura: List[Ficha]

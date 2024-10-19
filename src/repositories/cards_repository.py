@@ -86,6 +86,13 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
 
     db.commit()
 
+def descartar_carta_figura(id: int, db: Session) -> None:
+    card = get_CartaFigura(id, db)
+    card.partida_id = None
+    card.jugador_id = None
+    db.delete(card)
+    db.commit()
+
 def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
     figs = get_cartasFigura_player(jugador.id, db)
     for fig in figs:
