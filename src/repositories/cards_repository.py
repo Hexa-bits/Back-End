@@ -89,9 +89,7 @@ def repartir_cartas(game_id: int, db: Session) -> None:
         all_cards_mov = db.query(MovementCard).filter(and_(MovementCard.partida_id == game_id,
                                                            MovementCard.estado == CardStateMov.mazo)).all()
         
-        cant_cartas = (3 - len(cartas_mov_en_mano)) % 3
-        if cant_cartas == 0:
-            cant_cartas = 3
+        cant_cartas = 3 - len(cartas_mov_en_mano)
 
         for i in range(cant_cartas):
             carta = all_cards_mov.pop()
@@ -105,9 +103,7 @@ def repartir_cartas(game_id: int, db: Session) -> None:
         all_cards_fig = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
                                                           PictureCard.estado == CardState.mazo)).all()
         
-        cant_cartas = (3 - len(cartas_fig_en_mano)) % 3
-        if cant_cartas == 0:
-            cant_cartas = 3
+        cant_cartas = 3 - len(cartas_fig_en_mano)
 
         for i in range(cant_cartas):
             carta = all_cards_fig.pop()
