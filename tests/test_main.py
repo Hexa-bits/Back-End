@@ -143,6 +143,91 @@ def test_use_mov_card_error():
                             assert response.json() == {'detail': "Fallo en la base de datos"}
                             game_manager_mock.apilar_carta_y_ficha.assert_not_called()
 
+@patch("src.main.game_manager")
+@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
+@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                                             partida_id=1, jugador_id=1))
+@patch('src.main.get_jugador_en_turno')
+@patch('src.main.descartar_carta_figura', side_effect = None)
+def test_use_picture_card(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
+                          mock_get_jugador, mock_game_manager):
+    
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 200
+    mock_game_manager.limpiar_cartas_fichas.assert_called_once()
+
+@patch("src.main.game_manager")
+@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
+@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura12,
+                                                             partida_id=1, jugador_id=1))
+@patch('src.main.get_jugador_en_turno')
+@patch('src.main.descartar_carta_figura')
+def test_use_picture_card_invalid_card(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
+                                          mock_get_jugador, mock_game_manager):
+
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'Figura invalida'}
+    mock_game_manager.limpiar_cartas_fichas.assert_not_called()
+
+@patch("src.main.game_manager")
+@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
+@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                                             partida_id=2))
+@patch('src.main.get_jugador_en_turno')
+@patch('src.main.descartar_carta_figura')
+def test_use_picture_card_400_status_code(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
+                                          mock_get_jugador, mock_game_manager):
+    
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'La carta no pertenece a la partida'}
+
+    mock_get_carta.return_value.partida_id = 1
+    mock_get_carta.return_value.jugador_id = 1
+
+    mock_get_jugador_turno.return_value = Jugador(id=2, partida_id= 1)
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'No es turno del jugador'}
+    
+    mock_get_jugador.return_value = mock_get_jugador_turno.return_value
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'La carta no pertenece al jugador'}
+    mock_game_manager.limpiar_cartas_fichas.assert_not_called()
+
+@patch("src.main.get_Jugador", side_effect = SQLAlchemyError)
+def test_use_picture_card_error(mock_get_jugador):
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+
+    assert response.status_code == 500
+    assert response.json() == {'detail': 'Fallo en la base de datos'}
+
 @pytest.mark.asyncio
 @patch("src.main.get_valid_detected_figures")
 @patch("src.main.get_color_of_ficha")
