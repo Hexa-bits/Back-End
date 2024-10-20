@@ -12,10 +12,20 @@ def generate_all_figures() -> list[np.ndarray]:
     """Proceso que genera las 100 rotaciones de figuras posibles para detectar en la matriz"""
 
     #Generamos todas las figuras rotadas posibles (100 en total)
-
-    figures_list = []
-
     #Primero agregamos las figuras sin rotar (25 figuras)
+    figures_list = pictureCardsFigures()
+
+    all_figures = []
+
+    #Agregamos todas las rotaciones posibles de las figuras
+
+    for figure in figures_list:
+        all_figures.extend(generar_rotaciones(figure))
+        
+    return all_figures
+
+def pictureCardsFigures() -> list[np.ndarray]:
+    figures_list = []
 
     # 18 FIGURAS DIFICILES
     fig01 = [
@@ -178,11 +188,4 @@ def generate_all_figures() -> list[np.ndarray]:
     ]
     figures_list.append(fig25)
 
-    all_figures = []
-
-    #Agregamos todas las rotaciones posibles de las figuras
-
-    for figure in figures_list:
-        all_figures.extend(generar_rotaciones(figure))
-        
-    return all_figures
+    return figures_list

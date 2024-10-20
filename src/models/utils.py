@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 from pydantic import BaseModel, Field
 
 class Partida_config(BaseModel):
@@ -61,3 +61,8 @@ class MovementData(BaseModel):
     player_id: int = Field (..., gt=0)
     id_mov_card: int = Field (..., gt=0)
     fichas: Tuple[Coords, Coords]
+
+class FigureData(BaseModel):
+    player_id: int
+    id_fig_card: int
+    figura: List[Coords]

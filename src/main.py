@@ -20,12 +20,13 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.fichas_cajon import FichaCajon
+from src.models.utils import *
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-from src.game import GameManager, is_valid_move
+from src.game import *
 
 from src.models.patrones_figuras_matriz import generate_all_figures
 from src.game import GameManager
@@ -301,14 +302,17 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
-async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
+async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
     try:
-        id_fig_cards = list_fig_cards(player_id.player_id, db)
+        fig_cards = list_fig_cards(player_id.player_id, db)
+        fig_cards_list = []
+        for card in fig_cards:
+            fig_cards_list.append({"id": card.id, "fig": card.figura.value})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-    return JSONResponse (    
-        content={"id_fig_card": id_fig_cards},
+    return JSONResponse(    
+        content={"fig_cards": fig_cards_list},
         status_code=status.HTTP_200_OK
     )
 
@@ -485,7 +489,57 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")  
+
+
+@app.put("/game/use-fig-card", status_code= status.HTTP_200_OK)
+async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
+    """
+    Descripción: Este endpoint maneja la lógica de descartarse una carta de figura.
+
+    Respuesta:
+    - 200: Sin contenido en caso de que el movimiento sea válido.
+    - 400: Una request incorrecta con contenido: 
+            * "Figura invalida" en caso de que la figura a matchear no coincida
+              con la figura de la carta.
+            * "La carta no pertenece a la partida"
+            * "No es turno del jugador"
+            * "La carta no está en mano"
+            * "La carta no pertenece al jugador" 
+    - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
     
+    Ejemplo de uso:
+    PUT /game/use-fig-card, con body:
+        {player_id: int
+        id_fig_card: int
+        figura: [{x_pos: int, y_pos: int}]}
+    """
+
+    try:
+        jugador = get_Jugador(figureData.player_id, db)
+        pictureCard = get_CartaFigura(figureData.id_fig_card, db)
+        game_id = jugador.partida_id
+        if game_id != pictureCard.partida_id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
+        
+        id_jugador_en_turno = get_current_turn_player(game_id, db).id
+        if id_jugador_en_turno!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="No es turno del jugador")
+        
+        if pictureCard.estado != CardState.mano:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
+        
+        if pictureCard.jugador_id!=jugador.id:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
+        
+        if is_valid_picture_card(pictureCard, figureData.figura):
+            descartar_carta_figura(pictureCard.id, db)
+            game_manager.limpiar_cartas_fichas(game_id)
+            await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
+        else:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")   
 
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):

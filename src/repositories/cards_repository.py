@@ -26,17 +26,10 @@ def get_CartaMovimiento(id_carta_movimiento: int, db: Session) -> MovementCard:
     smt = select(MovementCard).where(MovementCard.id == id_carta_movimiento)
     return db.execute(smt).scalar() 
 
-def list_fig_cards(player_id: int, db: Session) -> List[int]:
-    """
-    Lista el tipo de cartas de figura en mano de un jugador  
-    """
-    smt = select(PictureCard.figura).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
-    cards = db.execute(smt).scalars().all()
-    res = []
-    for card in cards:
-        res.append(card.value)
-    return res 
-
+def list_fig_cards(player_id: int, db: Session) -> List[PictureCard]:
+    smt = select(PictureCard).where(and_(PictureCard.jugador_id == player_id, PictureCard.estado == CardState.mano))
+    return db.execute(smt).scalars().all()
+ 
 def list_mov_cards(player_id: int, db: Session) -> List[MovementCard]:
     """
     Lista el tipo de cartas de figura en mano de un jugador  
@@ -147,6 +140,12 @@ def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session)
 
     db.commit()
 
+def descartar_carta_figura(id: int, db: Session) -> None:
+    card = get_CartaFigura(id, db)
+    card.partida_id = None
+    card.jugador_id = None
+    db.delete(card)
+    db.commit()
 
 def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
     figs = get_cartasFigura_player(jugador.id, db)

@@ -32,6 +32,10 @@ class Event:
         return "Actualizar cartas de movimientos"
     
     @property
+    def get_cartas_fig(self):
+        return "Actualizar cartas de figuras"
+    
+    @property
     def start_partida(self):
         return "La partida inició"
     

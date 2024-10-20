@@ -6,6 +6,7 @@ from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
 from src.models.utils import *
+from src.models.patrones_figuras_matriz import pictureCardsFigures, generar_rotaciones
 from pydantic import BaseModel
 from typing import List, Dict, Tuple, Any
 from typing import List, Tuple
@@ -224,4 +225,38 @@ def is_valid_move(movementCard: MovementCard, coords: Tuple[Coords]) -> bool:
             return ( ((distancia_y == 1 and distancia_x == 2) and (distancia_entre_fichas_ejeY<0)) #<-- Idem pero al contrario
                     or ((distancia_y == 2 and distancia_x == 1) and distancia_entre_fichas_ejeY>0) )   #es como que "vas para adelante"             
                  
+    return False
+
+
+def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> bool:
+    """
+    Devuelve un booleano que indica si la figura de la carta coincide con la figura formada dada por las coordenadas
+    en el tablero.
+    """
+    fig_value = pictureCard.figura.value
+    figures = pictureCardsFigures()
+    figure = figures[fig_value - 1]
+    
+    max_x = max(coords, key=lambda coord: coord.x_pos).x_pos
+    min_x = min(coords, key=lambda coord: coord.x_pos).x_pos
+    max_y = max(coords, key=lambda coord: coord.y_pos).y_pos
+    min_y = min(coords, key=lambda coord: coord.y_pos).y_pos
+
+    filas = max_x - min_x + 1
+    columnas = max_y - min_y + 1
+
+    matriz = np.zeros((6,6))
+    for ficha in coords:
+        x = ficha.x_pos
+        y = ficha.y_pos
+        matriz[x-1][y-1] = 1
+    
+    submatriz = matriz[min_x-1 : min_x-1 + filas, min_y-1 : min_y-1 + columnas]
+    
+    figure_rotations = generar_rotaciones(figure)
+
+    for fig in figure_rotations:
+        if np.array_equal(fig, submatriz):
+            return True
+        
     return False
