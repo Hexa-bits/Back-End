@@ -279,6 +279,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
             cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.desapilar_carta_y_ficha(game_id.game_id)
+            await ws_manager.send_message_game_id(event.get_tablero, game_id.game_id)
         
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
@@ -408,21 +409,22 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
             try:
-                cancelar_movimiento(partida=partida.id, jugador=jugador.id, mov=mov, coords=coords, db=db)
+                cancelar_movimiento(partida.id, jugador.id, mov, coords, db)
                 
-                await ws_manager.send_message_game_id(event.get_tablero, jugador.id)
-                await ws_manager.send_message_game_id(event.get_movimientos, jugador.id)
+                await ws_manager.send_message_game_id(event.get_tablero, partida.id)
+                await ws_manager.send_message_game_id(event.get_movimientos, partida.id)
 
-                game_manager.desapilar_carta_y_ficha(game_id=jugador.id) 
+                game_manager.desapilar_carta_y_ficha(game_id=partida.id) 
             except Exception:
                 db.rollback()
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
+                                    detail="Fallo en la base de datos")
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail='No hay movimientos que deshacer')
         
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='Fallo en la base de datos')
 
 @app.put("/game/use-mov-card", status_code= status.HTTP_200_OK)
 async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)):

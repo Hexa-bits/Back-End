@@ -246,11 +246,8 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
     mock_get_partida.assert_called_once_with(1, ANY)
     mock_get_jugador.assert_called_once_with(1, ANY)
     mock_manager.top_tupla_carta_y_fichas.assert_called_once_with(game_id=1)
-    mock_cancel_movimiento.assert_called_with (partida=mock_partida.id,
-                                              jugador=mock_jugador.id, 
-                                              mov=1,
-                                              coords=(coord1, coord2), 
-                                              db=ANY)
+    mock_cancel_movimiento.assert_called_with (mock_partida.id, mock_jugador.id, 
+                                              1, (coord1, coord2), ANY)
     mock_manager.desapilar_carta_y_ficha.assert_called_once_with(game_id=1)
 
     assert response.status_code == 204
