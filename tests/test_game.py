@@ -1,6 +1,12 @@
 import numpy as np
 import pytest
-from src.game import detectar_patrones, figura_valida, separar_matrices_por_color
+from unittest.mock import MagicMock 
+from src.models.partida import Partida
+from src.models.jugadores import Jugador
+from src.models.cartafigura import PictureCard, CardState, Picture
+from src.models.inputs_front import Ficha
+from typing import List
+from src.game import detectar_patrones, figura_valida, separar_matrices_por_color, is_valid_picture_card
 
 def test_detectar_patrones_sin_patrones():
     matriz = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
@@ -50,6 +56,46 @@ def test_separar_matrices_por_color_sin_color():
     resultado_esperado = [np.zeros((2, 2))]
     matrices_resultantes = separar_matrices_por_color(matriz, lista_colores)
     assert np.array_equal(matrices_resultantes[0], resultado_esperado[0])
+
+def test_is_valid_picture_card():
+    cartaFigura = MagicMock()
+    cartaFigura.return_value = PictureCard(figura= Picture.figura12)
+
+    fichas = [Ficha(x_pos= 2, y_pos= 2), Ficha(x_pos= 3, y_pos= 2), Ficha(x_pos= 3, y_pos= 3), 
+              Ficha(x_pos= 3, y_pos= 4), Ficha(x_pos= 4, y_pos= 4)]
+
+    assert is_valid_picture_card(cartaFigura.return_value, fichas) == True
+
+    cartaFigura.return_value = PictureCard(figura= Picture.figura10)
+
+    fichas = [Ficha(x_pos= 1, y_pos= 6), Ficha(x_pos= 2, y_pos= 6), Ficha(x_pos= 2, y_pos= 5), 
+              Ficha(x_pos= 2, y_pos= 4), Ficha(x_pos= 3, y_pos= 4)]
+    
+    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+
+    cartaFigura.return_value = PictureCard(figura= Picture.figura10)
+
+    fichas = [Ficha(x_pos= 4, y_pos= 4), Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+              Ficha(x_pos= 6, y_pos= 5), Ficha(x_pos= 6, y_pos= 6)]
+    
+    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+
+    cartaFigura.return_value = PictureCard(figura= Picture.figura14)
+
+    fichas = [Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 3), Ficha(x_pos= 5, y_pos= 4),      #Figura 14 rotada 2 veces 
+              Ficha(x_pos= 5, y_pos= 5), Ficha(x_pos= 5, y_pos= 6)]
+    
+    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+
+    fichas = [Ficha(x_pos= 1, y_pos= 6), Ficha(x_pos= 2, y_pos= 6), Ficha(x_pos= 2, y_pos= 5),      #Figura 10 con carta
+              Ficha(x_pos= 2, y_pos= 4), Ficha(x_pos= 3, y_pos= 4)]                                 #Figura 14
+    
+    assert ~is_valid_picture_card(cartaFigura.return_value, fichas)
+
+    fichas = [Ficha(x_pos= 4, y_pos= 4), Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+              Ficha(x_pos= 6, y_pos= 5), Ficha(x_pos= 6, y_pos= 6)]                                 #con carta Figura 14
+ 
+    assert ~is_valid_picture_card(cartaFigura.return_value, fichas)
 
 if __name__ == "__main__":
     pytest.main()

@@ -232,16 +232,18 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Ficha]) -> bool
     filas = max_x - min_x + 1
     columnas = max_y - min_y + 1
 
-    matriz = np.zeros((filas,columnas))
+    matriz = np.zeros((6,6))
     for ficha in coords:
         x = ficha.x_pos
         y = ficha.y_pos
         matriz[x-1][y-1] = 1
-
+    
+    submatriz = matriz[min_x-1 : min_x-1 + filas, min_y-1 : min_y-1 + columnas]
+    
     figure_rotations = generar_rotaciones(figure)
 
     for fig in figure_rotations:
-        if np.array_equal(fig, matriz):
+        if np.array_equal(fig, submatriz):
             return True
         
     return False
