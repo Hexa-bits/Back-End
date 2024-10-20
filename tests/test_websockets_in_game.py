@@ -92,7 +92,6 @@ async def test_websocket_broadcast_ganador(client):
         MagicMock(id=1, nombre="testloser", partida_id= 1),
         MagicMock(id=2, nombre="testwinner", partida_id= 1)
     ]
-
     
     with client.websocket_connect("/game?game_id=1") as websocket2:
         with client.websocket_connect("/game?game_id=1") as websocket1:
@@ -114,7 +113,8 @@ async def test_websocket_broadcast_ganador(client):
         assert len(ws_manager.active_connections.get(1)) == 1
 
         #A esta altura por el side effect jugadores mock es una lista solo con el player_id = 2
-        with patch('src.main.get_jugadores', return_value = jugadores_mock):
+        with patch('src.main.get_jugadores', return_value = jugadores_mock), \
+             patch('src.main.get_jugador_sin_cartas', return_value = None):
             response = client.get("/game/get-winner?game_id=1")
             assert response.json() == {"name_player": "testwinner"}
 

@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 from src.main import app, lista_patrones
-from sqlalchemy.exc import SQLAlchemyError
-from unittest.mock import MagicMock, patch
+from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
+from unittest.mock import MagicMock, patch, ANY
 from sqlalchemy.orm import Session
 from src.models.partida import Partida
 from src.models.inputs_front import *
@@ -203,3 +203,121 @@ async def test_highlight_figures_db_error(mock_get_db, mock_get_valid_detected_f
     # Verificar el contenido del mensaje de error
     assert response.json() == {"detail": "Error al obtener las figuras"}
 
+
+@patch("src.main.get_jugador_sin_cartas")
+@patch("src.main.get_jugadores")
+@patch("src.main.get_db")
+def test_get_winner_OK_sin_cartas(mock_get_db, mock_get_jugadores, 
+                                 mock_get_jugador_sin_cartas):
+    
+    mock_get_db.return_value = MagicMock(spec=Session)
+
+    game_id = 1
+    jugadores_mock = [
+                      MagicMock(id=1, nombre="testwinner", partida_id=1),
+                      MagicMock(id=2, nombre="testlosser", partida_id=1)
+                     ]
+
+    mock_get_jugadores.return_value = jugadores_mock
+    mock_get_jugador_sin_cartas.return_value = jugadores_mock[0]
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_jugadores.assert_called_once_with(game_id, ANY)
+    mock_get_jugador_sin_cartas.assert_called_once_with(game_id, ANY)
+    assert response.status_code == 200
+    assert response.json() == {"name_player": "testwinner"}
+
+
+@patch("src.main.get_jugador_sin_cartas")
+@patch("src.main.get_jugadores")
+@patch("src.main.get_db")
+def test_get_winner_OK_abandonar(mock_get_db, mock_get_jugadores, 
+                                 mock_get_jugador_sin_cartas):
+    
+    mock_get_db.return_value = MagicMock(spec=Session)
+
+    game_id = 1
+    jugadores_mock = [MagicMock(id=1, nombre="testwinner", partida_id=1)]
+
+    mock_get_jugadores.return_value = jugadores_mock
+    mock_get_jugador_sin_cartas.return_value = None
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_jugadores.assert_called_once_with(game_id, ANY)
+    mock_get_jugador_sin_cartas.assert_called_once_with(game_id, ANY)
+    assert response.status_code == 200
+    assert response.json() == {"name_player": "testwinner"}
+
+
+@patch("src.main.get_jugador_sin_cartas")
+@patch("src.main.get_jugadores")
+@patch("src.main.get_db")
+def test_except_winner_abandonar(mock_get_db, mock_get_jugadores, 
+                                mock_get_jugador_sin_cartas):
+    
+    mock_get_db.return_value = MagicMock(spec=Session)
+    
+    game_id = 1
+
+    mock_get_jugador_sin_cartas.return_value = None
+    mock_get_jugadores.side_effect = SQLAlchemyError()
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_jugadores.assert_called_once_with(game_id, ANY)
+    mock_get_jugador_sin_cartas.assert_not_called()
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Fallo en la base de datos"}
+
+
+@patch("src.main.get_jugador_sin_cartas")
+@patch("src.main.get_jugadores")
+@patch("src.main.get_db")
+def test_except_winner_sin_cartas(mock_get_db, mock_get_jugadores, 
+                                mock_get_jugador_sin_cartas):
+    
+    mock_get_db.return_value = MagicMock(spec=Session)
+    
+    game_id = 1
+    jugadores_mock = [
+                      MagicMock(id=1, nombre="testlosser", partida_id=1),
+                      MagicMock(id=2, nombre="testlosser", partida_id=1)
+                     ]
+
+    mock_get_jugadores.return_value = jugadores_mock
+    #Encuentra más de uno (.one garantiza esto y arroja excep)
+    mock_get_jugador_sin_cartas.side_effect = MultipleResultsFound()
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_jugadores.assert_called_once_with(game_id, ANY)
+    mock_get_jugador_sin_cartas.assert_called_once_with(game_id, ANY)
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Fallo en la base de datos"}
+
+
+@patch("src.main.get_jugador_sin_cartas")
+@patch("src.main.get_jugadores")
+@patch("src.main.get_db")
+def test_winner_BAD_request(mock_get_db, mock_get_jugadores, 
+                            mock_get_jugador_sin_cartas):
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    
+    game_id = 1
+    jugadores_mock = [
+                        MagicMock(id=1, nombre="testlosser1", partida_id=1),
+                        MagicMock(id=2, nombre="testlosser2", partida_id=1)
+                     ]
+    
+    mock_get_jugadores.return_value = jugadores_mock
+    mock_get_jugador_sin_cartas.return_value = None
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_jugadores.assert_called_once_with(game_id, ANY)
+    mock_get_jugador_sin_cartas.assert_called_once_with(game_id, ANY)
+    assert response.status_code == 400
+    assert response.json() == {"detail": f"No hay ganador aún en partida: {game_id}"}

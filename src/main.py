@@ -189,8 +189,8 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
-            if len(get_jugadores(partida.id, db)) == 1:
-                #Mando ws
+            
+            if (len(get_jugadores(game_id, db)) == 1):
                 await ws_manager.send_message_game_id(event.get_winner, partida.id)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
@@ -288,15 +288,28 @@ async def get_mov_card(player_id: int, db: Session = Depends(get_db)):
 
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: int, db: Session = Depends(get_db)):
+    """
+
+    """
     try:
-        winner = get_jugadores(game_id, db)[0]
+        # A como estaba antes era demasiado inseguro, cualquiera de conociera el endpoint podía ganar automaticamente.
+        winner = None        
+        jugadores = get_jugadores(game_id, db)
+        jugador_sin_cartas = get_jugador_sin_cartas(game_id, db)
+        
+        if len(jugadores) == 1:
+            winner = jugadores[0]
+        elif jugador_sin_cartas is not None:
+            winner = jugador_sin_cartas
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"No hay ganador aún en partida: {game_id}")
   
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(
-                content= {"name_player": winner.nombre}
-            )
+        content= {"name_player": winner.nombre}
+    )
     
 
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
