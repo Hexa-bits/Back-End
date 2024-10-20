@@ -45,7 +45,8 @@ def test_terminar_turno_succesful(test_db, client):
     with patch("src.main.get_db"), \
          patch("src.main.get_current_turn_player"), \
          patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
-         patch("src.main.terminar_turno") as mock_terminar_turno:
+         patch("src.main.terminar_turno") as mock_terminar_turno, \
+         patch("src.main.repartir_cartas", return_value= None):
         
         mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
