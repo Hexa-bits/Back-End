@@ -269,8 +269,15 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
 
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
+    """
+        Descripción: Endpoint que maneja la lógica de pasar el turno. Recibe el id del juego
+        del cual se pasa el turno.
+        Respuesta:
+        - 200: Diccionario con el jugador del turno siguiente.
+        - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
+    """
+    
     try:
-        repartir_cartas(game_id.game_id, db)
         jugador = get_current_turn_player(game_id.game_id, db)
         
         while game_manager.is_tablero_parcial(game_id.game_id):
@@ -281,6 +288,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
             cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.desapilar_carta_y_ficha(game_id.game_id)
         
+        repartir_cartas(game_id.game_id, db)
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
