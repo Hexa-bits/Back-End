@@ -6,15 +6,65 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import *
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-
 from src.game import detectar_patrones, figura_valida, separar_matrices_por_color
+
+def get_tablero(game_id: int, db: Session) -> Tablero:
+    """
+    Devuelve el tablero ó None si algo sale mal
+    """
+    smt = select(Tablero).where(Tablero.partida_id == game_id)
+    return db.execute(smt).scalar()
+
+
+def get_fichasCajon(game_id: int, db: Session) -> List[FichaCajon]:
+    """
+    Devuelve las fichsaCajon de un juego ó None si algo sale mal
+    """
+    tablero = get_tablero(game_id, db)
+    if (tablero is not None):
+        smt = select(FichaCajon).where(FichaCajon.tablero_id == tablero.id)
+        return db.execute(smt).scalars().all()
+    return None
+
+
+def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCajon:
+    """
+    Devuelve la fichaCajon por sus coordenadas ó None si algo sale mal
+    """
+    tablero = get_tablero(game_id, db)
+    if (tablero is not None):
+        smt = select(FichaCajon).where (
+                                        (FichaCajon.tablero_id == tablero.id) &     
+                                        (FichaCajon.y_pos == coords.y_pos) & 
+                                        (FichaCajon.x_pos == coords.x_pos)
+        )
+        return db.execute(smt).scalar()
+    return None
+
+def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+    """
+    Swappea dos fichasCajon de acuerdo a sus coordenadas y juego.
+    """
+    ficha1 = get_fichaCajon_coords(game_id, tupla_coords[0], db)
+    ficha2 = get_fichaCajon_coords(game_id, tupla_coords[1], db)
+
+    if ficha1 is None or ficha2 is None:
+        raise ValueError("Una o ambas fichasCajon no existe en la db")
+
+    ficha1.x_pos, ficha2.x_pos = ficha2.x_pos, ficha1.x_pos
+    ficha1.y_pos, ficha2.y_pos = ficha2.y_pos, ficha1.y_pos
+
+    ficha1.color, ficha2.color = ficha2.color, ficha1.color
+
+    db.commit()
+
 
 def get_tablero(game_id: int, db: Session) -> Tablero:
     """Función que retorna el tablero de una partida"""
@@ -114,6 +164,5 @@ def get_color_of_ficha( x_pos: int, y_pos: int, game_id: int, db: Session) -> Co
 
     if ficha:
         color = ficha.color
-
 
     return color

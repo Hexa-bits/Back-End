@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
@@ -25,6 +25,16 @@ def get_Jugador(id: int, db: Session) -> Jugador:
 def get_jugadores(game_id: int, db: Session) -> List[Jugador]:
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
+def get_current_turn_player(game_id: int, db: Session) -> Jugador:
+    partida = get_Partida(game_id, db)
+    if partida is not None:
+        smt = select(Jugador).where(and_(
+                                        Jugador.partida_id == game_id, 
+                                        Jugador.turno == partida.jugador_en_turno
+                                        )
+                                    )
+        return db.execute(smt).scalar()
+    return None
 
 def add_player(nombre: str, anfitrion: bool, db: Session) -> Jugador:
     jugador = Jugador(nombre= nombre, es_anfitrion= anfitrion)
