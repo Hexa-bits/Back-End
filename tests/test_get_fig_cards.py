@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from .test_helpers import *
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard, Move 
 from src.models.cartafigura import PictureCard
