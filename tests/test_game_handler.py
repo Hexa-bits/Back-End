@@ -1,12 +1,11 @@
 from unittest.mock import patch, MagicMock
-
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
-from src.models.inputs_front import *
+from src.models.utils import *
 from src.game import GameManager, is_valid_move
     
 def test_create_game():
@@ -84,34 +83,34 @@ def test_valid_mov():
     mock_right_L_card.return_value = MovementCard(movimiento = Move.L_derecha)
     mock_left_L_card.return_value = MovementCard(movimiento = Move.L_izquierda)
 
-    assert False == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=2, y_pos=1), Ficha(x_pos=3, y_pos=1)))
-    assert False == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=2, y_pos=2), Ficha(x_pos=2, y_pos=5)))
-    assert False == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=2, y_pos=1), Ficha(x_pos=3, y_pos=2)))
+    assert False == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=2, y_pos=1), Coords(x_pos=3, y_pos=1)))
+    assert False == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=2, y_pos=2), Coords(x_pos=2, y_pos=5)))
+    assert False == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=2, y_pos=1), Coords(x_pos=3, y_pos=2)))
 
-    assert True == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=2, y_pos=2), Ficha(x_pos=2, y_pos=6)))
-    assert True == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=5, y_pos=1), Ficha(x_pos=6, y_pos=1)))
-    assert True == is_valid_move(mock_line_to_side_card.return_value, (Ficha(x_pos=1, y_pos=1), Ficha(x_pos=1, y_pos=6)))
+    assert True == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=2, y_pos=2), Coords(x_pos=2, y_pos=6)))
+    assert True == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=5, y_pos=1), Coords(x_pos=6, y_pos=1)))
+    assert True == is_valid_move(mock_line_to_side_card.return_value, (Coords(x_pos=1, y_pos=1), Coords(x_pos=1, y_pos=6)))
 
-    ficha3_3 = Ficha(x_pos=3, y_pos=3)
-    ficha4_1 = Ficha(x_pos=4, y_pos=1)
+    ficha3_3 = Coords(x_pos=3, y_pos=3)
+    ficha4_1 = Coords(x_pos=4, y_pos=1)
     assert False == is_valid_move(mock_left_L_card.return_value, (ficha3_3, ficha4_1))
     assert True == is_valid_move(mock_right_L_card.return_value, (ficha3_3, ficha4_1))
 
-    ficha5_4 = Ficha(x_pos=5, y_pos=4)
+    ficha5_4 = Coords(x_pos=5, y_pos=4)
     assert False == is_valid_move(mock_left_L_card.return_value, (ficha3_3, ficha5_4))
     assert True == is_valid_move(mock_right_L_card.return_value, (ficha3_3, ficha5_4))
     
-    ficha3_5 = Ficha(x_pos=3, y_pos=5)
-    ficha1_6 = Ficha(x_pos=1, y_pos=6)
+    ficha3_5 = Coords(x_pos=3, y_pos=5)
+    ficha1_6 = Coords(x_pos=1, y_pos=6)
     assert False == is_valid_move(mock_right_L_card.return_value, (ficha3_5, ficha1_6))
     assert True == is_valid_move(mock_left_L_card.return_value, (ficha3_5, ficha1_6))
 
-    ficha5_6 = Ficha(x_pos=5, y_pos=6)
-    ficha4_4 = Ficha(x_pos=4, y_pos=4)
+    ficha5_6 = Coords(x_pos=5, y_pos=6)
+    ficha4_4 = Coords(x_pos=4, y_pos=4)
     assert False == is_valid_move(mock_right_L_card.return_value, (ficha5_6, ficha4_4))
     assert True == is_valid_move(mock_left_L_card.return_value, (ficha5_6, ficha4_4))
 
-    assert False == is_valid_move(mock_right_L_card.return_value, (ficha3_3, Ficha(x_pos=2, y_pos=2)))
-    assert False == is_valid_move(mock_left_L_card.return_value, (ficha3_3, Ficha(x_pos=3, y_pos=2)))
+    assert False == is_valid_move(mock_right_L_card.return_value, (ficha3_3, Coords(x_pos=2, y_pos=2)))
+    assert False == is_valid_move(mock_left_L_card.return_value, (ficha3_3, Coords(x_pos=3, y_pos=2)))
 
     

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 from src.models.partida import Partida
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
-from src.models.inputs_front import Ficha
+from src.models.utils import Coords
 from typing import List
 from src.game import detectar_patrones, figura_valida, separar_matrices_por_color, is_valid_picture_card
 
@@ -61,41 +61,41 @@ def test_is_valid_picture_card():
     cartaFigura = MagicMock()
     cartaFigura.return_value = PictureCard(figura= Picture.figura12)
 
-    fichas = [Ficha(x_pos= 2, y_pos= 2), Ficha(x_pos= 3, y_pos= 2), Ficha(x_pos= 3, y_pos= 3), 
-              Ficha(x_pos= 3, y_pos= 4), Ficha(x_pos= 4, y_pos= 4)]
+    Coordss = [Coords(x_pos= 2, y_pos= 2), Coords(x_pos= 3, y_pos= 2), Coords(x_pos= 3, y_pos= 3), 
+              Coords(x_pos= 3, y_pos= 4), Coords(x_pos= 4, y_pos= 4)]
 
-    assert is_valid_picture_card(cartaFigura.return_value, fichas) == True
-
-    cartaFigura.return_value = PictureCard(figura= Picture.figura10)
-
-    fichas = [Ficha(x_pos= 1, y_pos= 6), Ficha(x_pos= 2, y_pos= 6), Ficha(x_pos= 2, y_pos= 5), 
-              Ficha(x_pos= 2, y_pos= 4), Ficha(x_pos= 3, y_pos= 4)]
-    
-    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+    assert is_valid_picture_card(cartaFigura.return_value, Coordss) == True
 
     cartaFigura.return_value = PictureCard(figura= Picture.figura10)
 
-    fichas = [Ficha(x_pos= 4, y_pos= 4), Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
-              Ficha(x_pos= 6, y_pos= 5), Ficha(x_pos= 6, y_pos= 6)]
+    Coordss = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5), 
+              Coords(x_pos= 2, y_pos= 4), Coords(x_pos= 3, y_pos= 4)]
     
-    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
+
+    cartaFigura.return_value = PictureCard(figura= Picture.figura10)
+
+    Coordss = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+              Coords(x_pos= 6, y_pos= 5), Coords(x_pos= 6, y_pos= 6)]
+    
+    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
 
     cartaFigura.return_value = PictureCard(figura= Picture.figura14)
 
-    fichas = [Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 3), Ficha(x_pos= 5, y_pos= 4),      #Figura 14 rotada 2 veces 
-              Ficha(x_pos= 5, y_pos= 5), Ficha(x_pos= 5, y_pos= 6)]
+    Coordss = [Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 3), Coords(x_pos= 5, y_pos= 4),      #Figura 14 rotada 2 veces 
+              Coords(x_pos= 5, y_pos= 5), Coords(x_pos= 5, y_pos= 6)]
     
-    assert is_valid_picture_card(cartaFigura.return_value, fichas)
+    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
 
-    fichas = [Ficha(x_pos= 1, y_pos= 6), Ficha(x_pos= 2, y_pos= 6), Ficha(x_pos= 2, y_pos= 5),      #Figura 10 con carta
-              Ficha(x_pos= 2, y_pos= 4), Ficha(x_pos= 3, y_pos= 4)]                                 #Figura 14
+    Coordss = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5),      #Figura 10 con carta
+              Coords(x_pos= 2, y_pos= 4), Coords(x_pos= 3, y_pos= 4)]                                 #Figura 14
     
-    assert ~is_valid_picture_card(cartaFigura.return_value, fichas)
+    assert ~is_valid_picture_card(cartaFigura.return_value, Coordss)
 
-    fichas = [Ficha(x_pos= 4, y_pos= 4), Ficha(x_pos= 4, y_pos= 5), Ficha(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
-              Ficha(x_pos= 6, y_pos= 5), Ficha(x_pos= 6, y_pos= 6)]                                 #con carta Figura 14
+    Coordss = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+              Coords(x_pos= 6, y_pos= 5), Coords(x_pos= 6, y_pos= 6)]                                 #con carta Figura 14
  
-    assert ~is_valid_picture_card(cartaFigura.return_value, fichas)
+    assert ~is_valid_picture_card(cartaFigura.return_value, Coordss)
 
 if __name__ == "__main__":
     pytest.main()

@@ -5,15 +5,20 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.jugadores import Jugador
+from src.models.utils import Coords
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
+from src.repositories.board_repository import swap_fichasCajon
 
 def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
+    """
+    Obtiene una carta de figura por su id
+    """
     smt = select(PictureCard).where(PictureCard.id == id_carta_figura)
     return db.execute(smt).scalar() 
 
@@ -26,12 +31,20 @@ def list_fig_cards(player_id: int, db: Session) -> List[PictureCard]:
     return db.execute(smt).scalars().all()
  
 def list_mov_cards(player_id: int, db: Session) -> List[MovementCard]:
+    """
+    Lista el tipo de cartas de figura en mano de un jugador  
+    """
     smt = select(MovementCard).where(and_(MovementCard.jugador_id == player_id, MovementCard.estado == CardStateMov.mano))
     return db.execute(smt).scalars().all()
 
 def mezclar_figuras(game_id: int, db: Session) -> None:
+    """
+    Mezcla las cartas de figuras de una partida y las reparte entre los 
+    jugadores de la partida.
+    """
     figuras_list = [x for x in range(1, 26)] + [x for x in range(1, 26)]
     random.shuffle(figuras_list)
+    # TO DO: remover repartir_cartas_figuras, nombre confuso y sólo se usa al mezclar las cartas
     repartir_cartas_figuras(game_id, figuras_list, db)
 
 def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
@@ -65,7 +78,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
             carta.estado = CardStateMov.mano
             db.commit()
             db.refresh(carta)
-    return
+
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
@@ -107,6 +120,7 @@ def cards_to_mazo(partida: Partida, jugador: Jugador, db: Session) -> None:
     
     db.commit()
 
+
 def get_cartasFigura_player(player_id: int, db: Session) -> List[PictureCard]:
     smt = select(PictureCard).where(PictureCard.jugador_id == player_id)
     return db.execute(smt).scalars().all()
@@ -121,8 +135,53 @@ def get_cartasMovimiento_game(game_id: int, db: Session) -> List[MovementCard]:
     smt = select(MovementCard).where(MovementCard.partida_id == game_id)
     return db.execute(smt).scalars().all()
 
+
 def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     smt = select(Jugador).where(Jugador.partida_id == id_game)
     jugadores = db.execute(smt).scalars().all()
     jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
+
+
+def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
+    """
+    Obtiene una carta de movimiento por su id
+    """
+    smt = select(MovementCard).where(MovementCard.id == mov_id)
+    return db.execute(smt).scalar()
+
+
+def cancelar_movimiento(partida_id: int, jugador_id: int, mov_id: int,
+                        tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+    """
+    Cancela un movimiento revertiendo la posición de las fichasCajon usadas 
+    (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
+    movimiento usada.
+    """
+    #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
+    swap_fichasCajon(partida_id, tupla_coords, db)        
+    carta_mov = get_cartaMovId(mov_id, db)
+    
+    if carta_mov is None:
+        raise ValueError("La carta de movimiento no existe en la partida")
+    elif carta_mov.estado == CardStateMov.mano:
+        raise ValueError("La carta de movimiento esta en mano de alguien")
+    
+    carta_mov.estado = CardStateMov.mano
+    carta_mov.jugador_id = jugador_id
+    
+    db.commit()
+
+def movimiento_parcial(game_id: int, moveCard: MovementCard, 
+                       coord: tuple[Coords, Coords], db: Session) -> None:
+    """
+    Realiza movimiento en el tablero, intercambiando fichas cajon 
+    (usa swap_fichasCajon), y llevando la carta de movimiento usada al estado
+    de descartada.
+    """
+    swap_fichasCajon(game_id, coord, db)
+
+    moveCard.estado = CardStateMov.descartada
+    moveCard.jugador_id = None
+
+    db.commit()
