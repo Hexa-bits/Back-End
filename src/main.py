@@ -213,7 +213,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             delete_player(jugador, db)
             
-            if (len(get_jugadores(game_id, db)) == 1):
+            if partida.winner_id is None and len(get_jugadores(game_id, db)) == 1:
                 await ws_manager.send_message_game_id(event.get_winner, partida.id)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
@@ -345,15 +345,15 @@ async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db))
     """
     try:
         # A como estaba antes era demasiado inseguro, cualquiera de conociera el endpoint podía ganar automaticamente.
-        winner = None        
-        jugadores = get_jugadores(game_id.game_id, db)
-        jugador_sin_cartas = get_jugador_sin_cartas(game_id.game_id, db)
         
-        if len(jugadores) == 1:
-            winner = jugadores[0]
-        elif jugador_sin_cartas is not None:
-            winner = jugador_sin_cartas
-        else:
+        partida = get_Partida(game_id.game_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f"No existe la partida: {game_id.game_id}")
+        
+        winner_id = partida.winner_id
+        winner = get_Jugador(winner_id, db)               
+        if winner is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
                                 detail=f"No hay ganador aún en partida: {game_id.game_id}")
     except SQLAlchemyError:
@@ -553,7 +553,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             descartar_carta_figura(pictureCard.id, db)
             game_manager.limpiar_cartas_fichas(game_id)
 
-            if get_jugador_sin_cartas(game_id, db) is not None:
+            if get_Partida(game_id, db).winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
                 await ws_manager.send_message_game_id(event.get_winner, game_id)
             else:
                 await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
