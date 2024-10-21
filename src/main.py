@@ -535,6 +535,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             descartar_carta_figura(pictureCard.id, db)
             game_manager.limpiar_cartas_fichas(game_id)
             await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
+            await ws_manager.send_message_game_id(event.get_tablero, game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:
