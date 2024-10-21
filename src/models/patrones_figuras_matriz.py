@@ -37,7 +37,6 @@ def pictureCardsFigures() -> list[np.ndarray]:
 
     fig02 = [
         [1, 1, 0, 0],
-        [0, 1, 0, 0],
         [0, 1, 1, 1]
     ]
     figures_list.append(fig02)
