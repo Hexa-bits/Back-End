@@ -50,3 +50,7 @@ class Event:
     @property
     def get_figuras(self):
         return "Actualizar cartas de figuras"
+    
+    @property
+    def get_info_players(self):
+        return "Actualizar cartas de otros jugadores"
