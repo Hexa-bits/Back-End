@@ -214,6 +214,10 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             delete_player(jugador, db)
             
             if partida.winner_id is None and len(get_jugadores(game_id, db)) == 1:
+                
+                partida.winner_id = jugador.id
+                db.commit()
+
                 await ws_manager.send_message_game_id(event.get_winner, partida.id)
         else:
             #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
@@ -553,7 +557,13 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             descartar_carta_figura(pictureCard.id, db)
             game_manager.limpiar_cartas_fichas(game_id)
 
-            if get_Partida(game_id, db).winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
+            partida = get_Partida(game_id, db).winner_id
+
+            if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
+                
+                partida.winner_id = jugador.id
+                db.commit()
+
                 await ws_manager.send_message_game_id(event.get_winner, game_id)
             else:
                 await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
