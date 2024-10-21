@@ -62,7 +62,7 @@ def test_others_cards():
         mock_get_cartasMovimiento_player.side_effect = lambda player_id, db_session: [carta_movimiento_1] if player_id == jugador_1.id else []
 
         # Llama a la función a testear
-        resultado = others_cards(game_id=1, player_id=2, db=db)
+        resultado = others_cards(game_id=1, player_id=2, jugadores= jugadores, db=db)
 
         # Validaciones
         assert len(resultado) == 1

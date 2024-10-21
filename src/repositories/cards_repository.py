@@ -183,10 +183,8 @@ def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
 
-def others_cards(game_id: int, player_id: int, db: Session) -> List[dict]:
+def others_cards(game_id: int, player_id: int, jugadores: List[Jugador], db: Session) -> List[dict]:
 
-    #obtengo los jugadores de la partida
-    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
     jugadores_info = []
     for jugador in jugadores:

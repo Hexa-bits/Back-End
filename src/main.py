@@ -577,7 +577,7 @@ async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
     return figuras_response
 
 @app.get("/game/others-cards", status_code=status.HTTP_200_OK)
-async def get_others_cards(game_id: int, player_id: int, db: Session = Depends(get_db)):
+async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(get_db)):
     """
     Endpoint para obtener nombre, las cartas de figuras y cant de cartas movimiento de los demás jugadores
     args:
@@ -586,6 +586,9 @@ async def get_others_cards(game_id: int, player_id: int, db: Session = Depends(g
     """
 
     try:
+        #Obtengo los jugadores de la aprtida
+        jugadores = get_jugadores(game_id, db)
+        
         # Obtengo las cartas de figuras y movimiento de los demás jugadores junto con el nombre del jugador
         cartas = others_cards(game_id, player_id, db)
 
