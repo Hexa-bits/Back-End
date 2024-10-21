@@ -212,6 +212,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
+            await ws_manager.send_message_game_id(event.get_info_players, partida.id)
             if len(get_jugadores(partida.id, db)) == 1:
                 #Mando ws
                 await ws_manager.send_message_game_id(event.get_winner, partida.id)
