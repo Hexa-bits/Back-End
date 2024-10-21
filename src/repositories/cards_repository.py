@@ -97,6 +97,14 @@ def repartir_cartas(game_id: int, db: Session) -> None:
         
         all_cards_mov = db.query(MovementCard).filter(and_(MovementCard.partida_id == game_id,
                                                            MovementCard.estado == CardStateMov.mazo)).all()
+
+        if len(all_cards_mov) == 0:
+            cartas_mov_descartadas = db.query(MovementCard).filter(and_(MovementCard.partida_id == game_id,
+                                                           MovementCard.estado == CardStateMov.descartada)).all()
+            for i in range(len(cartas_mov_descartadas)):
+                cartas_mov_descartadas[i].estado = CardStateMov.mano
+                db.commit()
+                db.refresh(cartas_mov_descartadas[i])
         
         cant_cartas = 3 - len(cartas_mov_en_mano)
 
@@ -115,11 +123,12 @@ def repartir_cartas(game_id: int, db: Session) -> None:
         cant_cartas = 3 - len(cartas_fig_en_mano)
 
         for i in range(cant_cartas):
-            carta = all_cards_fig.pop()
-            carta.jugador_id = jugador_en_turno.id
-            carta.estado = CardState.mano
-            db.commit()
-            db.refresh(carta)
+            if len(all_cards_fig)>0:
+                carta = all_cards_fig.pop()
+                carta.jugador_id = jugador_en_turno.id
+                carta.estado = CardState.mano
+                db.commit()
+                db.refresh(carta)
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
