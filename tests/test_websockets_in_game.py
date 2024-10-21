@@ -86,7 +86,8 @@ async def test_websocket_broadcast_turno_siguiente(client):
              patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
              patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
                                                                 "name_player": "testuser"}), \
-            patch('src.main.repartir_cartas', return_value= None):
+            patch('src.main.repartir_cartas', return_value= None), \
+            patch("src.main.game_manager.set_jugador_en_turno_id"):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
 
