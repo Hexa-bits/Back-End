@@ -183,7 +183,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         id_game = add_partida(partida_config, db)
 
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
-        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+        await ws_manager.send_message_game_id(event.get_lobbies, game_id = 0)
 
     except SQLAlchemyError:
         db.rollback()
@@ -197,27 +197,43 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
 
 @app.put("/game/leave", status_code=status.HTTP_204_NO_CONTENT)
 async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
+    """
+    Descripción: Maneja la logica de abandonar partida, ya sea empezada (game) o no
+    (lobby), borra las cartas figuras y devuelve las de movimiento al mazo, el último
+    elimina la partida y con ello todas las carta, tablero y fihcas cajon.
+    
+    Respuesta:
+    - 204: OK sin contenido
+    - 404: No encontro partida, jugador o jugador asociado a partida
+    - 500: Ocurre un error interno 
+    """
     try:
         jugador = get_Jugador(leave_lobby.id_user, db)
         if jugador is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No existe el jugador: {leave_lobby.id_user}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                detail=f'No existe el jugador: {leave_lobby.id_user}')
         
         partida = get_Partida(leave_lobby.game_id, db)
         if partida is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida: {leave_lobby.game_id}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f'No exsite la partida: {leave_lobby.game_id}')
         
         if jugador.partida_id == None or jugador.partida_id != partida.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
             await ws_manager.send_message_game_id(event.get_info_players, partida.id)
-            if len(get_jugadores(partida.id, db)) == 1:
-                #Mando ws
+            jugadores = get_jugadores(game_id, db)
+            
+            if partida.winner_id is None and len(jugadores) == 1:
+                partida.winner_id = jugadores[0].id
+                db.commit()
+
                 await ws_manager.send_message_game_id(event.get_winner, partida.id)
         else:
-            #Luego de abandonar la partida, le actualizo a los ws conectados la nueva lista de lobbies porque ahora tienen 1 jugador menos
             if jugador.es_anfitrion:
                 delete_players_lobby(partida, db)
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
@@ -225,13 +241,12 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 delete_player(jugador, db)
                 await ws_manager.send_message_game_id(event.leave_lobby, game_id=game_id)
         
-            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
+            await ws_manager.send_message_game_id(event.get_lobbies, game_id=0)
 
-    
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
-    
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                             detail="Fallo en la base de datos")
     
 @app.post("/game/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
 async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
@@ -336,9 +351,27 @@ async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
 
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: Maneja la logica de decidir ganador en partida.
+
+    Respuesta:
+    - 200: OK con nombre de jugador que ganó.
+    - 400: Si se llama, pero no hubo ganador de ningun metodo.
+    - 404: Si la partida no existe.
+    - 500: Ocurre un error interno. 
+    """
     try:
-        winner = get_jugadores(game_id.game_id, db)[0]
-  
+        # A como estaba antes era demasiado inseguro, cualquiera de conociera el endpoint podía ganar automaticamente.
+        partida = get_Partida(game_id.game_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
+                                detail=f"No existe la partida: {game_id.game_id}")
+        
+        winner_id = partida.winner_id
+        winner = get_Jugador(winner_id, db)
+        if winner is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, 
+                                detail=f"No hay ganador aún en partida: {game_id.game_id}")
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -424,7 +457,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                 cancelar_movimiento(partida.id, jugador.id, mov, coords, db)
                 
                 await ws_manager.send_message_game_id(event.get_tablero, partida.id)
-                await ws_manager.send_message_game_id(event.get_movimientos, partida.id)
+                await ws_manager.send_message_game_id(event.get_cartas_mov, partida.id)
 
                 game_manager.desapilar_carta_y_ficha(game_id=partida.id) 
             except Exception:
@@ -518,7 +551,10 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
     try:
         jugador = get_Jugador(figureData.player_id, db)
         pictureCard = get_CartaFigura(figureData.id_fig_card, db)
+        
         game_id = jugador.partida_id
+        partida = get_Partida(game_id, db)
+        
         if game_id != pictureCard.partida_id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
         
@@ -529,19 +565,27 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         if pictureCard.estado != CardState.mano:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
         
-        if pictureCard.jugador_id!=jugador.id:
+        if pictureCard.jugador_id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
             game_manager.limpiar_cartas_fichas(game_id)
-            await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
+
+            if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
+                partida.winner_id = jugador.id
+                db.commit()
+
+                await ws_manager.send_message_game_id(event.get_winner, game_id)
+            else:
+                await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
             await ws_manager.send_message_game_id(event.get_tablero, game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")   
+
 
 @app.get("/game/highlight-figures", status_code=status.HTTP_200_OK)
 async def highlight_figures(game_id: int, db: Session = Depends(get_db)):

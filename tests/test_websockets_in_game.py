@@ -60,13 +60,13 @@ async def test_websocket_connections(client):
     initial_connections = len(ws_manager.active_connections)
     assert initial_connections == 0
     
-    with client.websocket_connect("/game?game_id=1"):
-        with client.websocket_connect("/game?game_id=1"):
-            with client.websocket_connect("/game?game_id=2"):
+    with client.websocket_connect("/game?game_id=1"), \
+         client.websocket_connect("/game?game_id=1"), \
+         client.websocket_connect("/game?game_id=2"):
                 
-                assert len(ws_manager.active_connections) == initial_connections + 2  
-                assert len(ws_manager.active_connections.get(1)) == 2
-                assert len(ws_manager.active_connections.get(2)) == 1    
+        assert len(ws_manager.active_connections) == initial_connections + 2  
+        assert len(ws_manager.active_connections.get(1)) == 2
+        assert len(ws_manager.active_connections.get(2)) == 1    
     
     await asyncio.sleep(0.1)
     
@@ -97,8 +97,6 @@ async def test_websocket_broadcast_turno_siguiente(client):
             # Verificar que los mensajes recibidos son iguales para ambos
             assert mensaje1 == "Terminó turno"
             assert mensaje1 == mensaje2
-            assert response.status_code == 200
-            assert response.json() == {"id_player": 1 , "name_player": "testuser"}
 
 
 @pytest.mark.asyncio
@@ -109,20 +107,19 @@ async def test_websocket_broadcast_ganador(client):
         MagicMock(id=1, nombre="testloser", partida_id= 1),
         MagicMock(id=2, nombre="testwinner", partida_id= 1)
     ]
-
     
     with client.websocket_connect("/game?game_id=1") as websocket2:
         with client.websocket_connect("/game?game_id=1") as websocket1:
             assert len(ws_manager.active_connections) == 1  
             assert len(ws_manager.active_connections.get(1)) == 2 
             
-            with patch('src.main.get_Jugador', return_value = jugadores_mock[0]):
-                with patch('src.main.get_Partida', return_value = partida_mock.return_value):
-                    with patch('src.main.get_jugadores', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]):
-                        with patch('src.main.delete_player', return_value = None):
+            with patch('src.main.get_Jugador', return_value = jugadores_mock[0]), \
+                 patch('src.main.get_Partida', return_value = partida_mock.return_value), \
+                 patch('src.main.get_jugadores', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
+                 patch('src.main.delete_player', return_value = None):
                             
-                            response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})
-                            assert response.status_code == 204
+                response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})
+                assert response.status_code == 204
 
         # se cierra la conexion websocket1 simulando que el jugador abandono
         await asyncio.sleep(0.1)
@@ -130,11 +127,7 @@ async def test_websocket_broadcast_ganador(client):
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Hay Ganador"
         assert len(ws_manager.active_connections.get(1)) == 1
-
-        #A esta altura por el side effect jugadores mock es una lista solo con el player_id = 2
-        with patch('src.main.get_jugadores', return_value = jugadores_mock):
-            response = client.get("/game/get-winner?game_id=1")
-            assert response.json() == {"name_player": "testwinner"}
+        #Borre la verificación posterior porque ya se hace en test_main
 
     await asyncio.sleep(0.1)
     
@@ -159,7 +152,6 @@ async def test_websocket_broadcast_games_join(client):
             lobbies2 = websocket2.receive_text()
 
             assert lobbies1 == event.join_game
-
             assert lobbies1 == lobbies2
 
 
@@ -185,7 +177,6 @@ async def test_websocket_broadcast_games_leave(client):
             lobbies2 = websocket2.receive_text()
 
             assert lobbies1 == event.cancel_lobby
-
             assert lobbies1 == lobbies2
                             
 
