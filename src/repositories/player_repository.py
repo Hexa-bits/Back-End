@@ -29,7 +29,7 @@ def get_jugador_sin_cartas(game_id: int, db: Session) -> Jugador:
     return db.query(Jugador).outerjoin(PictureCard).filter (
                                                             Jugador.partida_id == game_id,
                                                             PictureCard.id == None
-                                                            ).one()
+                                                            ).one_or_none()
 
 def get_current_turn_player(game_id: int, db: Session) -> Jugador:
     partida = get_Partida(game_id, db)
