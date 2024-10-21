@@ -4,6 +4,13 @@ from src.db import Base
 
 
 class Partida(Base):
+    """
+    Entidad que representa la partida. Posee un id unico, un nombre no nulo de hasta 10
+    caracteres, un numero max de jugadores no nulo, un identificar de jugador en turno
+    (utiliza el id de los jugadores en la partida) y un indicador de si la partida esta 
+    inciada (en false quiere indicar que esta en lobby). Guarda relación muchos a uno
+    con jugador, carta figura y carta movimiento, y relacion uno a uno con tablero. 
+    """
     __tablename__ = "partidas"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

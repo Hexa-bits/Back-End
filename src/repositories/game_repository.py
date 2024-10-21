@@ -5,14 +5,13 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
 
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config, Coords
 from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-
 from src.repositories.cards_repository import get_cartasMovimiento_game
 from src.repositories.board_repository import get_tablero, get_fichasCajon
 
@@ -68,12 +67,8 @@ def jugador_en_turno(game_id: int, db: Session) -> dict:
 
 def terminar_turno(game_id: int, db: Session) -> dict:
     #Obtengo la partida
-    try:
-        partida = db.get(Partida, game_id)
-        jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
-
-    except Exception:
-        raise Exception("Error")
+    partida = db.get(Partida, game_id)
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
     
     #hago una lista con los indices de los jugadores
     lista_turnos = [x.turno for x in jugadores]
@@ -138,4 +133,3 @@ def delete_partida(partida: Partida, db: Session) -> None:
 
     db.delete(partida)
     db.commit()
-

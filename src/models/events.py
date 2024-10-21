@@ -1,4 +1,8 @@
 class Event:
+    """
+    Se utiliza para garantizar el correcto envió de mensajes (eventos) entre el
+    back y el front.
+    """
     @property
     def get_lobbies(self):
         return "Actualizar lista de partidas"
@@ -26,6 +30,10 @@ class Event:
     @property
     def get_cartas_mov(self):
         return "Actualizar cartas de movimientos"
+    
+    @property
+    def get_cartas_fig(self):
+        return "Actualizar cartas de figuras"
     
     @property
     def start_partida(self):

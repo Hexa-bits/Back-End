@@ -4,7 +4,7 @@ from sqlalchemy.orm import sessionmaker
 from src.db import Base
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config, Leave_config
+from src.models.utils import Partida_config, Leave_config
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
