@@ -58,10 +58,11 @@ def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Sess
     if ficha1 is None or ficha2 is None:
         raise ValueError("Una o ambas fichasCajon no existe en la db")
 
-    ficha1.x_pos, ficha2.x_pos = ficha2.x_pos, ficha1.x_pos
-    ficha1.y_pos, ficha2.y_pos = ficha2.y_pos, ficha1.y_pos
+    color_ficha_1= ficha1.color
+    color_ficha_2= ficha2.color
 
-    ficha1.color, ficha2.color = ficha2.color, ficha1.color
+    ficha1.color = color_ficha_2
+    ficha2.color = color_ficha_1
 
     db.commit()
 
