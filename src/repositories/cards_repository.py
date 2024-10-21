@@ -207,7 +207,7 @@ def others_cards(game_id: int, player_id: int, jugadores: List[Jugador], db: Ses
             jugador_info["mov_cant"] = len(cartas_mov)
 
             jugadores_info.append(jugador_info)
-    
+    print (jugadores_info)
     return jugadores_info
 
 def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:

@@ -588,9 +588,8 @@ async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(
     try:
         #Obtengo los jugadores de la aprtida
         jugadores = get_jugadores(game_id, db)
-        
         # Obtengo las cartas de figuras y movimiento de los demás jugadores junto con el nombre del jugador
-        cartas = others_cards(game_id, player_id, db)
+        cartas = others_cards(game_id, player_id, jugadores, db)
 
     except Exception:
         db.rollback()
