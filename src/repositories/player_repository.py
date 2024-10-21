@@ -25,6 +25,12 @@ def get_Jugador(id: int, db: Session) -> Jugador:
 def get_jugadores(game_id: int, db: Session) -> List[Jugador]:
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
+def get_jugador_sin_cartas(game_id: int, db: Session) -> Jugador:
+    return db.query(Jugador).outerjoin(PictureCard).filter (
+                                                            Jugador.partida_id == game_id,
+                                                            PictureCard.id == None
+                                                            ).one_or_none()
+
 def get_current_turn_player(game_id: int, db: Session) -> Jugador:
     partida = get_Partida(game_id, db)
     if partida is not None:

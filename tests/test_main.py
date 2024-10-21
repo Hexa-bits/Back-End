@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock, ANY
 from fastapi.testclient import TestClient
 from src.main import app, lista_patrones
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
 from sqlalchemy.orm import Session
 from src.models.partida import Partida
 from src.models.utils import *
@@ -158,38 +158,58 @@ def test_use_mov_card_error(mock_get_db, mock_mov_parcial, mock_is_valid, mock_g
     assert response.json() == {'detail': "Fallo en la base de datos"}
     mock_game_manager.apilar_carta_y_ficha.assert_not_called()
 
-@patch("src.main.game_manager")
-@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
-@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
-                                                             partida_id=1, jugador_id=1))
+@patch('src.main.get_db')
+@patch('src.main.game_manager')
+@patch("src.main.get_Jugador")
+@patch('src.main.get_CartaFigura')
 @patch('src.main.get_current_turn_player')
-@patch('src.main.descartar_carta_figura', side_effect = None)
-def test_use_picture_card(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
-                          mock_get_jugador, mock_game_manager):
-    
+@patch('src.main.descartar_carta_figura')
+@patch('src.main.get_jugador_sin_cartas')
+@patch('src.main.get_Partida')
+def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_descartar_carta,
+                         mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+
+    partida = MagicMock(id=1)
+    jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
     
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_jugador.return_value = jugador
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                             partida_id=1, jugador_id=1)
     mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
+    mock_get_jugador_sin_cartas.return_value = None
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
     assert response.status_code == 200
     mock_game_manager.limpiar_cartas_fichas.assert_called_once()
 
-@patch("src.main.game_manager")
-@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
-@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura12,
-                                                             partida_id=1, jugador_id=1))
+@patch('src.main.get_db')
+@patch('src.main.game_manager')
+@patch("src.main.get_Jugador")
+@patch('src.main.get_CartaFigura')
 @patch('src.main.get_current_turn_player')
 @patch('src.main.descartar_carta_figura')
-def test_use_picture_card_invalid_card(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
-                                          mock_get_jugador, mock_game_manager):
+@patch('src.main.get_Partida')
+def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
+                                       mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
+    partida = MagicMock(id=1)
+    jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
-    
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_jugador.return_value = jugador
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura12,
+                                              partida_id=1, jugador_id=1)    
     mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
@@ -197,19 +217,29 @@ def test_use_picture_card_invalid_card(mock_descartar_carta, mock_get_jugador_tu
     assert response.json() == {'detail': 'Figura invalida'}
     mock_game_manager.limpiar_cartas_fichas.assert_not_called()
 
-@patch("src.main.game_manager")
-@patch("src.main.get_Jugador", return_value = Jugador(id=1, partida_id= 1))
-@patch('src.main.get_CartaFigura', return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
-                                                             partida_id=2))
+@patch('src.main.get_db')
+@patch('src.main.game_manager')
+@patch("src.main.get_Jugador")
+@patch('src.main.get_CartaFigura')
 @patch('src.main.get_current_turn_player')
 @patch('src.main.descartar_carta_figura')
-def test_use_picture_card_400_status_code(mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, 
-                                          mock_get_jugador, mock_game_manager):
+@patch('src.main.get_Partida')
+def test_use_picture_card_400_status_code(mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
+                                          mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
     
+    partida = MagicMock(id=1)
+    jugador1 = MagicMock(id=1, partida_id=1)
+    jugador2 = MagicMock(id=2, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
     
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_jugador.return_value = jugador1
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                              partida_id=2)    
     mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
@@ -218,8 +248,7 @@ def test_use_picture_card_400_status_code(mock_descartar_carta, mock_get_jugador
 
     mock_get_carta.return_value.partida_id = 1
     mock_get_carta.return_value.jugador_id = 1
-
-    mock_get_jugador_turno.return_value = Jugador(id=2, partida_id= 1)
+    mock_get_jugador_turno.return_value = jugador2
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
@@ -302,6 +331,112 @@ async def test_highlight_figures_db_error(mock_get_db, mock_get_valid_detected_f
 
     # Verificar el contenido del mensaje de error
     assert response.json() == {"detail": "Error al obtener las figuras"}
+
+@patch("src.main.get_Partida")
+@patch("src.main.get_Jugador")
+@patch("src.main.get_db")
+def test_get_winner_OK_sin_cartas(mock_get_db, mock_get_jugador, 
+                                 mock_get_partida):
+    game_id = 1
+    partida_mock = MagicMock(id=1, winner_id=1)
+    jugadores_mock = [
+                      MagicMock(id=1, nombre="testwinner", partida_id=1),
+                      MagicMock(id=2, nombre="testlosser", partida_id=1)
+                     ]
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida_mock
+    mock_get_jugador.return_value = jugadores_mock [0]
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_partida.assert_called_once_with(game_id, ANY)
+    mock_get_jugador.assert_called_once_with(partida_mock.winner_id, ANY)
+
+    assert mock_get_jugador.return_value.id == partida_mock.winner_id
+    assert response.status_code == 200
+    assert response.json() == {"name_player": "testwinner"}
+
+
+@patch("src.main.get_Partida")
+@patch("src.main.get_Jugador")
+@patch("src.main.get_db")
+def test_get_winner_OK_abandonar(mock_get_db, mock_get_jugador, 
+                                 mock_get_partida):
+    game_id = 1
+    partida_mock = MagicMock(id=1, winner_id=1)
+    jugadores_mock = [MagicMock(id=1, nombre="testwinner", partida_id=1)]
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida_mock
+    mock_get_jugador.return_value = jugadores_mock [0]
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_partida.assert_called_once_with(game_id, ANY)
+    mock_get_jugador.assert_called_once_with(partida_mock.winner_id, ANY)
+
+    assert mock_get_jugador.return_value.id == partida_mock.winner_id
+    assert response.status_code == 200
+    assert response.json() == {"name_player": "testwinner"}
+
+
+@patch("src.main.get_Partida")
+@patch("src.main.get_Jugador")
+@patch("src.main.get_db")
+def test_sql_except_winner (mock_get_db, mock_get_jugador, 
+                            mock_get_partida):
+    game_id = 1
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.side_effect = SQLAlchemyError()
+    mock_get_jugador.return_value = None
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_partida.assert_called_once_with(game_id, ANY)
+    mock_get_jugador.assert_not_called()
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Fallo en la base de datos"}
+
+
+@patch("src.main.get_Partida")
+@patch("src.main.get_Jugador")
+@patch("src.main.get_db")
+def test_no_partida_except_winner(mock_get_db, mock_get_jugador, 
+                                  mock_get_partida):    
+    game_id = 1
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = None
+    mock_get_jugador.side_effect = None
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_partida.assert_called_once_with(game_id, ANY)
+    mock_get_jugador.assert_not_called()
+    assert response.status_code == 404
+    assert response.json() == {"detail": f"No existe la partida: {game_id}"}
+
+
+@patch("src.main.get_Partida")
+@patch("src.main.get_Jugador")
+@patch("src.main.get_db")
+def test_winner_BAD_request(mock_get_db, mock_get_jugador, 
+                            mock_get_partida):    
+    game_id = 1
+    partida_mock = MagicMock(id=1, winner_id=None)
+    
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida_mock
+    mock_get_jugador.return_value = None
+
+    response = client.get(f"/game/get-winner?game_id={game_id}")
+
+    mock_get_partida.assert_called_once_with(game_id, ANY)
+    mock_get_jugador.assert_called_once_with(None, ANY)
+    assert response.status_code == 400
+    assert response.json() == {"detail": f"No hay ganador aún en partida: {game_id}"}
 
 @pytest.mark.asyncio
 @patch("src.main.others_cards")  # Simula la función others_cards
@@ -483,4 +618,3 @@ async def test_cancelar_mov_sql_error(mock_get_db, mock_cancel_movimiento,
 
     assert response.status_code == 500
     assert response.json() == {"detail": "Fallo en la base de datos"}
-

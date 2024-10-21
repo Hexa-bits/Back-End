@@ -63,7 +63,7 @@ def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Sess
 
     ficha1.color = color_ficha_2
     ficha2.color = color_ficha_1
-
+    
     db.commit()
 
 

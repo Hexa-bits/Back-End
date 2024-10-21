@@ -18,6 +18,7 @@ class Partida(Base):
     max_players = Column(Integer, nullable=False)
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
+    winner_id = Column(Integer, nullable=True, default=None)
 
     jugadores = relationship("Jugador", back_populates="partida")
 
@@ -32,4 +33,5 @@ class Partida(Base):
         cantidad_jugadores = f'cantidad_max_jugadores={self.max_players!r}'
         jugador_en_turno = f'jugador_en_turno={self.jugador_en_turno!r}'
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
-        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + '}'
+        winner_id = f'id_ganador={self.winner_id}'
+        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + winner_id + '}'
