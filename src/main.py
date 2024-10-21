@@ -336,7 +336,12 @@ async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
 @app.get("/game/get-winner", status_code=status.HTTP_200_OK)
 async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     """
+    Descripción: Maneja la logica de decidir ganador en partida.
 
+    Respuesta:
+    - 200: OK con nombre de jugador que ganó.
+    - 400: Si se llama, pero no hubo ganador de ningun metodo.
+    - 500: Ocurre un error interno. 
     """
     try:
         # A como estaba antes era demasiado inseguro, cualquiera de conociera el endpoint podía ganar automaticamente.
@@ -547,11 +552,12 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
             game_manager.limpiar_cartas_fichas(game_id)
-            
+
             if get_jugador_sin_cartas(game_id, db) is not None:
                 await ws_manager.send_message_game_id(event.get_winner, game_id)
             else:
                 await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
+            await ws_manager.send_message_game_id(event.get_tablero, game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:
