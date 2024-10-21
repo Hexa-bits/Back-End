@@ -61,41 +61,41 @@ def test_is_valid_picture_card():
     cartaFigura = MagicMock()
     cartaFigura.return_value = PictureCard(figura= Picture.figura12)
 
-    Coordss = [Coords(x_pos= 2, y_pos= 2), Coords(x_pos= 3, y_pos= 2), Coords(x_pos= 3, y_pos= 3), 
+    coords = [Coords(x_pos= 2, y_pos= 2), Coords(x_pos= 3, y_pos= 2), Coords(x_pos= 3, y_pos= 3), 
               Coords(x_pos= 3, y_pos= 4), Coords(x_pos= 4, y_pos= 4)]
 
-    assert is_valid_picture_card(cartaFigura.return_value, Coordss) == True
+    assert is_valid_picture_card(cartaFigura.return_value, coords) == True
 
     cartaFigura.return_value = PictureCard(figura= Picture.figura10)
 
-    Coordss = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5), 
+    coords = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5), 
               Coords(x_pos= 2, y_pos= 4), Coords(x_pos= 3, y_pos= 4)]
     
-    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
+    assert is_valid_picture_card(cartaFigura.return_value, coords)
 
     cartaFigura.return_value = PictureCard(figura= Picture.figura10)
 
-    Coordss = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+    coords = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
               Coords(x_pos= 6, y_pos= 5), Coords(x_pos= 6, y_pos= 6)]
     
-    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
+    assert is_valid_picture_card(cartaFigura.return_value, coords)
 
     cartaFigura.return_value = PictureCard(figura= Picture.figura14)
 
-    Coordss = [Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 3), Coords(x_pos= 5, y_pos= 4),      #Figura 14 rotada 2 veces 
+    coords = [Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 3), Coords(x_pos= 5, y_pos= 4),      #Figura 14 rotada 2 veces 
               Coords(x_pos= 5, y_pos= 5), Coords(x_pos= 5, y_pos= 6)]
     
-    assert is_valid_picture_card(cartaFigura.return_value, Coordss)
+    assert is_valid_picture_card(cartaFigura.return_value, coords)
 
-    Coordss = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5),      #Figura 10 con carta
+    coords = [Coords(x_pos= 1, y_pos= 6), Coords(x_pos= 2, y_pos= 6), Coords(x_pos= 2, y_pos= 5),      #Figura 10 con carta
               Coords(x_pos= 2, y_pos= 4), Coords(x_pos= 3, y_pos= 4)]                                 #Figura 14
     
-    assert ~is_valid_picture_card(cartaFigura.return_value, Coordss)
+    assert not is_valid_picture_card(cartaFigura.return_value, coords)
 
-    Coordss = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
+    coords = [Coords(x_pos= 4, y_pos= 4), Coords(x_pos= 4, y_pos= 5), Coords(x_pos= 5, y_pos= 5),      #Figura 10 rotada 1 vez 
               Coords(x_pos= 6, y_pos= 5), Coords(x_pos= 6, y_pos= 6)]                                 #con carta Figura 14
  
-    assert ~is_valid_picture_card(cartaFigura.return_value, Coordss)
+    assert not is_valid_picture_card(cartaFigura.return_value, coords)
 
 if __name__ == "__main__":
     pytest.main()
