@@ -42,11 +42,3 @@ class Event:
     @property
     def join_game(self):
         return "Se unió/abandonó jugador en lobby"
-    
-    @property
-    def get_movimientos(self):
-        return "Actualizar cartas de movimientos"
-    
-    @property
-    def get_figuras(self):
-        return "Actualizar cartas de figuras"

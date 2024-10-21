@@ -23,6 +23,7 @@ def test_create_partida(test_db):
 
     assert cheq_entity(partida, configuracion)
     assert partida.jugador_en_turno == 0
+    assert partida.winner_id == None
     assert partida.id == 1
 
 def test_multi_partida(test_db):
@@ -35,6 +36,7 @@ def test_multi_partida(test_db):
         test_db.refresh(partida)
 
         assert cheq_entity(partida, configuracion)
+        assert partida.winner_id == None
         assert partida.jugador_en_turno == 0
         assert partida.id == i+1
 
