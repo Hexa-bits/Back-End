@@ -110,8 +110,9 @@ def repartir_cartas(game_id: int, db: Session) -> None:
                     all_cards_mov.append(carta)
                     db.commit()
                     db.refresh(carta)
-
-            carta = all_cards_mov.pop()
+                    
+            carta = random.choice(all_cards_mov)
+            all_cards_mov.remove(carta)
             carta.jugador_id = jugador_en_turno.id
             carta.estado = CardStateMov.mano
             db.commit()
