@@ -123,7 +123,8 @@ async def test_websocket_broadcast_ganador(client):
 
         # se cierra la conexion websocket1 simulando que el jugador abandono
         await asyncio.sleep(0.1)
-    
+        assert websocket2.receive_text() == "Actualizar cartas de otros jugadores"
+        await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Hay Ganador"
         assert len(ws_manager.active_connections.get(1)) == 1
         #Borre la verificación posterior porque ya se hace en test_main
