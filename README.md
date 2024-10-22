@@ -54,3 +54,9 @@
 
 ## Para correr los tests
     pytest
+
+## Para ver el coverage de los tests:
+    pytest --cov=src
+
+## Ver los detalles del missing coverage:
+    pytest --cov=src --cov-report=term-missing

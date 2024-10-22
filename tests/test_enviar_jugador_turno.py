@@ -1,11 +1,11 @@
 
 import pytest
 from sqlalchemy.exc import IntegrityError
-from src.consultas import jugador_en_turno
+from src.repositories.game_repository import jugador_en_turno
 from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero

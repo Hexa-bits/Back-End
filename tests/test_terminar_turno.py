@@ -3,14 +3,15 @@ from sqlalchemy.exc import IntegrityError
 from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.main import app, end_turn 
-from src.consultas import mezclar_fichas, terminar_turno
+from src.repositories.board_repository import mezclar_fichas
+from src.repositories.game_repository import terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
@@ -41,15 +42,19 @@ def test_terminar_turno_succesful(test_db, client):
     #next_player = test_db.query(Jugador).filter(Jugador.partida_id == partida.id, Jugador.turno == id_next_player).first()
 
     #Testeo el endpoint usando la base de datos que cree
-    with patch("src.main.get_db"):
-        with patch("src.main.terminar_turno") as mock_terminar_turno:
-            mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
+    with patch("src.main.get_db"), \
+         patch("src.main.get_current_turn_player"), \
+         patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
+         patch("src.main.terminar_turno") as mock_terminar_turno, \
+         patch("src.main.repartir_cartas", return_value= None):
+        
+        mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
-            response = client.put("/game/end-turn", json={"game_id": partida.id})
+        response = client.put("/game/end-turn", json={"game_id": partida.id})
 
-            assert response.status_code == 200
-            #assert response.json() == {"id_player": next_player.id, "name_player": next_player.nombre}
-            assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}
+        assert response.status_code == 200
+        #assert response.json() == {"id_player": next_player.id, "name_player": next_player.nombre}
+        assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}
 
 def test_terminar_turno_unsuccesful(test_db, client):
 

@@ -4,6 +4,13 @@ from src.db import Base
 
 
 class Partida(Base):
+    """
+    Entidad que representa la partida. Posee un id unico, un nombre no nulo de hasta 10
+    caracteres, un numero max de jugadores no nulo, un identificar de jugador en turno
+    (utiliza el id de los jugadores en la partida) y un indicador de si la partida esta 
+    inciada (en false quiere indicar que esta en lobby). Guarda relación muchos a uno
+    con jugador, carta figura y carta movimiento, y relacion uno a uno con tablero. 
+    """
     __tablename__ = "partidas"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -11,6 +18,7 @@ class Partida(Base):
     max_players = Column(Integer, nullable=False)
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
+    winner_id = Column(Integer, nullable=True, default=None)
 
     jugadores = relationship("Jugador", back_populates="partida")
 
@@ -25,4 +33,5 @@ class Partida(Base):
         cantidad_jugadores = f'cantidad_max_jugadores={self.max_players!r}'
         jugador_en_turno = f'jugador_en_turno={self.jugador_en_turno!r}'
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
-        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + '}'
+        winner_id = f'id_ganador={self.winner_id}'
+        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + winner_id + '}'

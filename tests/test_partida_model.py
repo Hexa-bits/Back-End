@@ -4,7 +4,7 @@ from src.db import Base
 from .test_helpers import test_db, cheq_entity
 from src.models.jugadores import Jugador
 
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.partida import Partida
 from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
@@ -23,6 +23,7 @@ def test_create_partida(test_db):
 
     assert cheq_entity(partida, configuracion)
     assert partida.jugador_en_turno == 0
+    assert partida.winner_id == None
     assert partida.id == 1
 
 def test_multi_partida(test_db):
@@ -35,6 +36,7 @@ def test_multi_partida(test_db):
         test_db.refresh(partida)
 
         assert cheq_entity(partida, configuracion)
+        assert partida.winner_id == None
         assert partida.jugador_en_turno == 0
         assert partida.id == i+1
 

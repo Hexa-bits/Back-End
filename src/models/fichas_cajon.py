@@ -11,6 +11,11 @@ from src.db import Base
 #NOTA A FUTURO: Quizas sea mejor tener todos los modelos en un solo archivo por problemas de dependencias
 
 class FichaCajon(Base):
+    """
+    Entidad que representa a cada una de las 36 fichas cajon que conforman el
+    de una partida. Posee un id unico, posiciones x e y, y un color que se 
+    representa por medio de un enum. Guarda relación uno a uno con tablero.
+    """
     __tablename__ = "fichas"
 
     id = Column(Integer, primary_key=True)

@@ -11,7 +11,7 @@ from sqlalchemy.exc import IntegrityError
 from .test_helpers import *
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.inputs_front import Partida_config
+from src.models.utils import Partida_config
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard, Move 
 from src.models.cartafigura import PictureCard
@@ -37,11 +37,11 @@ def test_get_fig_cards_endpoint_3cards(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_fig_card"]) == 3
-    assert json_resp ["id_fig_card"] == [
-                                        Picture.figura1.value,
-                                        Picture.figura2.value,
-                                        Picture.figura3.value
+    assert len(json_resp ["fig_cards"]) == 3
+    assert json_resp ["fig_cards"] == [
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value},
+                                        {"id": cards_fig[2].id, "fig":Picture.figura3.value}
                                         ]
 
 
@@ -60,10 +60,10 @@ def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_fig_card"]) == 2
-    assert json_resp ["id_fig_card"] == [
-                                        Picture.figura1.value,
-                                        Picture.figura2.value
+    assert len(json_resp ["fig_cards"]) == 2
+    assert json_resp ["fig_cards"] == [
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
                                         ]
 
 
@@ -81,10 +81,10 @@ def test_get_fig_cards_endpoint_2cards(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_fig_card"]) == 2
-    assert json_resp ["id_fig_card"] == [
-                                        Picture.figura1.value,
-                                        Picture.figura2.value
+    assert len(json_resp ["fig_cards"]) == 2
+    assert json_resp ["fig_cards"] == [
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
                                         ]
 
 
@@ -99,8 +99,8 @@ def test_get_fig_cards_endpoint_1card(mock_list_movs):
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["id_fig_card"]) == 1
-    assert json_resp ["id_fig_card"] == [Picture.figura1.value]
+    assert len(json_resp ["fig_cards"]) == 1
+    assert json_resp ["fig_cards"] == [{"id": cards_fig[0].id, "fig": Picture.figura1.value}]
     
 
 def test_get_fig_enpoint_exception_list():
