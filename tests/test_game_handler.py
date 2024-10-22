@@ -30,11 +30,12 @@ def test_apilar_carta_y_ficha():
     """Pruebo si apilar una carta y fichas convierte el tablero en parcial."""
     game_manager = GameManager()
     game_id = 1
+    coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
     game_manager.create_game(game_id)
-    game_manager.apilar_carta_y_ficha(game_id, 1, ((0, 0), (1, 1)))
+    game_manager.apilar_carta_y_ficha(game_id, 1, coords)
 
     # Verificamos que la carta y fichas fueron apiladas
-    assert game_manager.games[game_id]['cartas_y_fichas_usadas'] == [(1, ((0, 0), (1, 1)))]
+    assert game_manager.games[game_id]['cartas_y_fichas_usadas'] == [(1, coords)]
     # Verificamos que el tablero se convirtió en parcial
     assert game_manager.games[game_id]['es_tablero_parcial'] == True
 
@@ -56,13 +57,25 @@ def test_limpiar_cartas_fichas():
     """Pruebo si limpiar el stack convierte el tablero en real."""
     game_manager = GameManager()
     game_id = 1
+    coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
     game_manager.create_game(game_id)
-    game_manager.apilar_carta_y_ficha(game_id, 1, ((0, 0), (1, 1)))
+    game_manager.apilar_carta_y_ficha(game_id, 1, coords)
     game_manager.limpiar_cartas_fichas(game_id)
 
     # Verificamos que el stack esté vacío y el tablero sea real
     assert game_manager.games[game_id]['cartas_y_fichas_usadas'] == []
     assert game_manager.games[game_id]['es_tablero_parcial'] == False
+
+def test_top_tupla_carta_y_fichas():
+    """Pruebo si obtengo el último par (id movimiento, coordenadas cajon)"""
+    game_manager = GameManager()
+    game_id = 1
+    coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
+    game_manager.create_game(game_id)
+    game_manager.apilar_carta_y_ficha(game_id, 1, coords)
+    ultimo_parcial = game_manager.top_tupla_carta_y_fichas(game_id)
+
+    assert ultimo_parcial == (1, coords)
 
 def test_jugador_en_turno():
     """Pruebo si se obtiene y cambia el jugador en turno correctamente."""

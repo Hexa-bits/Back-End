@@ -124,7 +124,7 @@ class GameManager:
 
 
     def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, 
-                            dupla_coords_ficha: tuple[int, tuple[Coords, Coords]]) -> None:
+                            dupla_coords_ficha: tuple[Coords, Coords]) -> None:
         """
         Apilar carta y par de fichas sirve para guardar cual fue el cambio parcial realizado
         Siempre me convierte el tablero en parcial

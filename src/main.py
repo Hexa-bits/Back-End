@@ -127,23 +127,6 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
 
-@app.get("/")
-def read_root():
-    """
-    Verifica que el back este andando
-    """
-    return {"mensaje": "¡Hola, FastAPI!"}
-
-
-@app.get("/home/get-lobbies")
-async def get_lobbies(db: Session = Depends(get_db)):
-    try:
-        lobbies = list_lobbies(db)
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
-    return lobbies
-
-
 @app.exception_handler(ValidationError)
 async def validation_exception_handler(request: Request, exc: ValidationError):
     """
@@ -153,9 +136,39 @@ async def validation_exception_handler(request: Request, exc: ValidationError):
     """
     return HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=exc.errors())
 
+@app.get("/")
+def read_root():
+    """
+    Verifica que el back este andando
+    """
+    return {"mensaje": "¡Hola, FastAPI!"}
+
+
+@app.get("/home/get-lobbies", status_code=status.HTTP_200_OK)
+async def get_lobbies(db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de pedir las lobbies al servidor.
+
+    Respuesta:
+    - 200: OK
+    - 500: Ocurre un error interno.
+    """
+    try:
+        lobbies = list_lobbies(db)
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
+    return lobbies
 
 @app.post("/login", response_model=PlayerId, status_code=status.HTTP_201_CREATED)
 async def login(user: User, db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de logearse como usuario. Crea una instancia
+    de jugador, en funcion de parametros válidos.
+
+    Respuesta:
+    - 200: OK
+    - 500: Ocurre un error interno.
+    """
     try:
         jugador = add_player(user.username, False, db)#Jugador(nombre= user.username, es_anfitrion=False)
     except Exception:
@@ -167,8 +180,16 @@ async def login(user: User, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/home/lobby")
+@app.get("/home/lobby", status_code=status.HTTP_200_OK)
 async def get_lobby_info(game_id: GameId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de pedir al servidor la información de una
+    lobby (jugadores, partida, cantidad maxima, etc).
+
+    Respuesta:
+    - 200: OK.
+    - 500: Ocurre un error interno.
+    """
     try:
         lobby_info = get_lobby(game_id.game_id, db)    
     except Exception:
@@ -179,6 +200,13 @@ async def get_lobby_info(game_id: GameId = Depends(), db: Session = Depends(get_
 
 @app.post("/home/create-config", status_code=status.HTTP_201_CREATED)
 async def create_partida(partida_config: Partida_config, db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de crear una partida mediante un cierta configuración
+
+    Respuesta:
+    - 201: OK la partida fue creada.
+    - 500: Ocurre un erro interno.
+    """
     try:
         id_game = add_partida(partida_config, db)
 
@@ -250,11 +278,23 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
     
 @app.post("/game/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
 async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de unirse a una partida.
+
+    Respuesta:
+    - 200: OK.
+    - 404: No existe la partida a la que se quiere unir o no existe el jugador.
+    - 400: La partida ya esta empezada.
+    - 500: Ocurre un error interno.
+    """
     try:
         partida = get_Partida(playerAndGameId.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
         
+        if partida.partida_iniciada:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
+
         jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
@@ -272,6 +312,13 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
 
 @app.get("/game/board", status_code=status.HTTP_200_OK)
 async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de pedir al servidor el tablero.
+
+    Respuesta:
+    - 200: OK.
+    - 500: Ocurre un erro interno.
+    """
     try:
         tablero = get_fichas(game_id.game_id, db)
         is_parcial = game_manager.is_tablero_parcial(game_id.game_id)
@@ -287,13 +334,13 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
 @app.put("/game/end-turn", status_code=status.HTTP_200_OK)
 async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     """
-        Descripción: Endpoint que maneja la lógica de pasar el turno. Recibe el id del juego
-        del cual se pasa el turno.
-        Respuesta:
-        - 200: Diccionario con el jugador del turno siguiente.
-        - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
+    Descripción: Endpoint que maneja la lógica de pasar el turno. Recibe el id del juego
+    del cual se pasa el turno.
+
+    Respuesta:
+    - 200: Diccionario con el jugador del turno siguiente.
+    - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
     """
-    
     try:
         jugador = get_current_turn_player(game_id.game_id, db)
         
@@ -319,6 +366,14 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
 @app.get("/game/my-fig-card/", status_code=status.HTTP_200_OK)
 async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de pedir al servidor las cartas de figura
+    en mano de un jugador.
+
+    Respuesta:
+    - 200: OK.
+    - 500: Ocurre un error interno.
+    """
     try:
         fig_cards = list_fig_cards(player_id.player_id, db)
         fig_cards_list = []
@@ -335,6 +390,14 @@ async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
 
 @app.get("/game/my-mov-card", status_code=status.HTTP_200_OK)
 async def get_mov_card(player_id: PlayerId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: manejo la logica de pedir al servidor la cartas de movimiento
+    en mano de un jugador.
+
+    Respuesta:
+    - 200: OK.
+    - 500: Ocurre un erro interno.
+    """
     try:
         mov_cards = list_mov_cards(player_id.player_id, db)
         mov_cards_list = []
@@ -383,6 +446,13 @@ async def get_winner(game_id: GameId = Depends(), db: Session = Depends(get_db))
 
 @app.get("/game/current-turn", status_code=status.HTTP_200_OK)
 async def get_current_turn(game_id: GameId = Depends(), db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de pedir al servidor el jugador en turno de la partida.
+
+    Respuesta:
+    - 200: OK.
+    - 500: Ocurre un error interno.
+    """
     try:
         jugador = jugador_en_turno(game_id.game_id, db)
     except Exception:
@@ -393,6 +463,14 @@ async def get_current_turn(game_id: GameId = Depends(), db: Session = Depends(ge
 
 @app.put("/game/start-game", status_code= status.HTTP_200_OK)
 async def start_game(game_id: GameId, db: Session = Depends(get_db)):
+    """
+    Descripción: maneja la logica de empezar una partida. Crea todas las instancias
+    de tablero, cartas de movimientos, figuras y fichas cajon.
+
+    Respuesta: 
+    - 200: OK.
+    - 500: Ocurre error interno.
+    """
     try:
         partida = get_Partida(game_id.game_id, db)
         if not partida.partida_iniciada:
@@ -547,7 +625,6 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         id_fig_card: int
         figura: [{x_pos: int, y_pos: int}]}
     """
-
     try:
         jugador = get_Jugador(figureData.player_id, db)
         pictureCard = get_CartaFigura(figureData.id_fig_card, db)
