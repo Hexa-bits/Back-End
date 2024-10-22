@@ -626,6 +626,9 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         figura: [{x_pos: int, y_pos: int}]}
     """
     try:
+        if (len(figureData.figura)==0):
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
+        
         jugador = get_Jugador(figureData.player_id, db)
         pictureCard = get_CartaFigura(figureData.id_fig_card, db)
         
