@@ -63,6 +63,10 @@ class MovementData(BaseModel):
     fichas: Tuple[Coords, Coords]
 
 class FigureData(BaseModel):
-    player_id: int
-    id_fig_card: int
+    """
+    Se usa para representar la data necesaría para jugar una carta de figura, el
+    jugador y el id de la carta figura deber ser mayor a 0 la lista de tipo Coords
+    """
+    player_id: int = Field (..., gt=0)
+    id_fig_card: int = Field (..., gt=0)
     figura: List[Coords]
