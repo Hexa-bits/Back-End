@@ -13,10 +13,9 @@ from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.models.events import Event
-from src.db import Base
-from src.main import app, ws_manager
+from src.main import app
+from src.routers.game import ws_manager
 from unittest.mock import MagicMock, patch
-
 
 
 @pytest.fixture
@@ -82,12 +81,12 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections) == 1  
         assert len(ws_manager.active_connections.get(1)) == 2 
         
-        with patch("src.main.get_current_turn_player"), \
-             patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
-             patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
+        with patch("src.routers.game.get_current_turn_player"), \
+             patch("src.routers.game.game_manager.is_tablero_parcial", return_value=False), \
+             patch('src.routers.game.terminar_turno', return_value = {"id_player": 1 ,
                                                                 "name_player": "testuser"}), \
-            patch('src.main.repartir_cartas', return_value= None), \
-            patch("src.main.game_manager.set_jugador_en_turno_id"):
+            patch('src.routers.game.repartir_cartas', return_value= None), \
+            patch("src.routers.game.game_manager.set_jugador_en_turno_id"):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
 
@@ -114,10 +113,10 @@ async def test_websocket_broadcast_ganador(client):
             assert len(ws_manager.active_connections) == 1  
             assert len(ws_manager.active_connections.get(1)) == 2 
             
-            with patch('src.main.get_Jugador', return_value = jugadores_mock[0]), \
-                 patch('src.main.get_Partida', return_value = partida_mock.return_value), \
-                 patch('src.main.get_jugadores', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
-                 patch('src.main.delete_player', return_value = None):
+            with patch('src.routers.game.get_Jugador', return_value = jugadores_mock[0]), \
+                 patch('src.routers.game.get_Partida', return_value = partida_mock.return_value), \
+                 patch('src.routers.game.get_jugadores', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
+                 patch('src.routers.game.delete_player', return_value = None):
                             
                 response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})
                 assert response.status_code == 204
@@ -140,8 +139,8 @@ async def test_websocket_broadcast_games_join(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.main.add_player_game", return_value=mock_jugador) as mock_add_partida, \
-             patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida:
+        with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
+             patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida:
             config = {"player_id": 1 , "game_id": 1}
             mock_add_partida.return_value = mock_jugador
 
@@ -161,9 +160,9 @@ async def test_websocket_broadcast_games_leave(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
-             patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.main.delete_players_lobby") as mock_delete_players_partida:
+        with patch("src.routers.game.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
+             patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
+             patch("src.routers.game.delete_players_lobby") as mock_delete_players_partida:
             
             info_leave = {"id_user": 1, "game_id": 1}
 

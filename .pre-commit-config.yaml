@@ -1,0 +1,16 @@
+repos:
+    - repo: local
+      hooks:
+        - id: pytest
+          name: Run Pytest
+          entry: pytest -W ignore::pytest.PytestDeprecationWarning
+          language: system
+          types: [python]
+          always_run: true
+        
+        - id: black
+          name: Format with Black
+          entry: black
+          args: [--check, --diff, --color, --all-files]
+          language: system
+          types: [python]
