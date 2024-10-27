@@ -12,7 +12,7 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.models.events import Event
+from src.ws_manager import CANCEL_LOBBY, JOIN_GAME
 from src.main import app
 from src.routers.game import ws_manager
 from unittest.mock import MagicMock, patch
@@ -22,8 +22,6 @@ from unittest.mock import MagicMock, patch
 def client():
     with TestClient(app) as c:
         yield c
-
-event = Event()
 
 mock_partida = MagicMock()
 mock_partida.id = 1
@@ -151,7 +149,7 @@ async def test_websocket_broadcast_games_join(client):
             lobbies1 = websocket1.receive_text()
             lobbies2 = websocket2.receive_text()
 
-            assert lobbies1 == event.join_game
+            assert lobbies1 == JOIN_GAME
             assert lobbies1 == lobbies2
 
 
@@ -176,7 +174,7 @@ async def test_websocket_broadcast_games_leave(client):
             lobbies1 = websocket1.receive_text()
             lobbies2 = websocket2.receive_text()
 
-            assert lobbies1 == event.cancel_lobby
+            assert lobbies1 == CANCEL_LOBBY
             assert lobbies1 == lobbies2
                             
 

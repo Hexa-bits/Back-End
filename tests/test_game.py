@@ -6,7 +6,7 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard, CardState, Picture
 from src.models.utils import Coords
 from typing import List
-from src.game import detectar_patrones, figura_valida, separar_matrices_por_color, is_valid_picture_card
+from src.game_helpers import detectar_patrones, figura_valida, separar_matrices_por_color, is_valid_picture_card
 
 def test_detectar_patrones_sin_patrones():
     matriz = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])

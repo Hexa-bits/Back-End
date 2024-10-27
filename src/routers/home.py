@@ -1,32 +1,28 @@
-from fastapi import FastAPI, Request, Depends, status, HTTPException, APIRouter
+from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import ValidationError, BaseModel
 
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from src.db import Base, engine, SessionLocal, get_db
+from sqlalchemy.exc import SQLAlchemyError
+from src.db import get_db
 from sqlalchemy.orm import Session
 
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
-from src.models.utils import Partida_config, Leave_config
+from src.models.utils import Partida_config
 from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.ws_manager import WebSocketConnectionManager
-from src.models.events import Event
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-from src.game import *
+from src.game_helpers import *
 
 router = APIRouter()
 ws_manager = WebSocketConnectionManager()
-event = Event()
 
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
@@ -90,7 +86,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
         id_game = add_partida(partida_config, db)
 
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
-        await ws_manager.send_message_game_id(event.get_lobbies, game_id = 0)
+        await ws_manager.send_get_lobbies()
 
     except SQLAlchemyError:
         db.rollback()

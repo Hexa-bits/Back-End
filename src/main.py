@@ -1,17 +1,12 @@
-import random
 from fastapi import FastAPI, Request, Depends, status, HTTPException, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi import WebSocket, WebSocketDisconnect
-from typing import List, Dict
-from pydantic import ValidationError, BaseModel
+from pydantic import ValidationError
 
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from sqlalchemy.orm import Session
 
-from src.db import Base, engine, SessionLocal, get_db
+from src.db import Base, engine, get_db
 
-from src.models.events import Event
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.utils import *
@@ -19,13 +14,11 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
 from src.models.fichas_cajon import FichaCajon
-from src.models.utils import *
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-from src.game import *
 from src.routers import game, home
 
 Base.metadata.create_all(bind=engine)

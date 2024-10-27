@@ -1,6 +1,5 @@
 import random
 import numpy as np
-import json
 from typing import List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
@@ -13,7 +12,7 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.game import detectar_patrones, figura_valida, separar_matrices_por_color
+from src.game_helpers import detectar_patrones, figura_valida, separar_matrices_por_color
 
 def get_tablero(game_id: int, db: Session) -> Tablero:
     """

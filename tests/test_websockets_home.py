@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.models.events import Event
 from src.db import Base
 from src.main import app
 from src.routers.home import ws_manager

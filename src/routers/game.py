@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends, status, HTTPException, APIRouter
+from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 
@@ -8,19 +8,17 @@ from sqlalchemy.orm import Session
 
 from src.models.utils import *
 from src.ws_manager import WebSocketConnectionManager
-from src.models.events import Event
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
 from src.repositories.player_repository import *
 from src.repositories.cards_repository import *
-from src.game import *
+from src.game_helpers import *
 from src.models.patrones_figuras_matriz import generate_all_figures
 
 router = APIRouter()
 
 ws_manager = WebSocketConnectionManager()
-event = Event()
 game_manager = GameManager()
 
 lista_patrones = generate_all_figures()
@@ -71,23 +69,23 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
-            await ws_manager.send_message_game_id(event.get_info_players, partida.id)
+            await ws_manager.send_get_info_players(partida.id)
             jugadores = get_jugadores(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
                 partida.winner_id = jugadores[0].id
                 db.commit()
 
-                await ws_manager.send_message_game_id(event.get_winner, partida.id)
+                await ws_manager.send_get_winner(partida.id)
         else:
             if jugador.es_anfitrion:
                 delete_players_lobby(partida, db)
-                await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
+                await ws_manager.send_cancel_lobby(game_id)
             else:
                 delete_player(jugador, db)
-                await ws_manager.send_message_game_id(event.leave_lobby, game_id=game_id)
+                await ws_manager.send_leave_lobby(game_id)
         
-            await ws_manager.send_message_game_id(event.get_lobbies, game_id=0)
+            await ws_manager.send_get_lobbies()
 
     except SQLAlchemyError:
         db.rollback()
@@ -119,8 +117,8 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
-        await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
-        await ws_manager.send_message_game_id(event.join_game, game_id=partida.id)
+        await ws_manager.send_get_lobbies()
+        await ws_manager.send_join_game(partida.id)
 
     except SQLAlchemyError:
         db.rollback()
@@ -175,7 +173,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
-        await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        await ws_manager.send_end_turn(game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -303,8 +301,8 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             #Uso el game manager
             game_manager.create_game(game_id.game_id)
             
-            await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
-            await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
+            await ws_manager.send_get_lobbies()
+            await ws_manager.send_start_game(game_id.game_id)
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -352,8 +350,8 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
             try:
                 cancelar_movimiento(partida.id, jugador.id, mov, coords, db)
                 
-                await ws_manager.send_message_game_id(event.get_tablero, partida.id)
-                await ws_manager.send_message_game_id(event.get_cartas_mov, partida.id)
+                await ws_manager.send_get_tablero(partida.id)
+                await ws_manager.send_get_cartas_mov(partida.id)
 
                 game_manager.desapilar_carta_y_ficha(game_id=partida.id) 
             except Exception:
@@ -412,8 +410,9 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
         if is_valid_move(movementCard, coord):
             movimiento_parcial(game_id, movementCard, coord, db)
             game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
-            await ws_manager.send_message_game_id(event.get_tablero, game_id)
-            await ws_manager.send_message_game_id(event.get_cartas_mov, game_id)
+            
+            await ws_manager.send_get_tablero(game_id)
+            await ws_manager.send_get_cartas_mov(game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
     except SQLAlchemyError:
@@ -474,10 +473,10 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
                 partida.winner_id = jugador.id
                 db.commit()
 
-                await ws_manager.send_message_game_id(event.get_winner, game_id)
+                await ws_manager.send_get_winner(game_id)
             else:
-                await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
-            await ws_manager.send_message_game_id(event.get_tablero, game_id)
+                await ws_manager.send_get_cartas_fig(game_id)
+            await ws_manager.send_get_tablero(game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:

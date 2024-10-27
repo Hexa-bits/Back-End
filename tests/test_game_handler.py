@@ -6,7 +6,7 @@ from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
 from src.models.utils import *
-from src.game import GameManager, is_valid_move
+from src.game_helpers import GameManager, is_valid_move
     
 def test_create_game():
     """Pruebo si el juego se crea correctamente."""

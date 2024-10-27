@@ -1,5 +1,4 @@
 import random
-import json
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
