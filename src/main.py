@@ -114,7 +114,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 @app.websocket("/game")
-async def websocket_endpoint(game_id: int, websocket: WebSocket):
+async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = Depends(get_db)):
     """
     Le permite al front escucha los mensajes entrantes, que se envían a
     todos aquellos en juego, ya sea lobby o en partida inciada por game_id
@@ -123,16 +123,21 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            data = json.loads(data)
+
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                continue
             if "msg" in data:
                 message = data["msg"]
                 player_id = data["player_id"]
                 
+                player_name = get_Jugador(player_id, db).nombre
                 response = {
                             "type": "message",
                             "data":{
                                     "msg": message, 
-                                    "player_name": player_id
+                                    "player_name": player_name
                                     }
                             }
                 response = json.dumps(response)
