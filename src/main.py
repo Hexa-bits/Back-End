@@ -123,6 +123,18 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
+            if data["msg"]:
+                message = data["msg"]
+                player_id = data["player_id"]
+                
+                response = {"type": "message",
+                            "data":{
+                                "msg": message, 
+                                "player_name": player_id}
+                            }
+
+                await ws_manager.send_message_game_id(response, game_id)
+
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
