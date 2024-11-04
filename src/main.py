@@ -320,10 +320,16 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     - 500: Ocurre un erro interno.
     """
     try:
-        tablero = get_fichas(game_id.game_id, db)
+        tablero = get_tablero(game_id, db)
+        if tablero.color_prohibido is None:
+            forbidden_color = 0
+        else:
+           forbidden_color = tablero.color_prohibido.value
+        fichas = get_fichas(game_id.game_id, db)
         is_parcial = game_manager.is_tablero_parcial(game_id.game_id)
 
-        response = { "fichas": tablero,
+        response = { "fichas": fichas,
+                    "forbidden_color": forbidden_color,
                     "parcial": is_parcial }
 
     except Exception:
@@ -648,8 +654,15 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         if pictureCard.jugador_id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
         
+        tablero = get_tablero(game_id, db)
+        coords_ficha0 = figureData.figura[0]
+        color_figura = get_color_of_ficha(coords_ficha0.x_pos, coords_ficha0.y_pos, game_id, db)
+        if color_figura is not None and (tablero.color_prohibido == color_figura):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")
+        
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
+            setear_color_prohibido(tablero, color_figura, db)
             game_manager.limpiar_cartas_fichas(game_id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:

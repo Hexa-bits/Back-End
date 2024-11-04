@@ -99,7 +99,7 @@ def get_fichas(game_id: int, db: Session) -> List[dict]:
 def mezclar_fichas(db: Session, game_id: int) -> int:
     """Función que mezcla las fichas del tablero"""
 
-    tablero = Tablero(partida_id=game_id)
+    tablero = Tablero(partida_id=game_id, color_prohibido=None)
     db.add(tablero)
     db.commit()
     db.refresh(tablero)
@@ -167,3 +167,9 @@ def get_color_of_ficha( x_pos: int, y_pos: int, game_id: int, db: Session) -> Co
         color = ficha.color
 
     return color
+
+def setear_color_prohibido(tablero: Tablero, color_figura: Color, db: Session) -> None:
+    if tablero and color_figura:
+        tablero.color_prohibido = color_figura
+        db.commit()
+    
