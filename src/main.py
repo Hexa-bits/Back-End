@@ -123,16 +123,20 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
     try:
         while True:
             data = await websocket.receive_text()
-            if data["msg"]:
+            data = json.loads(data)
+            if "msg" in data:
                 message = data["msg"]
                 player_id = data["player_id"]
                 
-                response = {"type": "message",
+                response = {
+                            "type": "message",
                             "data":{
-                                "msg": message, 
-                                "player_name": player_id}
+                                    "msg": message, 
+                                    "player_name": player_id
+                                    }
                             }
-
+                response = json.dumps(response)
+                
                 await ws_manager.send_message_game_id(response, game_id)
 
     except WebSocketDisconnect:
