@@ -12,6 +12,8 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
+from src.models.cartamovimiento import CardStateMov
+from src.models.cartafigura import CardState
 from src.models.events import Event
 from src.db import Base
 from src.main import app, ws_manager
@@ -28,6 +30,7 @@ event = Event()
 
 mock_partida = MagicMock()
 mock_partida.id = 1
+mock_partida.winner_id = None
 mock_partida.partida_iniciada = False
 
 mock_jugador = MagicMock()
@@ -211,3 +214,87 @@ async def test_websocket_broadcast_games_leave(client):
             assert lobbies1 == lobbies2               
 
 
+@pytest.mark.asyncio
+async def test_websocket_broadcast_use_mov_card(client):
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
+
+        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
+             patch("src.main.get_CartaMovimiento", return_value=MagicMock(id = 1, estado=CardStateMov.mano, 
+                                                                          jugador_id=1, partida_id=1)), \
+             patch("src.main.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.main.is_valid_move", return_value = True), \
+             patch("src.main.movimiento_parcial"), \
+             patch("src.main.game_manager"):
+            
+            info = {"player_id": 1, "id_mov_card": 1, "fichas": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
+
+            response = client.put("/game/use-mov-card", json=info)
+
+            assert response.status_code == 200
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == event.get_tablero
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == event.get_cartas_mov
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "El jugador "+ mock_get_jugador.return_value.nombre +" hizo un movimiento"
+            assert mensaje1 == mensaje2
+
+
+@pytest.mark.asyncio
+async def test_websocket_broadcast_use_mov_card(client):
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
+
+        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
+             patch("src.main.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
+                                                                          jugador_id=1, partida_id=1)), \
+             patch("src.main.get_Partida", return_value= mock_partida), \
+             patch("src.main.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.main.is_valid_picture_card", return_value = True), \
+             patch("src.main.descartar_carta_figura"), \
+             patch("src.main.get_jugador_sin_cartas", return_value=None), \
+             patch("src.main.game_manager"):
+            
+            info = {"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
+
+            response = client.put("/game/use-fig-card", json=info)
+
+            assert response.status_code == 200
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == event.get_cartas_fig
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == event.get_tablero
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "El jugador "+ mock_get_jugador.return_value.nombre +" se descartó una figura"
+            assert mensaje1 == mensaje2
