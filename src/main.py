@@ -79,11 +79,11 @@ async def login(user: User, db: Session = Depends(get_db)):
     - 500: Ocurre un error interno.
     """
     try:
-        jugador = add_player(user.username, False, db)
+        player = add_player(user.username, False, db)
     except Exception:
         db.rollback()  # Revertir cambios en caso de error
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario.")
     return JSONResponse(
-        content={"id": jugador.id},
+        content={"id": player.id},
         status_code=status.HTTP_201_CREATED
     )

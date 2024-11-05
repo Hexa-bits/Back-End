@@ -12,7 +12,7 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.repositories.board_repository import swap_fichasCajon
+from src.repositories.board_repository import swap_box_card
 
 def get_CartaFigura(id_carta_figura: int, db: Session) -> PictureCard:
     """
@@ -67,13 +67,13 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
         
     #Obtengo 3 cartas para cada jugador
     #Obtengo mi lista de jugadores
-    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    playeres = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
     
-    for jugador in jugadores:
+    for player in playeres:
         for i in range(3):
             #Obtengo una carta aleatoria de all_cards_mov
             carta = all_cards_mov.pop()
-            carta.jugador_id = jugador.id
+            carta.jugador_id = player.id
             carta.estado = CardStateMov.mano
             db.commit()
             db.refresh(carta)
@@ -84,12 +84,12 @@ def repartir_cartas(game_id: int, db: Session) -> None:
 
     turno_actual = partida.jugador_en_turno
 
-    jugador_en_turno = db.query(Jugador).filter(and_(Jugador.partida_id == game_id, Jugador.turno == turno_actual)).first()
+    player_en_turno = db.query(Jugador).filter(and_(Jugador.partida_id == game_id, Jugador.turno == turno_actual)).first()
 
-    cartas_mov_en_mano = db.query(MovementCard).filter(and_(MovementCard.jugador_id == jugador_en_turno.id, 
+    cartas_mov_en_mano = db.query(MovementCard).filter(and_(MovementCard.jugador_id == player_en_turno.id, 
                                                         MovementCard.estado == CardStateMov.mano)).all()
     
-    cartas_fig_en_mano = db.query(PictureCard).filter(and_(PictureCard.jugador_id == jugador_en_turno.id, 
+    cartas_fig_en_mano = db.query(PictureCard).filter(and_(PictureCard.jugador_id == player_en_turno.id, 
                                                            PictureCard.estado == CardState.mano)).all()
 
     if len(cartas_mov_en_mano) < 3:
@@ -112,7 +112,7 @@ def repartir_cartas(game_id: int, db: Session) -> None:
                     
             carta = random.choice(all_cards_mov)
             all_cards_mov.remove(carta)
-            carta.jugador_id = jugador_en_turno.id
+            carta.jugador_id = player_en_turno.id
             carta.estado = CardStateMov.mano
             db.commit()
             db.refresh(carta)
@@ -120,7 +120,7 @@ def repartir_cartas(game_id: int, db: Session) -> None:
     if len(cartas_fig_en_mano) < 3:
         
         all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
-                                                          PictureCard.jugador_id == jugador_en_turno.id,
+                                                          PictureCard.jugador_id == player_en_turno.id,
                                                           PictureCard.estado == CardState.mazo)).all()
         
         cant_cartas = 3 - len(cartas_fig_en_mano)
@@ -128,26 +128,26 @@ def repartir_cartas(game_id: int, db: Session) -> None:
         for i in range(cant_cartas):
             if len(all_cards_fig_player)>0:
                 carta = all_cards_fig_player.pop()
-                carta.jugador_id = jugador_en_turno.id
+                carta.jugador_id = player_en_turno.id
                 carta.estado = CardState.mano
                 db.commit()
                 db.refresh(carta)
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
-    jugadores = get_ordenes(game_id, db)
-    num_jugadores = len(jugadores)
+    playeres = get_ordenes(game_id, db)
+    num_playeres = len(playeres)
 
-    cartas_total = (50 // num_jugadores) *num_jugadores
+    cartas_total = (50 // num_playeres) *num_playeres
 
     for i in range(cartas_total):
 
         cartaFigura = PictureCard(figura=Picture(figuras_list[i]))
-        if (i < 3 *num_jugadores):
+        if (i < 3 *num_playeres):
             cartaFigura.estado = CardState.mano
 
         cartaFigura.partida_id = game_id
-        cartaFigura.jugador_id = jugadores[i % num_jugadores].id
-        i += num_jugadores
+        cartaFigura.jugador_id = playeres[i % num_playeres].id
+        i += num_playeres
         db.add(cartaFigura)
 
     db.commit()
@@ -195,8 +195,7 @@ def get_ordenes(id_game: int, db: Session) -> List[Jugador]:
     jugadores.sort(key=lambda jugador: jugador.turno)
     return jugadores
 
-def others_cards(game_id: int, player_id: int, jugadores: List[Jugador], db: Session) -> List[dict]:
-
+def others_cards(player_id: int, jugadores: List[Jugador], db: Session) -> List[dict]:
 
     jugadores_info = []
     for jugador in jugadores:
@@ -229,15 +228,15 @@ def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
     return db.execute(smt).scalar()
 
 
-def cancelar_movimiento(partida_id: int, jugador_id: int, mov_id: int,
-                        tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+def cancel_movement(partida_id: int, jugador_id: int, mov_id: int,
+                        tuple_coords: tuple[Coords, Coords], db: Session) -> None:
     """
     Cancela un movimiento revertiendo la posición de las fichasCajon usadas 
     (swap_fichasCajon), y devolviendo a la mano del jugador una carta de 
     movimiento usada.
     """
     #Hace que la operación sea atómica (si ocurre un error hace rollback de todo)
-    swap_fichasCajon(partida_id, tupla_coords, db)        
+    swap_box_card(partida_id, tuple_coords, db)        
     carta_mov = get_cartaMovId(mov_id, db)
     
     if carta_mov is None:
@@ -257,7 +256,7 @@ def movimiento_parcial(game_id: int, moveCard: MovementCard,
     (usa swap_fichasCajon), y llevando la carta de movimiento usada al estado
     de descartada.
     """
-    swap_fichasCajon(game_id, coord, db)
+    swap_box_card(game_id, coord, db)
 
     moveCard.estado = CardStateMov.descartada
     moveCard.jugador_id = None

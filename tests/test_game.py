@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock, ANY
 from fastapi.testclient import TestClient
 from src.main import app
-from src.routers.game import lista_patrones
+from src.routers.game import list_patterns
 from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
 from sqlalchemy.orm import Session
 from src.models.partida import Partida
@@ -45,7 +45,7 @@ def test_use_mov_card(mock_get_db, mock_mov_parcial, mock_is_valid, mock_get_cur
                                                         })
         
     assert response.status_code == 200
-    mock_game_manager.apilar_carta_y_ficha.assert_called_once_with (1, 1, 
+    mock_game_manager.add_card_and_box_card.assert_called_once_with (1, 1, 
                                                                     (Coords(x_pos=2, y_pos=2), 
                                                                     Coords(x_pos=4, y_pos=4)))
 
@@ -78,7 +78,7 @@ def test_use_mov_card_invalid_move(mock_get_db, mock_mov_parcial, mock_is_valid,
                                 
     assert response.status_code == 400
     assert response.json() == {'detail': "Movimiento invalido"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
 @patch("src.routers.game.game_manager")
 @patch("src.routers.game.get_Jugador")
@@ -111,7 +111,7 @@ def test_use_mov_card_invalid_card(mock_get_db, mock_mov_parcial, mock_is_valid,
         
     assert response.status_code == 400
     assert response.json() == {'detail': "La carta no pertenece al jugador"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
     mock_get_movCard.return_value = MovementCard(id=1, estado= CardStateMov.mano, 
                                                 movimiento= Move.diagonal_con_espacio,
@@ -121,7 +121,7 @@ def test_use_mov_card_invalid_card(mock_get_db, mock_mov_parcial, mock_is_valid,
     
     assert response.status_code == 400
     assert response.json() == {'detail': "La carta no pertenece a la partida"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
 @patch("src.routers.game.game_manager")
 @patch("src.routers.game.get_Jugador")
@@ -154,7 +154,7 @@ def test_use_mov_card_invalid_player_or_not_in_hand(mock_get_db, mock_mov_parcia
                                                         })
     assert response.status_code == 400
     assert response.json() == {'detail': "No es turno del jugador"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
     mock_get_jugador.return_value = mock_jugador2
     mock_get_movCard.return_value = MovementCard(id=1, estado= CardStateMov.descartada, 
@@ -169,7 +169,7 @@ def test_use_mov_card_invalid_player_or_not_in_hand(mock_get_db, mock_mov_parcia
         
     assert response.status_code == 400
     assert response.json() == {'detail': "La carta no está en mano"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
 
 @patch("src.routers.game.game_manager")
@@ -201,7 +201,7 @@ def test_use_mov_card_error(mock_get_db, mock_mov_parcial, mock_is_valid, mock_g
         
     assert response.status_code == 500
     assert response.json() == {'detail': "Fallo en la base de datos"}
-    mock_game_manager.apilar_carta_y_ficha.assert_not_called()
+    mock_game_manager.add_card_and_box_card.assert_not_called()
 
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
@@ -231,7 +231,7 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
     assert response.status_code == 200
-    mock_game_manager.limpiar_cartas_fichas.assert_called_once()
+    mock_game_manager.clean_cards_box_cards.assert_called_once()
 
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
@@ -260,7 +260,7 @@ def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, m
     
     assert response.status_code == 400
     assert response.json() == {'detail': 'Figura invalida'}
-    mock_game_manager.limpiar_cartas_fichas.assert_not_called()
+    mock_game_manager.clean_cards_box_cards.assert_not_called()
 
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
@@ -306,7 +306,7 @@ def test_use_picture_card_400_status_code(mock_get_partida, mock_descartar_carta
     
     assert response.status_code == 400
     assert response.json() == {'detail': 'La carta no pertenece al jugador'}
-    mock_game_manager.limpiar_cartas_fichas.assert_not_called()
+    mock_game_manager.clean_cards_box_cards.assert_not_called()
 
 @patch("src.routers.game.get_Jugador", side_effect = SQLAlchemyError)
 def test_use_picture_card_error(mock_get_jugador):
@@ -319,9 +319,9 @@ def test_use_picture_card_error(mock_get_jugador):
 
 @pytest.mark.asyncio
 @patch("src.routers.game.get_valid_detected_figures")
-@patch("src.routers.game.get_color_of_ficha")
+@patch("src.routers.game.get_color_of_box_card")
 @patch("src.db.get_db")
-async def test_highlight_figures(mock_get_db, mock_get_color_of_ficha, mock_get_valid_detected_figures):
+async def test_highlight_figures(mock_get_db, mock_get_color_of_box_card, mock_get_valid_detected_figures):
     # Crear un mock de la base de datos
     mock_db = MagicMock(spec=Session)
     mock_get_db.return_value = mock_db
@@ -334,7 +334,7 @@ async def test_highlight_figures(mock_get_db, mock_get_color_of_ficha, mock_get_
     mock_get_valid_detected_figures.return_value = mock_figures
 
     # Mockear la respuesta de get_color_of_ficha (color para cada ficha)
-    mock_get_color_of_ficha.return_value = Color.ROJO.value
+    mock_get_color_of_box_card.return_value = Color.ROJO.value
 
     # Parámetros para la llamada al endpoint
     game_id = 1
@@ -549,7 +549,7 @@ async def test_get_others_cards_db_error(mock_get_db, mock_others_cards):
 @patch("src.routers.game.get_Jugador")
 @patch("src.routers.game.get_Partida")
 @patch("src.routers.game.game_manager")
-@patch("src.routers.game.cancelar_movimiento")
+@patch("src.routers.game.cancel_movement")
 @patch("src.db.get_db")
 async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
                                 mock_manager, mock_get_partida, mock_get_jugador):
@@ -563,8 +563,8 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
     mock_cancel_movimiento.return_value = None
 
     coord1, coord2 = Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2)
-    mock_manager.top_tupla_carta_y_fichas.return_value = (1, (coord1, coord2))
-    mock_manager.desapilar_carta_y_ficha.return_value = None
+    mock_manager.top_tuple_card_and_box_cards.return_value = (1, (coord1, coord2))
+    mock_manager.pop_card_and_box_card.return_value = None
 
     config = {"game_id": 1, "player_id": 1}
     response = client.put("/game/cancel-mov", json=config)
@@ -572,10 +572,10 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
     #Verifico que todo se llame como corresponde
     mock_get_partida.assert_called_once_with(1, ANY)
     mock_get_jugador.assert_called_once_with(1, ANY)
-    mock_manager.top_tupla_carta_y_fichas.assert_called_once_with(game_id=1)
+    mock_manager.top_tuple_card_and_box_cards.assert_called_once_with(game_id=1)
     mock_cancel_movimiento.assert_called_with (mock_partida.id, mock_jugador.id, 
                                               1, (coord1, coord2), ANY)
-    mock_manager.desapilar_carta_y_ficha.assert_called_once_with(game_id=1)
+    mock_manager.pop_card_and_box_card.assert_called_once_with(game_id=1)
 
     assert response.status_code == 204
 
@@ -583,7 +583,7 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
 @patch("src.routers.game.get_Jugador")
 @patch("src.routers.game.get_Partida")
 @patch("src.routers.game.game_manager")
-@patch("src.routers.game.cancelar_movimiento")
+@patch("src.routers.game.cancel_movement")
 @patch("src.db.get_db")
 async def test_cancelar_mov_not_mov_parcial(mock_get_db, mock_cancel_movimiento,
                                           mock_manager, mock_get_partida, mock_get_jugador):
@@ -596,8 +596,8 @@ async def test_cancelar_mov_not_mov_parcial(mock_get_db, mock_cancel_movimiento,
     mock_get_jugador.return_value = mock_jugador
     mock_cancel_movimiento.return_value = None
     
-    mock_manager.top_tupla_carta_y_fichas.return_value = None
-    mock_manager.desapilar_carta_y_ficha.return_value = None
+    mock_manager.top_tuple_card_and_box_cards.return_value = None
+    mock_manager.pop_card_and_box_card.return_value = None
 
     config = {"game_id": 1, "player_id": 1}
     response = client.put("/game/cancel-mov", json=config)
@@ -605,9 +605,9 @@ async def test_cancelar_mov_not_mov_parcial(mock_get_db, mock_cancel_movimiento,
     #Verifico que todo se llame como corresponde
     mock_get_partida.assert_called_once_with(1, ANY)
     mock_get_jugador.assert_called_once_with(1, ANY)
-    mock_manager.top_tupla_carta_y_fichas.assert_called_once_with(game_id=1)
+    mock_manager.top_tuple_card_and_box_cards.assert_called_once_with(game_id=1)
     mock_cancel_movimiento.assert_not_called()
-    mock_manager.desapilar_carta_y_ficha.assert_not_called()
+    mock_manager.pop_card_and_box_card.assert_not_called()
 
     assert response.status_code == 400
     assert response.json() == {"detail": "No hay movimientos que deshacer"}
@@ -616,7 +616,7 @@ async def test_cancelar_mov_not_mov_parcial(mock_get_db, mock_cancel_movimiento,
 @patch("src.routers.game.get_Jugador")
 @patch("src.routers.game.get_Partida")
 @patch("src.routers.game.game_manager")
-@patch("src.routers.game.cancelar_movimiento")
+@patch("src.routers.game.cancel_movement")
 @patch("src.db.get_db")
 async def test_cancelar_mov_not_jugador(mock_get_db, mock_cancel_movimiento,
                                         mock_manager, mock_get_partida, mock_get_jugador):
@@ -632,9 +632,9 @@ async def test_cancelar_mov_not_jugador(mock_get_db, mock_cancel_movimiento,
     #Verifico que todo se llame como corresponde
     mock_get_jugador.assert_called_once_with(1, ANY)
     mock_get_partida.assert_not_called()
-    mock_manager.top_tupla_carta_y_fichas.assert_not_called()
+    mock_manager.top_tuple_card_and_box_cards.assert_not_called()
     mock_cancel_movimiento.assert_not_called()
-    mock_manager.desapilar_carta_y_ficha.assert_not_called()
+    mock_manager.pop_card_and_box_card.assert_not_called()
 
     assert response.status_code == 404
     assert response.json() == {"detail": f'No existe el jugador: {config["player_id"]}'}
@@ -643,7 +643,7 @@ async def test_cancelar_mov_not_jugador(mock_get_db, mock_cancel_movimiento,
 @patch("src.routers.game.get_Jugador")
 @patch("src.routers.game.get_Partida")
 @patch("src.routers.game.game_manager")
-@patch("src.routers.game.cancelar_movimiento")
+@patch("src.routers.game.cancel_movement")
 @patch("src.db.get_db")
 async def test_cancelar_mov_sql_error(mock_get_db, mock_cancel_movimiento,
                                         mock_manager, mock_get_partida, mock_get_jugador):
@@ -657,9 +657,9 @@ async def test_cancelar_mov_sql_error(mock_get_db, mock_cancel_movimiento,
     #Verifico que todo se llame como corresponde
     mock_get_jugador.assert_called_once_with(1, ANY)
     mock_get_partida.assert_not_called()
-    mock_manager.top_tupla_carta_y_fichas.assert_not_called()
+    mock_manager.top_tuple_card_and_box_cards.assert_not_called()
     mock_cancel_movimiento.assert_not_called()
-    mock_manager.desapilar_carta_y_ficha.assert_not_called()
+    mock_manager.pop_card_and_box_card.assert_not_called()
 
     assert response.status_code == 500
     assert response.json() == {"detail": "Fallo en la base de datos"}

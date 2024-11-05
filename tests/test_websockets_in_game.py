@@ -80,11 +80,11 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections.get(1)) == 2 
         
         with patch("src.routers.game.get_current_turn_player"), \
-             patch("src.routers.game.game_manager.is_tablero_parcial", return_value=False), \
+             patch("src.routers.game.game_manager.is_board_parcial", return_value=False), \
              patch('src.routers.game.terminar_turno', return_value = {"id_player": 1 ,
                                                                 "name_player": "testuser"}), \
             patch('src.routers.game.repartir_cartas', return_value= None), \
-            patch("src.routers.game.game_manager.set_jugador_en_turno_id"):
+            patch("src.routers.game.game_manager.set_player_in_turn_id"):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
 
@@ -113,7 +113,7 @@ async def test_websocket_broadcast_ganador(client):
             
             with patch('src.routers.game.get_Jugador', return_value = jugadores_mock[0]), \
                  patch('src.routers.game.get_Partida', return_value = partida_mock.return_value), \
-                 patch('src.routers.game.get_jugadores', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
+                 patch('src.routers.game.get_players', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
                  patch('src.routers.game.delete_player', return_value = None):
                             
                 response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})

@@ -10,7 +10,7 @@ from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.main import app
-from src.repositories.board_repository import mezclar_fichas
+from src.repositories.board_repository import mezclar_box_cards
 from src.repositories.game_repository import terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
@@ -44,7 +44,7 @@ def test_terminar_turno_succesful(test_db, client):
     #Testeo el endpoint usando la base de datos que cree
     with patch("src.db.get_db"), \
          patch("src.routers.game.get_current_turn_player"), \
-         patch("src.routers.game.game_manager.is_tablero_parcial", return_value=False), \
+         patch("src.routers.game.game_manager.is_board_parcial", return_value=False), \
          patch("src.routers.game.terminar_turno") as mock_terminar_turno, \
          patch("src.routers.game.repartir_cartas", return_value= None):
         

@@ -7,7 +7,7 @@ END_TURN = "Terminó turno"
 LEAVE_LOBBY = "Se unió/abandonó jugador en lobby"
 CANCEL_LOBBY = "La partida se canceló"
 GET_WINNER = "Hay Ganador"
-GET_TABLERO = "Hay modificación de Tablero"
+GET_BOARD = "Hay modificación de Tablero"
 GET_CARTAS_MOV = "Actualizar cartas de movimientos"
 GET_CARTAS_FIG = "Actualizar cartas de figuras"
 START_PARTIDA = "La partida inició"
@@ -69,7 +69,7 @@ class WebSocketConnectionManager:
         await self.send_message_game_id(GET_WINNER, game_id)
     
     async def send_get_tablero(self, game_id: int):
-        await self.send_message_game_id(GET_TABLERO, game_id)
+        await self.send_message_game_id(GET_BOARD, game_id)
     
     async def send_get_cartas_mov(self, game_id: int):
         await self.send_message_game_id(GET_CARTAS_MOV, game_id)

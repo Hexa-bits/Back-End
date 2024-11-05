@@ -24,7 +24,7 @@ def test_start_game():
     app.dependency_overrides[get_db] = mock_get_db
 
     # Mockea las funciones que se llaman dentro de start_game
-    with mock.patch("src.routers.game.mezclar_fichas") as mock_mezclar_fichas, \
+    with mock.patch("src.routers.game.mezclar_box_cards") as mock_mezclar_box_cards, \
          mock.patch("src.routers.game.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
          mock.patch("src.routers.game.mezclar_figuras") as mock_mezclar_figuras, \
          mock.patch("src.routers.game.asignar_turnos") as mock_asignar_turnos, \
@@ -43,7 +43,7 @@ def test_start_game():
         assert response.json() == {"id_game": 1, "iniciada": True}
 
         # Verifica que las funciones fueron llamadas correctamente
-        mock_mezclar_fichas.assert_called_once_with(mock_db, 1)
+        mock_mezclar_box_cards.assert_called_once_with(mock_db, 1)
         mock_mezclar_cartas.assert_called_once_with(mock_db, 1)
         mock_mezclar_figuras.assert_called_once_with(1, mock_db)
         mock_asignar_turnos.assert_called_once_with(1, mock_db)
@@ -62,7 +62,7 @@ def test_start_game_exception():
     app.dependency_overrides[get_db] = mock_get_db
 
     # Mockea las funciones que se llaman dentro de start_game
-    with mock.patch("src.routers.game.mezclar_fichas") as mock_mezclar_fichas, \
+    with mock.patch("src.routers.game.mezclar_box_cards") as mock_mezclar_box_cards, \
          mock.patch("src.routers.game.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
          mock.patch("src.routers.game.mezclar_figuras") as mock_mezclar_figuras, \
          mock.patch("src.routers.game.asignar_turnos") as mock_asignar_turnos, \

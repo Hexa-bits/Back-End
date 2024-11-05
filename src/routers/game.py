@@ -21,8 +21,8 @@ router = APIRouter()
 ws_manager = WebSocketConnectionManager()
 game_manager = GameManager()
 
-lista_patrones = generate_all_figures()
-lista_patrones = [np.array(patron) for patron in lista_patrones]
+list_patterns = generate_all_figures()
+list_patterns = [np.array(patron) for patron in list_patterns]
 
 
 @router.websocket("")
@@ -70,7 +70,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             delete_player(jugador, db)
             await ws_manager.send_get_info_players(partida.id)
-            jugadores = get_jugadores(game_id, db)
+            jugadores = get_players(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
                 partida.winner_id = jugadores[0].id
@@ -136,8 +136,8 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     - 500: Ocurre un erro interno.
     """
     try:
-        tablero = get_fichas(game_id.game_id, db)
-        is_parcial = game_manager.is_tablero_parcial(game_id.game_id)
+        tablero = get_box_cards(game_id.game_id, db)
+        is_parcial = game_manager.is_board_parcial(game_id.game_id)
 
         response = { "fichas": tablero,
                     "parcial": is_parcial }
@@ -160,18 +160,18 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         jugador = get_current_turn_player(game_id.game_id, db)
         
-        while game_manager.is_tablero_parcial(game_id.game_id):
-            mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
+        while game_manager.is_board_parcial(game_id.game_id):
+            mov_coords = game_manager.top_tuple_card_and_box_cards(game_id.game_id)
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
 
-            cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
-            game_manager.desapilar_carta_y_ficha(game_id.game_id)
+            cancel_movement(game_id.game_id, jugador.id, mov, coords, db)
+            game_manager.pop_card_and_box_card(game_id.game_id)
         
         repartir_cartas(game_id.game_id, db)
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
-        game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
+        game_manager.set_player_in_turn_id(game_id=game_id.game_id, player_id=next_jugador["id_player"])
        
         await ws_manager.send_end_turn(game_id.game_id)
     except Exception:
@@ -290,7 +290,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     try:
         partida = get_Partida(game_id.game_id, db)
         if not partida.partida_iniciada:
-            mezclar_fichas(db, game_id.game_id)
+            mezclar_box_cards(db, game_id.game_id)
             mezclar_cartas_movimiento(db, game_id.game_id)
             mezclar_figuras(game_id.game_id, db)
             asignar_turnos(game_id.game_id, db)
@@ -343,17 +343,17 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail=f'No es el turno del jugador: {jugador.turno}, es de: {partida.jugador_en_turno}')
 
-        mov_coords = game_manager.top_tupla_carta_y_fichas(game_id=partida.id)
+        mov_coords = game_manager.top_tuple_card_and_box_cards(game_id=partida.id)
         if mov_coords is not None:
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
             try:
-                cancelar_movimiento(partida.id, jugador.id, mov, coords, db)
+                cancel_movement(partida.id, jugador.id, mov, coords, db)
                 
                 await ws_manager.send_get_tablero(partida.id)
                 await ws_manager.send_get_cartas_mov(partida.id)
 
-                game_manager.desapilar_carta_y_ficha(game_id=partida.id) 
+                game_manager.pop_card_and_box_card(game_id=partida.id) 
             except Exception:
                 db.rollback()
                 raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, 
@@ -409,7 +409,7 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
         
         if is_valid_move(movementCard, coord):
             movimiento_parcial(game_id, movementCard, coord, db)
-            game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
+            game_manager.add_card_and_box_card(game_id, movementCard.id, coord)
             
             await ws_manager.send_get_tablero(game_id)
             await ws_manager.send_get_cartas_mov(game_id)
@@ -467,7 +467,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
-            game_manager.limpiar_cartas_fichas(game_id)
+            game_manager.clean_cards_box_cards(game_id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
                 partida.winner_id = jugador.id
@@ -496,22 +496,22 @@ async def highlight_figures(game_id: int, db: Session = Depends(get_db)):
 
     try:
         #Obtengo la lista de figuras(lista de coordenadas) detectadas como validas en el tablero
-        figuras = get_valid_detected_figures(game_id, lista_patrones, db)
+        figuras = get_valid_detected_figures(game_id, list_patterns, db)
 
         # Creo una lista para adaptarme al formato de respuesta
         figuras_response = []    
         for figura in figuras:
-            lista_dicc_fig = []  # Lista para almacenar los diccionarios de una figura
+            list_dicc_fig = []  # Lista para almacenar los diccionarios de una figura
             for (x, y) in figura:
                 # Convertir la tupla en un diccionario y agregarla a la nueva figura
                 #Sumo 1 a x,y para que empiece en 1,1 como en el tablero
-                lista_dicc_fig.append({
+                list_dicc_fig.append({
                                     'x': x+1,
                                     'y': y+1,
-                                    'color': get_color_of_ficha(x+1, y+1, game_id, db)
+                                    'color': get_color_of_box_card(x+1, y+1, game_id, db)
                                     })
                 
-            figuras_response.append(lista_dicc_fig)
+            figuras_response.append(list_dicc_fig)
 
     except Exception:
         db.rollback()
@@ -530,9 +530,9 @@ async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(
 
     try:
         #Obtengo los jugadores de la aprtida
-        jugadores = get_jugadores(game_id, db)
+        jugadores = get_players(game_id, db)
         # Obtengo las cartas de figuras y movimiento de los demás jugadores junto con el nombre del jugador
-        cartas = others_cards(game_id, player_id, jugadores, db)
+        cartas = others_cards(player_id, jugadores, db)
 
     except Exception:
         db.rollback()
