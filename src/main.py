@@ -131,21 +131,23 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = D
             except json.JSONDecodeError:
                 continue
             if "msg" in data:
-                message = data["msg"]
-                player_id = data["player_id"]
-                
-                player_name = get_Jugador(player_id, db).nombre
-                response = {
-                            "type": "message",
-                            "data":{
-                                    "msg": message, 
-                                    "player_name": player_name
+                if type(data["msg"]) == str:
+                    if len(data["msg"]) !=0:
+                        message = data["msg"]
+                        player_id = data["player_id"]
+
+                        player_name = get_Jugador(player_id, db).nombre
+                        response = {
+                                    "type": "message",
+                                    "data":{
+                                            "msg": message, 
+                                            "player_name": player_name
+                                            }
                                     }
-                            }
-                response = json.dumps(response)
-                
-                #Despues de darle el formato adecuado al mensaje lo reenvio a los demas en partida
-                await ws_manager.send_message_game_id(response, game_id)
+                        response = json.dumps(response)
+
+                        #Despues de darle el formato adecuado al mensaje lo reenvio a los demas en partida
+                        await ws_manager.send_message_game_id(response, game_id)
 
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
