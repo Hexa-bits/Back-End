@@ -122,6 +122,8 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = D
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
+
+            #Recibo los mensajes enviados por el front
             data = await websocket.receive_text()
 
             try:
@@ -142,6 +144,7 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = D
                             }
                 response = json.dumps(response)
                 
+                #Despues de darle el formato adecuado al mensaje lo reenvio a los demas en partida
                 await ws_manager.send_message_game_id(response, game_id)
 
     except WebSocketDisconnect:
