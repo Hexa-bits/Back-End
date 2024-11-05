@@ -276,10 +276,13 @@ class BlockManager:
             }
 
     def delete_player(self, game_id: int, player_id: int) -> None:
-        self.games[game_id][player_id].remove(player_id)
+        if game_id in self.games:
+            if player_id in self.games[game_id]:
+                del self.games[game_id][player_id]
 
     def delete_game(self, game_id: int) -> None:
-        del self.games[game_id]
+        if game_id in self.games:
+            del self.games[game_id]
         
     def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
         self.games[game_id][player_blocked_id]["is_blocked"] = True

@@ -68,32 +68,34 @@ def jugador_en_turno(game_id: int, db: Session) -> dict:
 def terminar_turno(game_id: int, db: Session) -> dict:
     #Obtengo la partida
     partida = db.get(Partida, game_id)
-    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
-    
-    #hago una lista con los indices de los jugadores
-    lista_turnos = [x.turno for x in jugadores]
 
-    turno = partida.jugador_en_turno
-
-    #Busco que lugar de la lista esta el jugador en turno
-    index = lista_turnos.index(turno)
-
-    #indice del proximo jugador
-    new_index = index + 1
-    #Si me paso del final de la lista tomo  el primer jugador de nuevo
-    if new_index == len(jugadores):
-        new_index = 0
+    if partida:
+        jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).order_by(Jugador.turno).all()
         
-    partida.jugador_en_turno = lista_turnos[new_index]
-    db.commit()
+        #hago una lista con los indices de los jugadores
+        lista_turnos = [x.turno for x in jugadores]
     
-    info_jugador_turno = {
-        "id_player": jugadores[new_index].id ,
-        "name_player": jugadores[new_index].nombre
-    }
+        turno = partida.jugador_en_turno
     
-    #Debo retornar lo que esta en la API formato JSON
-    return info_jugador_turno
+        #Busco que lugar de la lista esta el jugador en turno
+        index = lista_turnos.index(turno)
+    
+        #indice del proximo jugador
+        new_index = index + 1
+        #Si me paso del final de la lista tomo  el primer jugador de nuevo
+        if new_index == len(jugadores):
+            new_index = 0
+            
+        partida.jugador_en_turno = lista_turnos[new_index]
+        db.commit()
+        
+        info_jugador_turno = {
+            "id_player": jugadores[new_index].id ,
+            "name_player": jugadores[new_index].nombre
+        }
+        
+        #Debo retornar lo que esta en la API formato JSON
+        return info_jugador_turno
 
 def list_lobbies(db) -> List[dict]:
 

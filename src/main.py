@@ -780,7 +780,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
 
         game_manager.limpiar_cartas_fichas(game.id)
         
-    except Exception:
+    except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al bloquear la figura")
     
