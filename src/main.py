@@ -361,7 +361,8 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
             cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.desapilar_carta_y_ficha(game_id.game_id)
         
-        repartir_cartas(game_id.game_id, db)
+        player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
+        repartir_cartas(game_id.game_id, player_blocked, db)
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])

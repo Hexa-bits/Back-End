@@ -80,7 +80,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
             db.refresh(carta)
 
 
-def repartir_cartas(game_id: int, db: Session) -> None:
+def repartir_cartas(game_id: int, blocked: bool, db: Session) -> None:
     partida = db.query(Partida).filter(Partida.id == game_id).first()
 
     turno_actual = partida.jugador_en_turno
@@ -118,21 +118,22 @@ def repartir_cartas(game_id: int, db: Session) -> None:
             db.commit()
             db.refresh(carta)
     
-    if len(cartas_fig_en_mano) < 3:
-        
-        all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
-                                                          PictureCard.jugador_id == jugador_en_turno.id,
-                                                          PictureCard.estado == CardState.mazo)).all()
-        
-        cant_cartas = 3 - len(cartas_fig_en_mano)
-
-        for i in range(cant_cartas):
-            if len(all_cards_fig_player)>0:
-                carta = all_cards_fig_player.pop()
-                carta.jugador_id = jugador_en_turno.id
-                carta.estado = CardState.mano
-                db.commit()
-                db.refresh(carta)
+    if not blocked:
+        if len(cartas_fig_en_mano) < 3:
+            
+            all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
+                                                              PictureCard.jugador_id == jugador_en_turno.id,
+                                                              PictureCard.estado == CardState.mazo)).all()
+            
+            cant_cartas = 3 - len(cartas_fig_en_mano)
+    
+            for i in range(cant_cartas):
+                if len(all_cards_fig_player)>0:
+                    carta = all_cards_fig_player.pop()
+                    carta.jugador_id = jugador_en_turno.id
+                    carta.estado = CardState.mano
+                    db.commit()
+                    db.refresh(carta)
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     jugadores = get_ordenes(game_id, db)
