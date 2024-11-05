@@ -191,6 +191,7 @@ def test_use_picture_card(mock_get_color_ficha, mock_get_tablero, mock_get_parti
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
     
     assert response.status_code == 200
+    assert mock_get_tablero.return_value.color_prohibido == Color.VERDE
     mock_game_manager.limpiar_cartas_fichas.assert_called_once()
 
 @patch('src.main.get_db')
