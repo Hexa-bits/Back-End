@@ -306,7 +306,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
         
-        block_manager.add_player(PlayerAndGameId.game_id, PlayerAndGameId.player_id)
+        block_manager.add_player(playerAndGameId.game_id, playerAndGameId.player_id)
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
