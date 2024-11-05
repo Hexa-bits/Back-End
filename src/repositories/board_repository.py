@@ -167,9 +167,5 @@ def get_color_of_ficha( x_pos: int, y_pos: int, game_id: int, db: Session) -> Co
         color = ficha.color
 
     return color
-
-def setear_color_prohibido(tablero: Tablero, color_figura: Color, db: Session) -> None:
-    if tablero and color_figura:
-        tablero.color_prohibido = color_figura
-        db.commit()
+    
     

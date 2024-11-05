@@ -166,8 +166,11 @@ def test_use_mov_card_error(mock_get_db, mock_mov_parcial, mock_is_valid, mock_g
 @patch('src.main.descartar_carta_figura')
 @patch('src.main.get_jugador_sin_cartas')
 @patch('src.main.get_Partida')
-def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_descartar_carta,
-                         mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+@patch('src.main.get_tablero')
+@patch('src.main.get_color_of_ficha')
+def test_use_picture_card(mock_get_color_ficha, mock_get_tablero, mock_get_partida, mock_get_jugador_sin_cartas,
+                         mock_descartar_carta, mock_get_jugador_turno, mock_get_carta,
+                         mock_get_jugador, mock_game_manager, mock_get_db):
 
     partida = MagicMock(id=1)
     jugador = MagicMock(id=1, partida_id=1)
@@ -176,6 +179,8 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
     
     mock_get_db.return_value = MagicMock(spec=Session)
     mock_get_partida.return_value = partida
+    mock_get_tablero.return_value = Tablero(color_prohibido=None)
+    mock_get_color_ficha.return_value = Color.VERDE
     mock_get_jugador.return_value = jugador
     mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
                                              partida_id=1, jugador_id=1)
@@ -195,7 +200,10 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
 @patch('src.main.get_current_turn_player')
 @patch('src.main.descartar_carta_figura')
 @patch('src.main.get_Partida')
-def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
+@patch('src.main.get_tablero')
+@patch('src.main.get_color_of_ficha')
+def test_use_picture_card_invalid_card(mock_get_color_ficha, mock_get_tablero, mock_get_partida, 
+                                       mock_descartar_carta, mock_get_jugador_turno,
                                        mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
     partida = MagicMock(id=1)
@@ -205,6 +213,8 @@ def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, m
 
     mock_get_db.return_value = MagicMock(spec=Session)
     mock_get_partida.return_value = partida
+    mock_get_tablero.return_value = Tablero(color_prohibido=None)
+    mock_get_color_ficha.return_value = Color.VERDE
     mock_get_jugador.return_value = jugador
     mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura12,
                                               partida_id=1, jugador_id=1)    
@@ -215,6 +225,40 @@ def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, m
     
     assert response.status_code == 400
     assert response.json() == {'detail': 'Figura invalida'}
+    mock_game_manager.limpiar_cartas_fichas.assert_not_called()
+
+@patch('src.main.get_db')
+@patch('src.main.game_manager')
+@patch("src.main.get_Jugador")
+@patch('src.main.get_CartaFigura')
+@patch('src.main.get_current_turn_player')
+@patch('src.main.descartar_carta_figura')
+@patch('src.main.get_Partida')
+@patch('src.main.get_tablero')
+@patch('src.main.get_color_of_ficha')
+def test_use_picture_card_invalid_colour(mock_get_color_ficha, mock_get_tablero, mock_get_partida, 
+                                       mock_descartar_carta, mock_get_jugador_turno,
+                                       mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+
+    partida = MagicMock(id=1)
+    jugador = MagicMock(id=1, partida_id=1)
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_tablero.return_value = Tablero(color_prohibido=Color.VERDE)
+    mock_get_color_ficha.return_value = Color.VERDE
+    mock_get_jugador.return_value = jugador
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                              partida_id=1, jugador_id=1)    
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+    
+    assert response.status_code == 400
+    assert response.json() == {'detail': 'El color de la figura está prohibido'}
     mock_game_manager.limpiar_cartas_fichas.assert_not_called()
 
 @patch('src.main.get_db')

@@ -619,6 +619,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
     - 400: Una request incorrecta con contenido: 
             * "Figura invalida" en caso de que la figura a matchear no coincida
               con la figura de la carta.
+            * "El color de la figura está prohibido"
             * "La carta no pertenece a la partida"
             * "No es turno del jugador"
             * "La carta no está en mano"
@@ -662,7 +663,9 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
-            setear_color_prohibido(tablero, color_figura, db)
+            if tablero and color_figura:
+                tablero.color_prohibido = color_figura
+                db.commit()
             game_manager.limpiar_cartas_fichas(game_id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
