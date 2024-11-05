@@ -388,7 +388,7 @@ async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
         fig_cards = list_fig_cards(player_id.player_id, db)
         fig_cards_list = []
         for card in fig_cards:
-            fig_cards_list.append({"id": card.id, "fig": card.figura.value})
+            fig_cards_list.append({"id": card.id, "fig": card.figura.value, "blocked": card.blocked})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -769,7 +769,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         
         all_player_to_block_fig_cards = get_cartasFigura_player(player_to_block.id, db)
         
-        if len(all_player_to_block_fig_cards) == 1:
+        if len(all_player_to_block_fig_cards) <= 1:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta, no se puede bloquear")
         
         block_player_figure_card(figura.id_fig_card, db)
