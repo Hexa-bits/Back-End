@@ -732,7 +732,7 @@ async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las cartas de los demás jugadores")
     
     return cartas
-@app.post("game/bloq-fig", status_code=status.HTTP_200_OK)
+@app.put("/game/block-fig-card", status_code=status.HTTP_200_OK)
 async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
     """
     Endpoint para bloquear una figura en el tablero
@@ -777,6 +777,8 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         list_of_not_blocked_cards = get_cards_not_blocked_id(game.id, player_to_block.id, db)
         
         block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
+
+        game_manager.limpiar_cartas_fichas(game.id)
         
     except Exception:
         db.rollback()
