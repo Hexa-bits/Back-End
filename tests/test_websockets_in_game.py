@@ -37,7 +37,8 @@ mock_jugador.partida_id = mock_partida.id
 mock_jugador.es_anfitrion = True
 
 mock_jugadores = MagicMock()
-mock_jugadores.return_value = [MagicMock(id=1, nombre="test", partida_id=1), MagicMock(id=2, nombre="test", partida_id=1)]
+mock_jugadores.return_value = [MagicMock(id=2, nombre="test", partida_id=1), 
+                               MagicMock(id=3, nombre="test", partida_id=1)]
 
 
 @pytest.mark.asyncio
@@ -86,9 +87,9 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections) == 1  
         assert len(ws_manager.active_connections.get(1)) == 2 
         
-        with patch("src.main.get_current_turn_player", return_value = Jugador(id=2, nombre="testws", partida_id=1)), \
+        with patch("src.main.get_current_turn_player", return_value = mock_jugador), \
              patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
-             patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
+             patch('src.main.terminar_turno', return_value = {"id_player": 2 ,
                                                                 "name_player": "testuser"}), \
             patch('src.main.repartir_cartas', return_value= None), \
             patch("src.main.game_manager.set_jugador_en_turno_id"):
