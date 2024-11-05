@@ -260,3 +260,42 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
             return True
         
     return False
+
+class block_manager:
+    def __init__(self):
+        self.games: Dict[int, Any] = {}
+        
+    def create_game(self, game_id: int) -> None:
+        self.games[game_id] = {}
+        
+    def add_player(self, game_id: int, player_id: int) -> None:
+        self.games[game_id][player_id] = {
+            "is_blocked": False,
+            "block_card_fig_id": 0,
+            "other_cards_in_hand": []
+            }
+
+    def delete_player(self, game_id: int, player_id: int) -> None:
+        self.games[game_id][player_id].remove(player_id)
+
+    def delete_game(self, game_id: int) -> None:
+        del self.games[game_id]
+        
+    def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
+        self.games[game_id][player_blocked_id]["is_blocked"] = True
+        self.games[game_id][player_blocked_id]["block_card_fig_id"] = block_fig_card_id
+        self.games[game_id][player_blocked_id]["other_cards_in_hand"] = others_fig_cards_id
+
+    def is_blocked(self, game_id: int, player_id: int) -> bool:
+        return self.games[game_id][player_id]["is_blocked"]
+    
+    def get_blocked_card_id(self, game_id: int, player_id: int) -> int:
+        return self.games[game_id][player_id]["block_card_fig_id"]
+    
+    def delete_other_card(self, game_id: int, player_id: int, card_id: int) -> None:
+        self.games[game_id][player_id]["other_cards_in_hand"].remove(card_id)
+
+        #Desbloqueo al jugador si ya no tiene mas cartas en mano
+        if self.games[game_id][player_id]["other_cards_in_hand"] == []:
+            self.games[game_id][player_id]["is_blocked"] = False
+            self.games[game_id][player_id]["block_card_fig_id"] = 0

@@ -55,7 +55,7 @@ class PictureCard(Base):
     #TO DO: eliminar is_simple
     is_simple = Column(Boolean, default=True)
     estado = Column(Enum(CardState), default=CardState.mazo)
-
+    blocked = Column(Boolean, default=False)
     partida_id = Column(Integer, ForeignKey("partidas.id"))
     partida = relationship("Partida", back_populates="cartafigura")
 

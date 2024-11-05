@@ -722,3 +722,30 @@ async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las cartas de los demás jugadores")
     
     return cartas
+@app.post("game/bloq-fig", status_code=status.HTTP_200_OK)
+async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
+    """
+    Endpoint para bloquear una figura en el tablero
+    args:
+        figura: FigureData - Figura a bloquear
+    return:
+        dict - Diccionario con el estado del tablero
+    """
+    try:
+        jugador = get_Jugador(figura.player_id, db)
+        partida = get_Partida(jugador.partida_id, db)
+        if partida is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
+        
+        if partida.jugador_en_turno != jugador.id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No es el turno del jugador")
+        
+        if not is_valid_picture_card(figura.id_fig_card, figura.figura):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
+        
+        block_figure(figura.id_fig_card, figura.figura, db)
+        
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al bloquear la figura")
+    
