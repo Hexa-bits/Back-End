@@ -1,5 +1,6 @@
 import random
-from fastapi import FastAPI, Request, Depends, status, HTTPException
+from time import time, sleep
+from fastapi import FastAPI, Request, Depends, status, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
@@ -94,6 +95,20 @@ class WebSocketConnectionManager:
                 for connection in connections:
                     await connection.send_text(message)
                 break
+
+turn_finished = False
+turn_start_time = None
+backgroundTask = BackgroundTasks() 
+
+async def timer(ws: WebSocketConnectionManager, game_id: int):
+    global turn_finished
+    while not turn_finished:
+        elapsed_time = time() - turn_start_time
+        if elapsed_time >= 120:
+            turn_finished = True
+            await ws.send_message_game_id(event.end_turn, game_id)
+        else:
+            sleep(1)  # Esperar 1 segundo antes de verificar nuevamente
 
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
@@ -357,7 +372,12 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
-        await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        if turn_finished:
+            turn_finished = False
+            turn_start_time = time()
+            backgroundTask.add_task(timer, ws_manager, game_id.game_id)
+        else:
+            await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -481,6 +501,9 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             partida.partida_iniciada = True
             db.commit()
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
+            
+            turn_start_time = time()
+            backgroundTask.add_task(timer, ws_manager, game_id.game_id)
 
             #Uso el game manager
             game_manager.create_game(game_id.game_id)
