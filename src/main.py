@@ -252,8 +252,10 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
         game_id = partida.id
         if partida.partida_iniciada:
+            nombre_jugador = jugador.nombre
             delete_player(jugador, db)
             await ws_manager.send_message_game_id(event.get_info_players, partida.id)
+            await ws_manager.send_message_game_id("El jugador " + nombre_jugador + " abandonó la partida", partida.id)
             jugadores = get_jugadores(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
@@ -358,6 +360,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        await ws_manager.send_message_game_id("El jugador "+ jugador.nombre +" terminó el turno", game_id.game_id)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -536,6 +539,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                 
                 await ws_manager.send_message_game_id(event.get_tablero, partida.id)
                 await ws_manager.send_message_game_id(event.get_cartas_mov, partida.id)
+                await ws_manager.send_message_game_id("El jugador "+ jugador.nombre +" canceló movimiento", partida.id)
 
                 game_manager.desapilar_carta_y_ficha(game_id=partida.id) 
             except Exception:
@@ -596,6 +600,7 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
             game_manager.apilar_carta_y_ficha(game_id, movementCard.id, coord)
             await ws_manager.send_message_game_id(event.get_tablero, game_id)
             await ws_manager.send_message_game_id(event.get_cartas_mov, game_id)
+            await ws_manager.send_message_game_id("El jugador "+ jugador.nombre +" hizo un movimiento", game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
     except SQLAlchemyError:
@@ -660,6 +665,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             else:
                 await ws_manager.send_message_game_id(event.get_cartas_fig, game_id)
             await ws_manager.send_message_game_id(event.get_tablero, game_id)
+            await ws_manager.send_message_game_id("El jugador "+ jugador.nombre +" se descartó una figura", game_id)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:
