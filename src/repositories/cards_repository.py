@@ -264,3 +264,22 @@ def movimiento_parcial(game_id: int, moveCard: MovementCard,
     moveCard.jugador_id = None
 
     db.commit()
+
+def block_player_figure_card(card_to_block_id: int, db: Session ):
+    
+    card_to_block = get_CartaFigura(card_to_block_id, db)
+    card_to_block.blocked = True
+    db.commit()
+    
+def get_cards_not_blocked_id(game_id: int, player_id: int, db: Session) -> List[int]:
+    
+    cards_not_blocked = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
+                                                          PictureCard.jugador_id == player_id,
+                                                          PictureCard.blocked == False)).all()
+    
+    list_of_cards_not_blocked_id = []
+    
+    for card in cards_not_blocked:
+        list_of_cards_not_blocked_id.append(card.id)
+        
+    return list_of_cards_not_blocked_id

@@ -261,7 +261,7 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
         
     return False
 
-class block_manager:
+class BlockManager:
     def __init__(self):
         self.games: Dict[int, Any] = {}
         
@@ -295,7 +295,15 @@ class block_manager:
     def delete_other_card(self, game_id: int, player_id: int, card_id: int) -> None:
         self.games[game_id][player_id]["other_cards_in_hand"].remove(card_id)
 
-        #Desbloqueo al jugador si ya no tiene mas cartas en mano
-        if self.games[game_id][player_id]["other_cards_in_hand"] == []:
-            self.games[game_id][player_id]["is_blocked"] = False
-            self.games[game_id][player_id]["block_card_fig_id"] = 0
+    def can_delete_blocked_card(self, game_id: int, player_id: int) -> bool:
+        return len(self.games[game_id][player_id]["other_cards_in_hand"]) == 0
+
+    def delete_blocked_card(self, game_id: int, player_id: int, block_card_id: int) -> None:
+
+        if self.can_delete_blocked_card(game_id, player_id) == 0:
+            if block_card_id == self.games[game_id][player_id]["block_card_fig_id"]:
+                self.games[game_id][player_id]["is_blocked"] = False
+                self.games[game_id][player_id]["block_card_fig_id"] = 0
+                self.games[game_id][player_id]["other_cards_in_hand"] = []
+
+    

@@ -29,13 +29,14 @@ from src.repositories.cards_repository import *
 from src.game import *
 
 from src.models.patrones_figuras_matriz import generate_all_figures
-from src.game import GameManager
+from src.game import GameManager, BlockManager
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
 game_manager = GameManager()
+block_manager = BlockManager
 event = Event()
 
 lista_patrones = generate_all_figures()
@@ -210,6 +211,8 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     try:
         id_game = add_partida(partida_config, db)
 
+        #Uso el block manager
+        block_manager.create_game(id_game)
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
         await ws_manager.send_message_game_id(event.get_lobbies, game_id = 0)
 
@@ -251,12 +254,15 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                                 detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
         game_id = partida.id
+        block_manager.delete_player(game_id, jugador.id)
+
         if partida.partida_iniciada:
             delete_player(jugador, db)
             await ws_manager.send_message_game_id(event.get_info_players, partida.id)
             jugadores = get_jugadores(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
+                block_manager.delete_game(game_id)
                 partida.winner_id = jugadores[0].id
                 db.commit()
 
@@ -264,13 +270,14 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         else:
             if jugador.es_anfitrion:
                 delete_players_lobby(partida, db)
+                block_manager.delete_game(game_id)
                 await ws_manager.send_message_game_id(event.cancel_lobby, game_id=game_id)
             else:
                 delete_player(jugador, db)
                 await ws_manager.send_message_game_id(event.leave_lobby, game_id=game_id)
         
             await ws_manager.send_message_game_id(event.get_lobbies, game_id=0)
-
+        
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -298,6 +305,8 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+        
+        block_manager.add_player(PlayerAndGameId.game_id, PlayerAndGameId.player_id)
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
@@ -484,7 +493,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
 
             #Uso el game manager
             game_manager.create_game(game_id.game_id)
-            
+                        
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
     except SQLAlchemyError:
@@ -732,18 +741,41 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         dict - Diccionario con el estado del tablero
     """
     try:
-        jugador = get_Jugador(figura.player_id, db)
-        partida = get_Partida(jugador.partida_id, db)
-        if partida is None:
+        player = get_Jugador(figura.player_id, db)
+        game = get_Partida(player.partida_id, db)
+        if game is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
         
-        if partida.jugador_en_turno != jugador.id:
+        if game.jugador_en_turno != player.id:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No es el turno del jugador")
+        
+        #CHECKEAR QUE NO SEA DEL COLOR PRHIBIDO ANTES DE CHEQUEAR QUE LA FIGURA SEA VALIDA
+        #if not valid_color(figura.figura):
+        #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura es de color prohibido")
         
         if not is_valid_picture_card(figura.id_fig_card, figura.figura):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
         
-        block_figure(figura.id_fig_card, figura.figura, db)
+        fig_card = get_CartaFigura(FigureData.id_fig_card, db)
+        
+        player_to_block = get_Jugador(fig_card.jugador_id, db)
+        
+        if player_to_block is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador a bloquear")
+        
+        if block_manager.is_blocked(game.id, player_to_block.id):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya está bloqueado")
+        
+        all_player_to_block_fig_cards = get_cartasFigura_player(player_to_block.id, db)
+        
+        if len(all_player_to_block_fig_cards) == 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta, no se puede bloquear")
+        
+        block_player_figure_card(figura.id_fig_card, db)
+        
+        list_of_not_blocked_cards = get_cards_not_blocked_id(game.id, player_to_block.id, db)
+        
+        block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
         
     except Exception:
         db.rollback()
