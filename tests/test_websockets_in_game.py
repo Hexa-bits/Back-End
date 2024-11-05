@@ -110,7 +110,7 @@ async def test_websocket_broadcast_turno_siguiente(client):
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
-            assert mensaje1 == "El jugador testws terminó el turno"
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Terminó el turno'}}"
             assert mensaje1 == mensaje2
 
 
@@ -140,7 +140,7 @@ async def test_websocket_broadcast_ganador(client):
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Actualizar cartas de otros jugadores"
         await asyncio.sleep(0.1)
-        assert websocket2.receive_text() == "El jugador testloser abandonó la partida"
+        assert websocket2.receive_text() == "{'type': 'log', 'data': {'player_name': 'testloser', 'event': 'Abandonó la partida'}}"
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Hay Ganador"
         assert len(ws_manager.active_connections.get(1)) == 1
@@ -210,7 +210,7 @@ async def test_websocket_broadcast_games_leave(client):
             lobbies1 = websocket1.receive_text()
             lobbies2 = websocket2.receive_text()
 
-            assert lobbies1 == "El jugador testws abandonó la partida"
+            assert lobbies1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Abandonó la partida'}}"
             assert lobbies1 == lobbies2               
 
 
@@ -219,7 +219,7 @@ async def test_websocket_broadcast_use_mov_card(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
+        with patch("src.main.get_Jugador", return_value=mock_jugador), \
              patch("src.main.get_CartaMovimiento", return_value=MagicMock(id = 1, estado=CardStateMov.mano, 
                                                                           jugador_id=1, partida_id=1)), \
              patch("src.main.get_current_turn_player", return_value=mock_jugador), \
@@ -252,16 +252,16 @@ async def test_websocket_broadcast_use_mov_card(client):
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
-            assert mensaje1 == "El jugador "+ mock_get_jugador.return_value.nombre +" hizo un movimiento"
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Hizo un movimiento'}}"
             assert mensaje1 == mensaje2
 
 
 @pytest.mark.asyncio
-async def test_websocket_broadcast_use_mov_card(client):
+async def test_websocket_broadcast_use_fig_card(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
+        with patch("src.main.get_Jugador", return_value=mock_jugador), \
              patch("src.main.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
                                                                           jugador_id=1, partida_id=1)), \
              patch("src.main.get_Partida", return_value= mock_partida), \
@@ -296,5 +296,5 @@ async def test_websocket_broadcast_use_mov_card(client):
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
-            assert mensaje1 == "El jugador "+ mock_get_jugador.return_value.nombre +" se descartó una figura"
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Descartó una carta de figura'}}"
             assert mensaje1 == mensaje2
