@@ -320,7 +320,7 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     - 500: Ocurre un erro interno.
     """
     try:
-        tablero = get_tablero(game_id, db)
+        tablero = get_tablero(game_id.game_id, db)
         if tablero.color_prohibido is None:
             forbidden_color = 0
         else:
