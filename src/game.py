@@ -120,7 +120,10 @@ class GameManager:
         """Sirve para saber si el tablero es parcial o real al enviar el tablero a Frontend"""
         
         # Obtener si el tablero es parcial
-        return self.games[game_id]['es_tablero_parcial']
+        if game_id in self.games:
+            return self.games[game_id]['es_tablero_parcial']
+        else: 
+            return False
 
 
     def apilar_carta_y_ficha(self, game_id: int, carta_mov_id: int, 
@@ -276,13 +279,17 @@ class BlockManager:
             }
 
     def delete_player(self, game_id: int, player_id: int) -> None:
+        print("delete_player")
         if game_id in self.games:
             if player_id in self.games[game_id]:
                 del self.games[game_id][player_id]
+        print("delete player worked")
 
     def delete_game(self, game_id: int) -> None:
+        print("delete_game")
         if game_id in self.games:
             del self.games[game_id]
+        print("delete game worked")
         
     def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
         self.games[game_id][player_blocked_id]["is_blocked"] = True
@@ -290,6 +297,8 @@ class BlockManager:
         self.games[game_id][player_blocked_id]["other_cards_in_hand"] = others_fig_cards_id
 
     def is_blocked(self, game_id: int, player_id: int) -> bool:
+        if game_id not in self.games:
+            return False
         return self.games[game_id][player_id]["is_blocked"]
     
     def get_blocked_card_id(self, game_id: int, player_id: int) -> int:
