@@ -32,8 +32,12 @@ mock_partida.partida_iniciada = False
 
 mock_jugador = MagicMock()
 mock_jugador.id = 1
+mock_jugador.nombre = "testws"
 mock_jugador.partida_id = mock_partida.id
 mock_jugador.es_anfitrion = True
+
+mock_jugadores = MagicMock()
+mock_jugadores.return_value = [MagicMock(id=1, nombre="test", partida_id=1), MagicMock(id=2, nombre="test", partida_id=1)]
 
 
 @pytest.mark.asyncio
@@ -82,7 +86,7 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections) == 1  
         assert len(ws_manager.active_connections.get(1)) == 2 
         
-        with patch("src.main.get_current_turn_player"), \
+        with patch("src.main.get_current_turn_player", return_value = Jugador(id=2, nombre="testws", partida_id=1)), \
              patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
              patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
                                                                 "name_player": "testuser"}), \
@@ -90,13 +94,19 @@ async def test_websocket_broadcast_turno_siguiente(client):
             patch("src.main.game_manager.set_jugador_en_turno_id"):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
-
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
             # Verificar que los mensajes recibidos son iguales para ambos
             assert mensaje1 == "Terminó turno"
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "El jugador testws terminó el turno"
             assert mensaje1 == mensaje2
 
 
@@ -125,6 +135,8 @@ async def test_websocket_broadcast_ganador(client):
         # se cierra la conexion websocket1 simulando que el jugador abandono
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Actualizar cartas de otros jugadores"
+        await asyncio.sleep(0.1)
+        assert websocket2.receive_text() == "El jugador testloser abandonó la partida"
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Hay Ganador"
         assert len(ws_manager.active_connections.get(1)) == 1
@@ -163,12 +175,11 @@ async def test_websocket_broadcast_games_leave(client):
 
         with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
              patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.main.delete_players_lobby") as mock_delete_players_partida:
+             patch("src.main.delete_player"), \
+             patch("src.main.get_jugadores", return_value = mock_jugadores), \
+             patch("src.main.delete_players_lobby"):
             
             info_leave = {"id_user": 1, "game_id": 1}
-
-            mock_get_jugador.return_value = mock_jugador
-            mock_get_partida.return_value = mock_partida
 
             response = client.put("/game/leave", json=info_leave)
 
@@ -179,6 +190,23 @@ async def test_websocket_broadcast_games_leave(client):
 
             assert lobbies1 == event.cancel_lobby
             assert lobbies1 == lobbies2
-                            
+
+            mock_get_partida.return_value.partida_iniciada = True
+
+            response = client.put("/game/leave", json=info_leave)
+
+            lobbies1 = websocket1.receive_text()
+            lobbies2 = websocket2.receive_text()
+
+            assert lobbies1 == event.get_info_players
+            assert lobbies1 == lobbies2
+
+            await asyncio.sleep(0.1)
+
+            lobbies1 = websocket1.receive_text()
+            lobbies2 = websocket2.receive_text()
+
+            assert lobbies1 == "El jugador testws abandonó la partida"
+            assert lobbies1 == lobbies2               
 
 

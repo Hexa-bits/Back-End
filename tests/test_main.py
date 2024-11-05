@@ -18,7 +18,7 @@ client = TestClient(app)
 def test_use_mov_card():
  
     with patch('src.main.game_manager') as game_manager_mock:
-        with patch('src.main.get_Jugador', return_value = Jugador(id=1, partida_id= 1)) as mock_get_jugador:
+        with patch('src.main.get_Jugador', return_value = Jugador(id=1, nombre="test", partida_id= 1)) as mock_get_jugador:
             with patch('src.main.get_CartaMovimiento', return_value = MovementCard(id=1, estado= CardStateMov.mano, 
                                                                                 movimiento= Move.diagonal_con_espacio, 
                                                                                 partida_id=1, jugador_id=1)):
