@@ -36,7 +36,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 game_manager = GameManager()
-block_manager = BlockManager
+block_manager = BlockManager()
 event = Event()
 
 lista_patrones = generate_all_figures()
