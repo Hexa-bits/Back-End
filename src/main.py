@@ -759,7 +759,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         #CHECKEAR QUE NO SEA DEL COLOR PRHIBIDO ANTES DE CHEQUEAR QUE LA FIGURA SEA VALIDA
         #if not valid_color(figura.figura):
         #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura es de color prohibido")
-        fig_card = get_CartaFigura(FigureData.id_fig_card, db)
+        fig_card = get_CartaFigura(figura.id_fig_card, db)
 
         if not is_valid_picture_card(fig_card, figura.figura):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
