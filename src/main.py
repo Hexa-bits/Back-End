@@ -786,6 +786,9 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
 
         game_manager.limpiar_cartas_fichas(game.id)
+
+        await ws_manager.send_message_game_id(event.get_cartas_fig, player.partida_id)
+        await ws_manager.send_message_game_id(event.get_tablero, player.partida)
         
     except SQLAlchemyError:
         db.rollback()
