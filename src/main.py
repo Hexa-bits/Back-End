@@ -213,6 +213,7 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
 
         #Uso el block manager
         block_manager.create_game(id_game)
+        block_manager.add_player(id_game, partida_config.id_user)
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
         await ws_manager.send_message_game_id(event.get_lobbies, game_id = 0)
 
@@ -361,8 +362,9 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
                 cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
                 game_manager.desapilar_carta_y_ficha(game_id.game_id)
-
+            print("holaaa")
             player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
+            print(player_blocked)
             repartir_cartas(game_id.game_id, player_blocked, db)
             next_jugador = terminar_turno(game_id.game_id, db)
             #TO DO: ver si quitar jugador en turno de game_manager
