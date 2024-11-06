@@ -751,7 +751,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         if game is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
         
-        if game.jugador_en_turno != player.id:
+        if game.jugador_en_turno != player.turno:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No es el turno del jugador")
         
         #CHECKEAR QUE NO SEA DEL COLOR PRHIBIDO ANTES DE CHEQUEAR QUE LA FIGURA SEA VALIDA
