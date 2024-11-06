@@ -745,6 +745,8 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
     return:
         dict - Diccionario con el estado del tablero
     """
+    print("holaaa esta es la figure data")
+    print(figura)
     try:
         player = get_Jugador(figura.player_id, db)
         game = get_Partida(player.partida_id, db)
@@ -757,11 +759,12 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         #CHECKEAR QUE NO SEA DEL COLOR PRHIBIDO ANTES DE CHEQUEAR QUE LA FIGURA SEA VALIDA
         #if not valid_color(figura.figura):
         #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura es de color prohibido")
-        
-        if not is_valid_picture_card(figura.id_fig_card, figura.figura):
+        fig_card = get_CartaFigura(FigureData.id_fig_card, db)
+
+        if not is_valid_picture_card(fig_card, figura.figura):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
         
-        fig_card = get_CartaFigura(FigureData.id_fig_card, db)
+
         
         player_to_block = get_Jugador(fig_card.jugador_id, db)
         
