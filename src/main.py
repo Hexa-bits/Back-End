@@ -1,6 +1,7 @@
 import random
-from time import time, sleep
-from fastapi import FastAPI, Request, Depends, status, HTTPException, BackgroundTasks
+from time import time
+import asyncio
+from fastapi import FastAPI, Request, Depends, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi import WebSocket, WebSocketDisconnect
@@ -96,22 +97,39 @@ class WebSocketConnectionManager:
                     await connection.send_text(message)
                 break
 
-turn_finished = False
-turn_start_time = None
-backgroundTask = BackgroundTasks() 
-
-async def timer(ws: WebSocketConnectionManager, game_id: int):
-    global turn_finished
-    while not turn_finished:
-        elapsed_time = time() - turn_start_time
-        if elapsed_time >= 120:
-            turn_finished = True
-            await ws.send_message_game_id(event.end_turn, game_id)
-        else:
-            sleep(1)  # Esperar 1 segundo antes de verificar nuevamente
-
 # Instanciar el WebSocketManager
 ws_manager = WebSocketConnectionManager()
+
+active_timers = {}
+
+async def temporizador(game_id: int):
+    global active_timers
+    
+    turn_start_time = time()
+    while not active_timers[game_id]["turn_finished"]:
+        elapsed_time = time() - turn_start_time
+        print(elapsed_time)
+        if elapsed_time >= 120:
+            active_timers[game_id]["turn_finished"] = True
+            await ws_manager.send_message_game_id(event.end_turn, game_id)
+        else:
+            await asyncio.sleep(1)  # Esperar 1 segundo antes de verificar nuevamente
+
+# Función para manejar el inicio y cancelación del temporizador
+async def manejar_temporizador(game_id: int):
+    # Si ya hay un temporizador corriendo, lo cancelamos
+    if game_id in active_timers and active_timers[game_id]["task"]:
+        print(f"Cancelando el temporizador del juego {game_id}.")
+        active_timers[game_id]["task"].cancel()
+        try:
+            await active_timers[game_id]["task"]  # Esperamos a que la tarea termine o se cancele
+        except asyncio.CancelledError:
+            print(f"Temporizador del juego {game_id} cancelado correctamente.")
+
+    active_timers[game_id] = {
+        "turn_finished": False,  # Reinicia el estado de turno
+        "task": asyncio.create_task(temporizador(game_id))  # Inicia el nuevo temporizador
+    }
 
 @app.websocket("/home")
 async def websocket_endpoint(websocket: WebSocket):
@@ -372,12 +390,9 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
-        if turn_finished:
-            turn_finished = False
-            turn_start_time = time()
-            backgroundTask.add_task(timer, ws_manager, game_id.game_id)
-        else:
+        if not active_timers[game_id.game_id]["turn_finished"]:
             await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
+        await manejar_temporizador(game_id.game_id)    
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -502,11 +517,12 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             db.commit()
             #Envio la lista de partidas actualizadas a ws ya que se inicio una partida
             
-            turn_start_time = time()
-            backgroundTask.add_task(timer, ws_manager, game_id.game_id)
+            active_timers[game_id.game_id] = {"turn_finished": False, "task": None}
 
             #Uso el game manager
             game_manager.create_game(game_id.game_id)
+
+            await manejar_temporizador(game_id.game_id)
             
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)
