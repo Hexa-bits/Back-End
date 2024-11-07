@@ -101,33 +101,33 @@ ws_manager = WebSocketConnectionManager()
 
 active_timers = {}
 
-async def temporizador(game_id: int, db: Session):
+async def timer(game_id: int, db: Session):
 
     await asyncio.sleep(30)
 
     #-------
-    jugador = get_current_turn_player(game_id, db)
+    player = get_current_turn_player(game_id, db)
         
     while game_manager.is_tablero_parcial(game_id):
         mov_coords = game_manager.top_tupla_carta_y_fichas(game_id)
         mov = mov_coords [0]
         coords = (mov_coords [1][0], mov_coords [1][1])
 
-        cancelar_movimiento(game_id, jugador.id, mov, coords, db)
+        cancelar_movimiento(game_id, player.id, mov, coords, db)
         game_manager.desapilar_carta_y_ficha(game_id)
 
     repartir_cartas(game_id, db)
-    next_jugador = terminar_turno(game_id, db)
-    game_manager.set_jugador_en_turno_id(game_id=game_id, jugador_id=next_jugador["id_player"])
+    next_player = terminar_turno(game_id, db)
+    game_manager.set_jugador_en_turno_id(game_id=game_id, jugador_id=next_player["id_player"])
        
     await ws_manager.send_message_game_id(event.end_turn, game_id)
-    await manejar_temporizador(game_id, db) 
+    await timer_handler(game_id, db) 
     #--------  esto es lo mismo que en el endpoint end-turn, hay que modularizarlo a services o a otro lado
 
-async def manejar_temporizador(game_id: int, db: Session):
+async def timer_handler(game_id: int, db: Session):
     if game_id in active_timers and not active_timers[game_id].done():
         active_timers[game_id].cancel()    
-    active_timers[game_id] = asyncio.create_task(temporizador(game_id, db))
+    active_timers[game_id] = asyncio.create_task(timer(game_id, db))
 
 
 @app.websocket("/home")
@@ -285,8 +285,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         game_id = partida.id
         if partida.partida_iniciada:
             delete_player(jugador, db)
-            await ws_manager.send_message_game_id(event.get_info_players, partida.id)
-            await manejar_temporizador(game_id, db) 
+            await ws_manager.send_message_game_id(event.get_info_players, partida.id) 
             jugadores = get_jugadores(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
@@ -393,7 +392,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
        # if not active_timers[game_id.game_id]["turn_finished"]:
         await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
 
-        await manejar_temporizador(game_id.game_id, db) 
+        await timer_handler(game_id.game_id, db) 
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -521,7 +520,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
             #Uso el game manager
             game_manager.create_game(game_id.game_id)
 
-            asyncio.create_task(manejar_temporizador(game_id.game_id, db))
+            asyncio.create_task(timer_handler(game_id.game_id, db))
             
             await ws_manager.send_message_game_id(str(event.get_lobbies), game_id = 0)
             await ws_manager.send_message_game_id(event.start_partida, game_id.game_id)

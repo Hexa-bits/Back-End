@@ -44,14 +44,14 @@ def test_terminar_turno_succesful(test_db, client):
          patch("src.main.terminar_turno") as mock_terminar_turno, \
          patch("src.main.repartir_cartas", return_value= None), \
          patch("src.main.game_manager.set_jugador_en_turno_id"), \
-         patch("src.main.manejar_temporizador") as mock_temporizador:
+         patch("src.main.timer_handler") as mock_timer:
         
         mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
         response = client.put("/game/end-turn", json={"game_id": partida.id})
         assert response.status_code == 200
         assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}
-        mock_temporizador.assert_awaited_once()
+        mock_timer.assert_awaited_once()
 
 def test_terminar_turno_unsuccesful(test_db, client):
 
