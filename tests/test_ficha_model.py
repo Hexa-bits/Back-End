@@ -26,10 +26,10 @@ def test_db():
         finally:
             db.close()
 
-def cheq_ficha_cajon(ficha_cajon: FichaCajon, dicc: dict) -> bool:
+def cheq_box_card(box_card: FichaCajon, dicc: dict) -> bool:
     res = True
     for (key, des) in dicc.items():
-        atributo = getattr(ficha_cajon, key, None)
+        atributo = getattr(box_card, key, None)
         if isinstance(atributo, enum.Enum):
             res = atributo.name == des  # Compara el nombre del Enum con la cadena
         else:
@@ -38,29 +38,29 @@ def cheq_ficha_cajon(ficha_cajon: FichaCajon, dicc: dict) -> bool:
             break
     return res
 
-def test_create_ficha_cajon(test_db):
+def test_create_box_card(test_db):
     configuracion = {"x_pos": 1, "y_pos": 2, "color": "AZUL"}
-    ficha_cajon = FichaCajon(**configuracion)
-    test_db.add(ficha_cajon)
+    box_card = FichaCajon(**configuracion)
+    test_db.add(box_card)
     test_db.commit()
-    test_db.refresh(ficha_cajon)
+    test_db.refresh(box_card)
 
-    assert cheq_ficha_cajon(ficha_cajon, configuracion)
-    assert ficha_cajon.id == 1
-    assert ficha_cajon.x_pos == 1
-    assert ficha_cajon.y_pos == 2
-    assert ficha_cajon.color == Color.AZUL
+    assert cheq_box_card(box_card, configuracion)
+    assert box_card.id == 1
+    assert box_card.x_pos == 1
+    assert box_card.y_pos == 2
+    assert box_card.color == Color.AZUL
 
-def test_multi_ficha_cajon(test_db):
+def test_multi_box_card(test_db):
     for i in range(20):
         configuracion = {"x_pos": 1, "y_pos": 2, "color": "AZUL"}
-        ficha_cajon = FichaCajon(**configuracion)
-        test_db.add(ficha_cajon)
+        box_card = FichaCajon(**configuracion)
+        test_db.add(box_card)
         test_db.commit()
-        test_db.refresh(ficha_cajon)
+        test_db.refresh(box_card)
 
-        assert cheq_ficha_cajon(ficha_cajon, configuracion)
-        assert ficha_cajon.id == i+1
-        assert ficha_cajon.x_pos == 1
-        assert ficha_cajon.y_pos == 2
-        assert ficha_cajon.color == Color.AZUL
+        assert cheq_box_card(box_card, configuracion)
+        assert box_card.id == i+1
+        assert box_card.x_pos == 1
+        assert box_card.y_pos == 2
+        assert box_card.color == Color.AZUL

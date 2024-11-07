@@ -8,7 +8,7 @@ class Partida_config(BaseModel):
     ser menor cómo max 10 carácteres, y max_players es un entero que debe estar entre 2 y 4. 
     """
     id_user: int = Field (..., gt=0)
-    game_name: str = Field (..., max_length=10)
+    game_name: str = Field (..., max_length=10, min_length=1)
     max_players: int = Field (..., gt=1, lt=5)
 
 class Leave_config(BaseModel):
@@ -29,7 +29,7 @@ class User(BaseModel):
     """
     Se usa para representar el nombre del usuario al logearse, debe ser cómo max 10 caracteres
     """
-    username: str = Field (..., max_length=10)
+    username: str = Field (..., max_length=10, min_length=1)
 
 class GameId(BaseModel):
     """
@@ -63,6 +63,10 @@ class MovementData(BaseModel):
     fichas: Tuple[Coords, Coords]
 
 class FigureData(BaseModel):
-    player_id: int
-    id_fig_card: int
+    """
+    Se usa para representar la data necesaría para jugar una carta de figura, el
+    jugador y el id de la carta figura deber ser mayor a 0 la lista de tipo Coords
+    """
+    player_id: int = Field (..., gt=0)
+    id_fig_card: int = Field (..., gt=0)
     figura: List[Coords]
