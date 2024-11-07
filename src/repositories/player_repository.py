@@ -83,10 +83,12 @@ def player_in_partida(partida: Partida, db: Session) -> int:
     return db.execute(smt).scalar()
 
 def delete_player(jugador: Jugador, db: Session) -> None:
+    is_in_turn = False
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)
     if (partida.partida_iniciada):
         if (partida.jugador_en_turno == jugador.turno):
+            is_in_turn = True
             terminar_turno(partida.id, db)
 
         cards_to_mazo(partida, jugador, db)
@@ -99,6 +101,7 @@ def delete_player(jugador: Jugador, db: Session) -> None:
     
     jugador.partida_id = None
     db.commit()
+    return is_in_turn
 
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)
