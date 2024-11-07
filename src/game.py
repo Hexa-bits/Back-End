@@ -279,17 +279,13 @@ class BlockManager:
             }
 
     def delete_player(self, game_id: int, player_id: int) -> None:
-        print("delete_player")
         if game_id in self.games:
             if player_id in self.games[game_id]:
                 del self.games[game_id][player_id]
-        print("delete player worked")
 
     def delete_game(self, game_id: int) -> None:
-        print("delete_game")
         if game_id in self.games:
             del self.games[game_id]
-        print("delete game worked")
         
     def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
         self.games[game_id][player_blocked_id]["is_blocked"] = True
@@ -310,12 +306,13 @@ class BlockManager:
     def can_delete_blocked_card(self, game_id: int, player_id: int) -> bool:
         return len(self.games[game_id][player_id]["other_cards_in_hand"]) == 0
 
-    def delete_blocked_card(self, game_id: int, player_id: int, block_card_id: int) -> None:
-
-        if self.can_delete_blocked_card(game_id, player_id) == 0:
+    def delete_blocked_card(self, game_id: int, player_id: int, block_card_id: int) -> bool:
+        success = False
+        if self.can_delete_blocked_card(game_id, player_id):
             if block_card_id == self.games[game_id][player_id]["block_card_fig_id"]:
                 self.games[game_id][player_id]["is_blocked"] = False
                 self.games[game_id][player_id]["block_card_fig_id"] = 0
                 self.games[game_id][player_id]["other_cards_in_hand"] = []
-
+                success = True
+        return success
     

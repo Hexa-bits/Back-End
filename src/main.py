@@ -745,8 +745,6 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
     return:
         dict - Diccionario con el estado del tablero
     """
-    print("holaaa esta es la figure data")
-    print(figura)
     try:
         player = get_Jugador(figura.player_id, db)
         game = get_Partida(player.partida_id, db)
@@ -760,6 +758,8 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         #if not valid_color(figura.figura):
         #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura es de color prohibido")
         fig_card = get_CartaFigura(figura.id_fig_card, db)
+        if fig_card is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la carta figura")
 
         if not is_valid_picture_card(fig_card, figura.figura):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
@@ -777,7 +777,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         all_player_to_block_fig_cards = get_cartasFigura_player(player_to_block.id, db)
         
         if len(all_player_to_block_fig_cards) <= 1:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta, no se puede bloquear")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta figura")
         
         block_player_figure_card(figura.id_fig_card, db)
         
@@ -793,5 +793,5 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         
     except SQLAlchemyError:
         db.rollback()
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al bloquear la figura")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     

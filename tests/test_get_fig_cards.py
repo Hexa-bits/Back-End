@@ -39,9 +39,9 @@ def test_get_fig_cards_endpoint_3cards(mock_list_movs):
     json_resp = response.json()
     assert len(json_resp ["fig_cards"]) == 3
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value},
-                                        {"id": cards_fig[2].id, "fig":Picture.figura3.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False},
+                                        {"id": cards_fig[2].id, "fig":Picture.figura3.value, "blocked": False}
                                         ]
 
 
@@ -62,8 +62,8 @@ def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
     json_resp = response.json()
     assert len(json_resp ["fig_cards"]) == 2
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False}
                                         ]
 
 
@@ -83,8 +83,8 @@ def test_get_fig_cards_endpoint_2cards(mock_list_movs):
     json_resp = response.json()
     assert len(json_resp ["fig_cards"]) == 2
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False}
                                         ]
 
 
@@ -100,7 +100,7 @@ def test_get_fig_cards_endpoint_1card(mock_list_movs):
     assert response.status_code == 200
     json_resp = response.json()
     assert len(json_resp ["fig_cards"]) == 1
-    assert json_resp ["fig_cards"] == [{"id": cards_fig[0].id, "fig": Picture.figura1.value}]
+    assert json_resp ["fig_cards"] == [{"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False}]
     
 
 def test_get_fig_enpoint_exception_list():

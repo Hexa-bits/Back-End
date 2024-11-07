@@ -14,7 +14,7 @@ from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.models.events import Event
 from src.db import Base
-from src.main import app, ws_manager
+from src.main import app, ws_manager, block_manager
 from unittest.mock import MagicMock, patch
 
 
@@ -87,10 +87,12 @@ async def test_websocket_broadcast_turno_siguiente(client):
              patch('src.main.terminar_turno', return_value = {"id_player": 1 ,
                                                                 "name_player": "testuser"}), \
             patch('src.main.repartir_cartas', return_value= None), \
-            patch("src.main.game_manager.set_jugador_en_turno_id"):
+            patch("src.main.game_manager.set_jugador_en_turno_id"),\
+            patch("src.main.block_manager.is_blocked", return_value= False):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
-
+            
+            await asyncio.sleep(0.1)
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
@@ -142,25 +144,25 @@ async def test_websocket_broadcast_games_join(client):
 
         with patch("src.main.add_player_game", return_value=mock_jugador) as mock_add_partida, \
              patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida:
-            config = {"player_id": 1 , "game_id": 1}
-            mock_add_partida.return_value = mock_jugador
+            with  patch("src.main.block_manager.add_player", return_value= None):
+                config = {"player_id": 1 , "game_id": 1}
+                mock_add_partida.return_value = mock_jugador
 
-            response = client.post("/game/join", json=config)
+                response = client.post("/game/join", json=config)
 
-            assert response.status_code == 200
+                assert response.status_code == 200
 
-            lobbies1 = websocket1.receive_text()
-            lobbies2 = websocket2.receive_text()
+                lobbies1 = websocket1.receive_text()
+                lobbies2 = websocket2.receive_text()
 
-            assert lobbies1 == event.join_game
-            assert lobbies1 == lobbies2
+                assert lobbies1 == event.join_game
+                assert lobbies1 == lobbies2
 
 
 @pytest.mark.asyncio
 async def test_websocket_broadcast_games_leave(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
-
         with patch("src.main.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
              patch("src.main.get_Partida", return_value=mock_partida) as mock_get_partida, \
              patch("src.main.delete_players_lobby") as mock_delete_players_partida:
