@@ -82,7 +82,7 @@ def player_in_partida(partida: Partida, db: Session) -> int:
     smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
     return db.execute(smt).scalar()
 
-def delete_player(jugador: Jugador, db: Session) -> None:
+def delete_player(jugador: Jugador, db: Session) -> bool:
     is_in_turn = False
     partida = get_Partida(jugador.partida_id, db)
     cant = player_in_partida(partida, db)

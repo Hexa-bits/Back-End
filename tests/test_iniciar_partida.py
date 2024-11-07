@@ -48,7 +48,7 @@ def test_start_game():
         mock_mezclar_cartas.assert_called_once_with(mock_db, 1)
         mock_mezclar_figuras.assert_called_once_with(1, mock_db)
         mock_asignar_turnos.assert_called_once_with(1, mock_db)
-        mock_timer.assert_called_once()
+        mock_timer.assert_called_once_with(1, mock_db)
 
     # Restablece las dependencias
     app.dependency_overrides.clear()
