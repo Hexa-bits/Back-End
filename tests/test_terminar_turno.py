@@ -37,24 +37,21 @@ def test_terminar_turno_succesful(test_db, client):
     test_db.add(jugador4)
     test_db.commit()
 
-    #turno_actual = partida.jugador_en_turno
-    #id_next_player = (turno_actual + 1) % 4
-    #next_player = test_db.query(Jugador).filter(Jugador.partida_id == partida.id, Jugador.turno == id_next_player).first()
-
     #Testeo el endpoint usando la base de datos que cree
     with patch("src.main.get_db"), \
          patch("src.main.get_current_turn_player"), \
          patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
          patch("src.main.terminar_turno") as mock_terminar_turno, \
-         patch("src.main.repartir_cartas", return_value= None):
+         patch("src.main.repartir_cartas", return_value= None), \
+         patch("src.main.game_manager.set_jugador_en_turno_id"), \
+         patch("src.main.manejar_temporizador") as mock_temporizador:
         
         mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
         response = client.put("/game/end-turn", json={"game_id": partida.id})
-
         assert response.status_code == 200
-        #assert response.json() == {"id_player": next_player.id, "name_player": next_player.nombre}
         assert response.json() == {"id_player": 2 , "name_player": "Jugador2"}
+        mock_temporizador.assert_awaited_once()
 
 def test_terminar_turno_unsuccesful(test_db, client):
 
