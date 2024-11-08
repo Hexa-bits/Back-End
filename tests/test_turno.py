@@ -12,8 +12,8 @@ import pdb
 
 class TestAsignarTurnos(unittest.TestCase):
 
-    @patch('src.repositories.player_repository.get_jugadores')
-    def test_asignar_turnos(self, mock_get_jugadores):
+    @patch('src.repositories.player_repository.get_players')
+    def test_asignar_turnos(self, mock_get_players):
         # Configuración del mock
         mock_db = MagicMock()  # Crea un mock para la base de datos
         game_id = 1
@@ -23,7 +23,7 @@ class TestAsignarTurnos(unittest.TestCase):
             MagicMock(turno=None)   # Jugador 3
         ]
         
-        mock_get_jugadores.return_value = jugadores_mock
+        mock_get_players.return_value = jugadores_mock
             
         asignar_turnos(game_id, mock_db)
 
@@ -34,8 +34,8 @@ class TestAsignarTurnos(unittest.TestCase):
         self.assertEqual(mock_db.commit.call_count, len(jugadores_mock))
         self.assertEqual(mock_db.refresh.call_count, len(jugadores_mock))
 
-    @patch('src.repositories.player_repository.get_jugadores')
-    def test_asignar_turnos1(self, mock_get_jugadores):
+    @patch('src.repositories.player_repository.get_players')
+    def test_asignar_turnos1(self, mock_get_players):
         mock_db = MagicMock()
         game_id = 1
         jugadores_mock = [
@@ -44,7 +44,7 @@ class TestAsignarTurnos(unittest.TestCase):
             MagicMock(id=3, turno=None) 
         ]
         
-        mock_get_jugadores.return_value = jugadores_mock
+        mock_get_players.return_value = jugadores_mock
         with patch('random.sample', return_value= [2,0,1]):
             asignar_turnos(game_id, mock_db)
 

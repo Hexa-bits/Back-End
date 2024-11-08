@@ -16,7 +16,7 @@ from typing import List
 from src.repositories.cards_repository import get_cartasFigura_player, list_fig_cards, list_mov_cards, repartir_cartas_figuras
 from src.repositories.game_repository import  get_Partida
 from src.repositories.player_repository import add_partida
-from src.repositories.board_repository import get_fichasCajon, get_tablero
+from src.repositories.board_repository import get_box_card, get_tablero
 from src.repositories.player_repository import delete_player, delete_players_lobby, get_Jugador, player_in_partida
 
 
@@ -80,7 +80,7 @@ def mock_delete_player(max_players: int, empezada: bool):
         delete_player(jugador, test_db)
 
         cant = player_in_partida(partida, test_db)
-        fichs = get_fichasCajon(1, test_db)
+        fichs = get_box_card(1, test_db)
         assert  cant == (0 if partida.partida_iniciada and max_players == 1 else max_players - 1)
         
         if (partida.partida_iniciada):
@@ -121,13 +121,13 @@ def db_prueba(max_players: int, emepezada: bool, db: Session):
             db.add(tablero)
             db.flush()
 
-            colores = [Color.ROJO]*9 + [Color.VERDE]*9 + [Color.AMARILLO]*9 + [Color.AZUL]*9
+            colors = [Color.ROJO]*9 + [Color.VERDE]*9 + [Color.AMARILLO]*9 + [Color.AZUL]*9
             coordenadas = [(x, y) for x in range(1, 7) for y in range(1, 7)]
             for coord in coordenadas:
                 x, y = coord
-                color = colores.pop()
-                ficha = FichaCajon(x_pos=x, y_pos=y, color=color, tablero_id=tablero.id)
-                db.add(ficha)
+                color = colors.pop()
+                box_card = FichaCajon(x_pos=x, y_pos=y, color=color, tablero_id=tablero.id)
+                db.add(box_card)
 
         db.commit()
     except SQLAlchemyError:
