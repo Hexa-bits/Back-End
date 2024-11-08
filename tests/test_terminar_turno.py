@@ -10,8 +10,9 @@ from src.models.cartafigura import PictureCard
 from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.main import app, get_db 
-from src.repositories.board_repository import mezclar_fichas
+from src.db import get_db
+from src.main import app
+from src.repositories.board_repository import mezclar_box_cards
 from src.repositories.game_repository import terminar_turno
 from fastapi.testclient import TestClient
 from unittest.mock import patch
@@ -45,13 +46,13 @@ async def test_terminar_turno_succesful(test_db, client):
     test_db.commit()
 
     #Testeo el endpoint usando la base de datos que cree
-    #with patch("src.main.get_db"), \
-    with patch("src.main.get_current_turn_player"), \
-         patch("src.main.game_manager.is_tablero_parcial", return_value=False), \
-         patch("src.main.terminar_turno") as mock_terminar_turno, \
-         patch("src.main.repartir_cartas", return_value= None), \
-         patch("src.main.game_manager.set_jugador_en_turno_id"), \
-         patch("src.main.timer_handler", side_effect= await sleep(2)) as mock_timer:
+    with patch("src.db.get_db"), \
+         patch("src.routers.game.get_current_turn_player"), \
+         patch("src.routers.game.game_manager.is_board_parcial", return_value=False), \
+         patch("src.routers.game.terminar_turno") as mock_terminar_turno, \
+         patch("src.routers.game.repartir_cartas", return_value= None), \
+         patch("src.routers.game.game_manager.set_player_in_turn_id"), \
+         patch("src.routers.game.timer_handler", side_effect= await sleep(2)) as mock_timer:
         
         mock_terminar_turno.return_value = terminar_turno(partida.id, test_db)
 
@@ -62,8 +63,8 @@ async def test_terminar_turno_succesful(test_db, client):
 
 def test_terminar_turno_unsuccesful(test_db, client):
 
-    with patch("src.main.get_db"):
-        with patch("src.main.terminar_turno") as mock_terminar_turno:
+    with patch("src.db.get_db"):
+        with patch("src.routers.game.terminar_turno") as mock_terminar_turno:
             mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
 
             response = client.put("/game/end-turn", json={"game_id": 1})

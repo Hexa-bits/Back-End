@@ -1,5 +1,4 @@
 import random
-import json
 from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
@@ -22,7 +21,7 @@ def get_Jugador(id: int, db: Session) -> Jugador:
     jugador = db.execute(smt).scalar()
     return jugador
 
-def get_jugadores(game_id: int, db: Session) -> List[Jugador]:
+def get_players(game_id: int, db: Session) -> List[Jugador]:
     return db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
 def get_jugador_sin_cartas(game_id: int, db: Session) -> Jugador:
@@ -57,7 +56,7 @@ def add_player_game(player_id: int, game_id: int, db: Session) -> Jugador:
     return jugador
 
 def asignar_turnos(game_id: int, db: Session) -> None:
-    player_list = get_jugadores(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    player_list = get_players(game_id, db)           #db.query(Jugador).filter(Jugador.partida_id == game_id).all()
 
     turnos = random.sample(range(len(player_list)), len(player_list))
 
