@@ -11,8 +11,8 @@ from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.main import app
-from src.main import game_manager
-from src.repositories.board_repository import get_fichas, get_tablero
+from src.routers.game import game_manager
+from src.repositories.board_repository import get_box_cards, get_tablero
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 
@@ -37,16 +37,16 @@ def test_enviar_tablero_succesful_real(test_db, client):
     #Agrego 36 fichas al tablero 6x6, cada una con una posicion x,y y un color
     for i in range(1,7):
         for j in range(1,7):
-            ficha = FichaCajon(tablero_id=tablero.id, x_pos=i, y_pos=j, color=Color.ROJO)
-            test_db.add(ficha)
+            box_card = FichaCajon(tablero_id=tablero.id, x_pos=i, y_pos=j, color=Color.ROJO)
+            test_db.add(box_card)
             test_db.commit()
-            test_db.refresh(ficha)
+            test_db.refresh(box_card)
 
 
-    with patch("src.main.get_db"):
-        with patch("src.main.get_fichas") as mock_get_fichas:
-            with patch("src.main.get_tablero", return_value = get_tablero(partida.id, test_db)):
-                mock_get_fichas.return_value = get_fichas(partida.id, test_db)
+    with patch("src.db.get_db"):
+        with patch("src.routers.game.get_box_cards") as mock_get_box_cards:
+            with patch("src.routers.game.get_tablero", return_value = get_tablero(partida.id, test_db)):
+                mock_get_box_cards.return_value = get_box_cards(partida.id, test_db)
 
                 response = client.get("/game/board?game_id=" + str(partida.id))
 
@@ -64,8 +64,8 @@ def test_enviar_tablero_succesful_real(test_db, client):
 
 def test_enviar_tablero_unsuccesful(client):
 
-    with patch("src.main.get_db"):
-        with patch("src.main.get_fichas") as mock_terminar_turno:
+    with patch("src.db.get_db"):
+        with patch("src.routers.game.get_box_cards") as mock_terminar_turno:
             mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
 
             response = client.get("/game/board?game_id=1")

@@ -1,6 +1,5 @@
 import random
 import numpy as np
-import json
 from typing import List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func, and_
@@ -13,7 +12,7 @@ from src.models.tablero import Tablero
 from src.models.fichas_cajon import FichaCajon
 from src.models.color_enum import Color
 from src.models.cartamovimiento import MovementCard, Move, CardStateMov
-from src.game import detectar_patrones, figura_valida, separar_matrices_por_color
+from src.game_helpers import detect_patterns, valid_figure, separate_arrays_by_color
 
 def get_tablero(game_id: int, db: Session) -> Tablero:
     """
@@ -23,7 +22,7 @@ def get_tablero(game_id: int, db: Session) -> Tablero:
     return db.execute(smt).scalar()
 
 
-def get_fichasCajon(game_id: int, db: Session) -> List[FichaCajon]:
+def get_box_card(game_id: int, db: Session) -> List[FichaCajon]:
     """
     Devuelve las fichsaCajon de un juego ó None si algo sale mal
     """
@@ -34,7 +33,7 @@ def get_fichasCajon(game_id: int, db: Session) -> List[FichaCajon]:
     return None
 
 
-def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCajon:
+def get_box_card_coords(game_id: int, coords: Coords, db: Session) -> FichaCajon:
     """
     Devuelve la fichaCajon por sus coordenadas ó None si algo sale mal
     """
@@ -48,21 +47,21 @@ def get_fichaCajon_coords(game_id: int, coords: Coords, db: Session) -> FichaCaj
         return db.execute(smt).scalar()
     return None
 
-def swap_fichasCajon(game_id: int, tupla_coords: tuple[Coords, Coords], db: Session) -> None:
+def swap_box_card(game_id: int, tuple_coords: tuple[Coords, Coords], db: Session) -> None:
     """
     Swappea dos fichasCajon de acuerdo a sus coordenadas y juego.
     """
-    ficha1 = get_fichaCajon_coords(game_id, tupla_coords[0], db)
-    ficha2 = get_fichaCajon_coords(game_id, tupla_coords[1], db)
+    box_card1 = get_box_card_coords(game_id, tuple_coords[0], db)
+    box_card2 = get_box_card_coords(game_id, tuple_coords[1], db)
 
-    if ficha1 is None or ficha2 is None:
+    if box_card1 is None or box_card2 is None:
         raise ValueError("Una o ambas fichasCajon no existe en la db")
 
-    color_ficha_1= ficha1.color
-    color_ficha_2= ficha2.color
+    color_box_card_1= box_card1.color
+    color_box_card_2= box_card2.color
 
-    ficha1.color = color_ficha_2
-    ficha2.color = color_ficha_1
+    box_card1.color = color_box_card_2
+    box_card2.color = color_box_card_1
     
     db.commit()
 
@@ -73,30 +72,30 @@ def get_tablero(game_id: int, db: Session) -> Tablero:
     return db.execute(smt).scalar()
 
 
-def get_fichasCajon(tablero_id: int, db: Session) -> List[FichaCajon]:
+def get_box_card(tablero_id: int, db: Session) -> List[FichaCajon]:
     """Función que retorna las fichas de un tablero"""
     smt = select(FichaCajon).where(FichaCajon.tablero_id == tablero_id)
     return db.execute(smt).scalars().all()
 
 
-def get_fichas(game_id: int, db: Session) -> List[dict]:
+def get_box_cards(game_id: int, db: Session) -> List[dict]:
     """Función que retorna las fichas de un tablero en formato lista de diccionarios"""
     tablero = db.query(Tablero).filter(Tablero.partida_id == game_id).first()
 
-    all_fichas = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+    all_box_cards = db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
 
-    lista_fichas = []
-    for ficha in all_fichas:
+    list_box_cards = []
+    for box_card in all_box_cards:
         #armo un json con las fichas
-        lista_fichas.append({
-            "x": ficha.x_pos,
-            "y": ficha.y_pos,
-            "color": ficha.color
+        list_box_cards.append({
+            "x": box_card.x_pos,
+            "y": box_card.y_pos,
+            "color": box_card.color
         })
     
-    return lista_fichas
+    return list_box_cards
 
-def mezclar_fichas(db: Session, game_id: int) -> int:
+def mezclar_box_cards(db: Session, game_id: int) -> int:
     """Función que mezcla las fichas del tablero"""
 
     tablero = Tablero(partida_id=game_id, color_prohibido=None)
@@ -111,60 +110,60 @@ def mezclar_fichas(db: Session, game_id: int) -> int:
             coordenadas.append((i,j))
 
     #Creo una lista con 9 veces repetido cada color del enum
-    colores = [Color.ROJO]*9 + [Color.VERDE]*9 + [Color.AMARILLO]*9 + [Color.AZUL]*9
+    colors = [Color.ROJO]*9 + [Color.VERDE]*9 + [Color.AMARILLO]*9 + [Color.AZUL]*9
 
     #mezclo los colores que le corresponderia a cada casilla
-    random.shuffle(colores)
+    random.shuffle(colors)
 
     #Asigno cada color a una ficha cajon
     for coord in coordenadas:
         x, y = coord
-        color = colores.pop()
-        ficha = FichaCajon(x_pos=x, y_pos=y, color=color, tablero_id=tablero.id)
-        db.add(ficha)
+        color = colors.pop()
+        box_card = FichaCajon(x_pos=x, y_pos=y, color=color, tablero_id=tablero.id)
+        db.add(box_card)
         db.commit()
-        db.refresh(ficha)
+        db.refresh(box_card)
         
     return tablero.id
 
-def get_valid_detected_figures(game_id: int, lista_patrones, db: Session ) -> List[List[Tuple[int, int]]]:
+def get_valid_detected_figures(game_id: int, list_patterns, db: Session ) -> List[List[Tuple[int, int]]]:
     """Función que retorna las figuras detectadas en el tablero que son válidas según los patrones dados y game_id"""
-    lista_fichas = get_fichas(game_id, db)
+    list_box_cards = get_box_cards(game_id, db)
 
     matriz = np.zeros((6,6))
-    for ficha in lista_fichas:
-        x = ficha["x"]
-        y = ficha["y"]
-        matriz[x-1][y-1] = ficha["color"].value
+    for box_card in list_box_cards:
+        x = box_card["x"]
+        y = box_card["y"]
+        matriz[x-1][y-1] = box_card["color"].value
 
-    lista_colores = [Color.ROJO.value, Color.VERDE.value, Color.AMARILLO.value, Color.AZUL.value]
+    list_colors = [Color.ROJO.value, Color.VERDE.value, Color.AMARILLO.value, Color.AZUL.value]
 
-    lista_matrices_por_color = separar_matrices_por_color(matriz, lista_colores)
+    list_matrices_por_color = separate_arrays_by_color(matriz, list_colors)
 
     figuras_detectadas = []
 
-    for matriz_color in lista_matrices_por_color:
-        figuras_detectadas.extend(detectar_patrones(matriz_color, lista_patrones))
+    for matriz_color in list_matrices_por_color:
+        figuras_detectadas.extend(detect_patterns(matriz_color, list_patterns))
 
     figuras_validas = []
 
     for figura in figuras_detectadas:
-        if figura_valida(matriz, figura):
+        if valid_figure(matriz, figura):
             figuras_validas.append(figura)
 
     return figuras_validas
 
-def get_color_of_ficha( x_pos: int, y_pos: int, game_id: int, db: Session) -> Color:
+def get_color_of_box_card( x_pos: int, y_pos: int, game_id: int, db: Session) -> Color:
     """Función que retorna el color de una ficha dada su x_pos, y_pos y game_id"""
     color = None
 
     tablero = get_tablero(game_id, db)
 
     if tablero:
-        ficha = db.query(FichaCajon).filter(and_(FichaCajon.tablero_id == tablero.id, FichaCajon.x_pos == x_pos, FichaCajon.y_pos == y_pos)).first()
+        box_card = db.query(FichaCajon).filter(and_(FichaCajon.tablero_id == tablero.id, FichaCajon.x_pos == x_pos, FichaCajon.y_pos == y_pos)).first()
 
-    if ficha:
-        color = ficha.color
+        if box_card:
+            color = box_card.color
 
     return color
     
