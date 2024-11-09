@@ -94,8 +94,10 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
         game_id = partida.id
         if partida.partida_iniciada:
+            nombre_jugador = jugador.nombre
             delete_player(jugador, db)
             await ws_manager.send_get_info_players(partida.id)
+            await ws_manager.send_leave_log(partida.id, nombre_jugador)
             jugadores = get_players(game_id, db)
             
             if partida.winner_id is None and len(jugadores) == 1:
@@ -200,6 +202,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         game_manager.set_player_in_turn_id(game_id=game_id.game_id, player_id=next_jugador["id_player"])
        
         await ws_manager.send_end_turn(game_id.game_id)
+        await ws_manager.send_turn_log(game_id.game_id, jugador.nombre)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -378,6 +381,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                 
                 await ws_manager.send_get_tablero(partida.id)
                 await ws_manager.send_get_cartas_mov(partida.id)
+                await ws_manager.send_cancel_mov_log(partida.id, jugador.nombre)
 
                 game_manager.pop_card_and_box_card(game_id=partida.id) 
             except Exception:
@@ -439,6 +443,7 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
             
             await ws_manager.send_get_tablero(game_id)
             await ws_manager.send_get_cartas_mov(game_id)
+            await ws_manager.send_mov_log(game_id, jugador.nombre)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
     except SQLAlchemyError:
@@ -503,6 +508,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             else:
                 await ws_manager.send_get_cartas_fig(game_id)
             await ws_manager.send_get_tablero(game_id)
+            await ws_manager.send_fig_log(game_id, jugador.nombre)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:

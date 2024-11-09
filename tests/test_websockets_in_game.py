@@ -13,8 +13,10 @@ from src.models.jugadores import Jugador
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.ws_manager import CANCEL_LOBBY, JOIN_GAME
+from src.models.cartamovimiento import CardStateMov
+from src.models.cartafigura import CardState
 from src.main import app
+from src.ws_manager import CANCEL_LOBBY, JOIN_GAME, GET_INFO_PLAYERS, GET_BOARD, GET_CARTAS_FIG, GET_CARTAS_MOV
 from src.routers.game import ws_manager
 from unittest.mock import MagicMock, patch
 
@@ -26,12 +28,18 @@ def client():
 
 mock_partida = MagicMock()
 mock_partida.id = 1
+mock_partida.winner_id = None
 mock_partida.partida_iniciada = False
 
 mock_jugador = MagicMock()
 mock_jugador.id = 1
+mock_jugador.nombre = "testws"
 mock_jugador.partida_id = mock_partida.id
 mock_jugador.es_anfitrion = True
+
+mock_jugadores = MagicMock()
+mock_jugadores.return_value = [MagicMock(id=2, nombre="test", partida_id=1), 
+                               MagicMock(id=3, nombre="test", partida_id=1)]
 
 
 @pytest.mark.asyncio
@@ -80,21 +88,27 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections) == 1  
         assert len(ws_manager.active_connections.get(1)) == 2 
         
-        with patch("src.routers.game.get_current_turn_player"), \
+        with patch("src.routers.game.get_current_turn_player", return_value = mock_jugador), \
              patch("src.routers.game.game_manager.is_board_parcial", return_value=False), \
-             patch('src.routers.game.terminar_turno', return_value = {"id_player": 1 ,
+             patch('src.routers.game.terminar_turno', return_value = {"id_player": 2 ,
                                                                 "name_player": "testuser"}), \
             patch('src.routers.game.repartir_cartas', return_value= None), \
             patch("src.routers.game.game_manager.set_player_in_turn_id"):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
-
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
             # Verificar que los mensajes recibidos son iguales para ambos
             assert mensaje1 == "Terminó turno"
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Terminó el turno'}}"
             assert mensaje1 == mensaje2
 
 
@@ -124,9 +138,11 @@ async def test_websocket_broadcast_ganador(client):
         await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Actualizar cartas de otros jugadores"
         await asyncio.sleep(0.1)
+        assert websocket2.receive_text() == "{'type': 'log', 'data': {'player_name': 'testloser', 'event': 'Abandonó la partida'}}"
+        await asyncio.sleep(0.1)
         assert websocket2.receive_text() == "Hay Ganador"
         assert len(ws_manager.active_connections.get(1)) == 1
-        #Borre la verificación posterior porque ya se hace en test_main
+        #Borre la verificación posterior porque ya se hace en test_routers.game
 
     await asyncio.sleep(0.1)
     
@@ -161,12 +177,11 @@ async def test_websocket_broadcast_games_leave(client):
 
         with patch("src.routers.game.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
              patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.routers.game.delete_players_lobby") as mock_delete_players_partida:
+             patch("src.routers.game.delete_player"), \
+             patch("src.routers.game.get_players", return_value = mock_jugadores), \
+             patch("src.routers.game.delete_players_lobby"):
             
             info_leave = {"id_user": 1, "game_id": 1}
-
-            mock_get_jugador.return_value = mock_jugador
-            mock_get_partida.return_value = mock_partida
 
             response = client.put("/game/leave", json=info_leave)
 
@@ -177,8 +192,138 @@ async def test_websocket_broadcast_games_leave(client):
 
             assert lobbies1 == CANCEL_LOBBY
             assert lobbies1 == lobbies2
-                            
 
+            mock_get_partida.return_value.partida_iniciada = True
+
+            response = client.put("/game/leave", json=info_leave)
+
+            lobbies1 = websocket1.receive_text()
+            lobbies2 = websocket2.receive_text()
+
+            assert lobbies1 == GET_INFO_PLAYERS
+            assert lobbies1 == lobbies2
+
+            await asyncio.sleep(0.1)
+
+            lobbies1 = websocket1.receive_text()
+            lobbies2 = websocket2.receive_text()
+
+            assert lobbies1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Abandonó la partida'}}"
+            assert lobbies1 == lobbies2               
+
+@pytest.mark.asyncio
+async def test_broadcast_message_to_other_websockets():
+    with TestClient(app) as client:
+        # Conecto 3 WebSockets
+        with client.websocket_connect("/game?game_id=1") as websocket_1, \
+             client.websocket_connect("/game?game_id=1") as websocket_2, \
+             client.websocket_connect("/game?game_id=1") as websocket_3:
+            
+            # Verifica que los WebSockets están conectados
+            assert websocket_1 is not None
+            assert websocket_2 is not None
+            assert websocket_3 is not None
+            
+            # Simulo un mensaje a enviar
+            response = {
+                "type": "message",
+                "data": {
+                    "msg": "Hola",
+                    "player_name": "Pepe"
+                }
+            }
+            response_text = json.dumps(response)
+            
+            # Envío el mensaje usando ws_manager a todos los de game_id 1
+            await ws_manager.send_message_game_id(game_id=1, message=response_text)
+            
+            # Espero para que los mensajes sean enviados
+            await asyncio.sleep(0.1)
+
+@pytest.mark.asyncio
+async def test_websocket_broadcast_use_mov_card(client):
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
+
+        with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+             patch("src.routers.game.get_CartaMovimiento", return_value=MagicMock(id = 1, estado=CardStateMov.mano, 
+                                                                          jugador_id=1, partida_id=1)), \
+             patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.is_valid_move", return_value = True), \
+             patch("src.routers.game.movimiento_parcial"), \
+             patch("src.routers.game.game_manager"):
+            
+            info = {"player_id": 1, "id_mov_card": 1, "fichas": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
+
+            response = client.put("/game/use-mov-card", json=info)
+
+            assert response.status_code == 200
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_BOARD
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_CARTAS_MOV
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Hizo un movimiento'}}"
+            assert mensaje1 == mensaje2
+
+
+@pytest.mark.asyncio
+async def test_websocket_broadcast_use_fig_card(client):
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
+
+        with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+             patch("src.routers.game.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
+                                                                          jugador_id=1, partida_id=1)), \
+             patch("src.routers.game.get_Partida", return_value= mock_partida), \
+             patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.is_valid_picture_card", return_value = True), \
+             patch("src.routers.game.descartar_carta_figura"), \
+             patch("src.routers.game.get_jugador_sin_cartas", return_value=None), \
+             patch("src.routers.game.game_manager"):
+            
+            info = {"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
+
+            response = client.put("/game/use-fig-card", json=info)
+
+            assert response.status_code == 200
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_CARTAS_FIG
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_BOARD
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Descartó una carta de figura'}}"
+            assert mensaje1 == mensaje2
 @pytest.mark.asyncio
 async def test_broadcast_message_to_other_websockets():
     with TestClient(app) as client:
