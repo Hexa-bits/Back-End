@@ -9,6 +9,7 @@ class Partida_config(BaseModel):
     """
     id_user: int = Field (..., gt=0)
     game_name: str = Field (..., max_length=10, min_length=1)
+    game_password: str = Field (..., max_length=44, min_length=44)
     max_players: int = Field (..., gt=1, lt=5)
 
 class Leave_config(BaseModel):

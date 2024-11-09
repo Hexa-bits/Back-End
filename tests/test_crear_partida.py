@@ -24,7 +24,12 @@ client = TestClient(app)
 @patch("src.routers.home.add_partida")
 def test_endpoint_partida (mock_add_game):
     mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
-    config = {"id_user": 1, "game_name": "partida", "max_players": 4}
+    config = {
+                "id_user": 1, 
+                "game_name": "partida",
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                "max_players": 4
+            }
     
     response = client.post("/home/create-config", json=config)
         
@@ -36,7 +41,13 @@ def test_endpoint_partida (mock_add_game):
 
 
 def test_endpoint_partida_exception_add_partida ():
-    config = {"id_user": 1, "game_name": "partida", "max_players": 4}
+    config = {
+                "id_user": 1, 
+                "game_name": "partida", 
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=", 
+                "max_players": 4
+              }
+    
     with patch("src.routers.home.add_partida", side_effect=IntegrityError("Error de integridad", 
                                                                     params=None, 
                                                                     orig=None)) as mock_add_player:
@@ -50,7 +61,13 @@ def test_endpoint_partida_exception_add_partida ():
 
 
 def test_endpoint_partida_invalid_max ():
-    config = {"id_user": 1, "game_name": "partida", "max_players": 1}
+    config = {
+                "id_user": 1, 
+                "game_name": "partida",
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                "max_players": 1
+            }
+    
     with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
@@ -64,7 +81,13 @@ def test_endpoint_partida_invalid_max ():
 
 
 def test_endpoint_partida_invalid_name_length ():
-    config = {"id_user": 1, "game_name": "abcdefghijklmnopq", "max_players": 4}
+    config = {
+                "id_user": 1,
+                "game_name": "abcdefghijklmnopq",
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=", 
+                "max_players": 4
+            }
+    
     with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
@@ -78,7 +101,13 @@ def test_endpoint_partida_invalid_name_length ():
     
 
 def test_endpoint_partida_invalid_name_str ():
-    config = {"id_user": 1, "game_name": None, "max_players": 4}
+    config = {
+                "id_user": 1, 
+                "game_name": None,
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=", 
+                "max_players": 4
+            }
+    
     with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
@@ -91,8 +120,34 @@ def test_endpoint_partida_invalid_name_str ():
                                         'type': 'string_type'}]
             
 
+def test_endpoint_partida_invalid_password ():
+    config = {
+                "id_user": 1,
+                "game_name": "partida",
+                "game_password": "1234",
+                "max_players": 4
+            }
+    
+    with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
+        response = client.post("/home/create-config", json=config)
+
+        mock_add_player.assert_not_called()
+        assert response.status_code == 422
+        json_resp = response.json()
+        assert json_resp ["detail"] == [{'type': 'string_too_short', 
+                                         'loc': ['body', 'game_password'], 
+                                         'msg': 'String should have at least 44 characters', 
+                                         'input': '1234', 'ctx': {'min_length': 44}}]
+
 def test_endpoint_partida_invalid_name ():
-    config = {"id_user": "str", "game_name": "partida", "max_players": 4, "extra": 1}
+    config = {
+                "id_user": "str", 
+                "game_name": "partida",
+                "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                "max_players": 4, 
+                "extra": 1
+            }
+    
     with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
             

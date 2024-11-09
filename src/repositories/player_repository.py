@@ -100,7 +100,10 @@ def delete_player(jugador: Jugador, db: Session) -> None:
     db.commit()
 
 def add_partida(config: Partida_config, db: Session) -> int:
-    partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    partida = Partida(game_name=config.game_name, 
+                      max_players=config.max_players,
+                      password=config.game_password)
+    
     jugador = get_Jugador(config.id_user, db)
     db.add(partida)
     db.commit()
