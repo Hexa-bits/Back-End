@@ -40,7 +40,7 @@ def test_login_success(client):
         assert response.json() != {"id": None}
 
 def test_login_failure(client):
-    with patch('src.main.get_db'):
+    with patch('src.db.get_db'):
         with patch('src.main.add_player', side_effect=OperationalError("Error de DB", 
                                                                         params=None, 
                                                                         orig=None)):
