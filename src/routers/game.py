@@ -97,9 +97,10 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
 
+        is_current_turn_player = partida.jugador_en_turno == jugador.turno
         game_id = partida.id
         if partida.partida_iniciada:
-            is_current_turn_player = delete_player(jugador, db)
+            delete_player(jugador, db)
             await ws_manager.send_get_info_players(partida.id)
             if get_Partida(game_id, db) is None and not active_timers[game_id].done():
                 if active_timers[game_id].cancel():

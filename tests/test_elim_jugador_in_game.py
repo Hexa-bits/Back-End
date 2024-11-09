@@ -77,7 +77,7 @@ def test_endpoint_leave_in_game_elim_partida (mock_delete_jugador):
 @patch("src.routers.game.timer_handler")
 @patch("src.routers.game.delete_player")
 async def test_endpoint_leave_in_game_timer(mock_delete_jugador, mock_timer):
-    mock_delete_jugador.return_value = True
+    mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(1, empezada=True)
     mock_timer.side_effect = await sleep(2)
     info_leave = {"id_user": 1, "game_id": 1}
     with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
