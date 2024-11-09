@@ -1,4 +1,5 @@
 import asyncio
+import json
 import pytest
 from fastapi import FastAPI, WebSocket
 from fastapi.testclient import TestClient
@@ -210,6 +211,34 @@ async def test_websocket_broadcast_games_leave(client):
             assert lobbies1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Abandonó la partida'}}"
             assert lobbies1 == lobbies2               
 
+@pytest.mark.asyncio
+async def test_broadcast_message_to_other_websockets():
+    with TestClient(app) as client:
+        # Conecto 3 WebSockets
+        with client.websocket_connect("/game?game_id=1") as websocket_1, \
+             client.websocket_connect("/game?game_id=1") as websocket_2, \
+             client.websocket_connect("/game?game_id=1") as websocket_3:
+            
+            # Verifica que los WebSockets están conectados
+            assert websocket_1 is not None
+            assert websocket_2 is not None
+            assert websocket_3 is not None
+            
+            # Simulo un mensaje a enviar
+            response = {
+                "type": "message",
+                "data": {
+                    "msg": "Hola",
+                    "player_name": "Pepe"
+                }
+            }
+            response_text = json.dumps(response)
+            
+            # Envío el mensaje usando ws_manager a todos los de game_id 1
+            await ws_manager.send_message_game_id(game_id=1, message=response_text)
+            
+            # Espero para que los mensajes sean enviados
+            await asyncio.sleep(0.1)
 
 @pytest.mark.asyncio
 async def test_websocket_broadcast_use_mov_card(client):
@@ -295,3 +324,41 @@ async def test_websocket_broadcast_use_fig_card(client):
 
             assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Descartó una carta de figura'}}"
             assert mensaje1 == mensaje2
+@pytest.mark.asyncio
+async def test_broadcast_message_to_other_websockets():
+    with TestClient(app) as client:
+        # Conecto 3 WebSockets
+        with client.websocket_connect("/game?game_id=1") as websocket_1, \
+             client.websocket_connect("/game?game_id=1") as websocket_2, \
+             client.websocket_connect("/game?game_id=1") as websocket_3:
+            
+            # Verifica que los WebSockets están conectados
+            assert websocket_1 is not None
+            assert websocket_2 is not None
+            assert websocket_3 is not None
+            
+            # Simulo un mensaje a enviar
+            response = {
+                "type": "message",
+                "data": {
+                    "msg": "Hola",
+                    "player_name": "Pepe"
+                }
+            }
+            response_text = json.dumps(response)
+            
+            # Envío el mensaje usando ws_manager a todos los de game_id 1
+            await ws_manager.send_message_game_id(game_id=1, message=response_text)
+            
+            # Espero para que los mensajes sean enviados
+            await asyncio.sleep(0.1)
+
+            # Recibo el mensaje en cada WebSocket
+            received_1 = websocket_1.receive_text()
+            received_2 = websocket_2.receive_text()
+            received_3 = websocket_3.receive_text()
+
+            # Verifico que los mensajes recibidos son iguales al enviado
+            assert received_1 == response_text
+            assert received_2 == response_text
+            assert received_3 == response_text

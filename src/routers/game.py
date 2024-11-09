@@ -1,3 +1,4 @@
+import json
 from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
@@ -26,7 +27,7 @@ list_patterns = [np.array(patron) for patron in list_patterns]
 
 
 @router.websocket("")
-async def websocket_endpoint(game_id: int, websocket: WebSocket):
+async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = Depends(get_db)):
     """
     Le permite al front escucha los mensajes entrantes, que se envían a
     todos aquellos en juego, ya sea lobby o en partida inciada por game_id
@@ -34,7 +35,32 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
+
+            #Recibo los mensajes enviados por el front
             data = await websocket.receive_text()
+
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+            if "msg" in data:
+                if type(data["msg"]) == str:
+                    if len(data["msg"]) !=0:
+                        message = data["msg"]
+                        player_id = data["player_id"]
+
+                        player_name = get_Jugador(player_id, db).nombre
+                        response = {
+                                    "type": "message",
+                                    "data":{
+                                            "msg": message, 
+                                            "player_name": player_name
+                                            }
+                                    }
+                        response = json.dumps(response)
+
+                        #Despues de darle el formato adecuado al mensaje lo reenvio a los demas en partida
+                        await ws_manager.send_message_game_id(response, game_id)
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
