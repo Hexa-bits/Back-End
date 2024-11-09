@@ -26,21 +26,15 @@ def client():
     with TestClient(app) as c:
         yield c
 
-mock_partida = MagicMock()
-mock_partida.id = 1
-mock_partida.winner_id = None
-mock_partida.partida_iniciada = False
+mock_game = MagicMock()
+mock_game.id = 1
+mock_game.winner_id = None
 
-mock_jugador = MagicMock()
-mock_jugador.id = 1
-mock_jugador.nombre = "testws"
-mock_jugador.partida_id = mock_partida.id
-mock_jugador.es_anfitrion = True
-
-mock_jugadores = MagicMock()
-mock_jugadores.return_value = [MagicMock(id=2, nombre="test", partida_id=1), 
-                               MagicMock(id=3, nombre="test", partida_id=1)]
-
+mock_player = MagicMock()
+mock_player.id = 1
+mock_player.nombre = "testws"
+mock_player.partida_id = mock_game.id
+mock_player.es_anfitrion = True
 
 @pytest.mark.asyncio
 async def test_websocket_connection(client):
@@ -88,7 +82,7 @@ async def test_websocket_broadcast_turno_siguiente(client):
         assert len(ws_manager.active_connections) == 1  
         assert len(ws_manager.active_connections.get(1)) == 2 
         
-        with patch("src.routers.game.get_current_turn_player", return_value = mock_jugador), \
+        with patch("src.routers.game.get_current_turn_player", return_value = mock_player), \
              patch("src.routers.game.game_manager.is_board_parcial", return_value=False), \
              patch('src.routers.game.terminar_turno', return_value = {"id_player": 2 ,
                                                                 "name_player": "testuser"}), \
@@ -113,10 +107,9 @@ async def test_websocket_broadcast_turno_siguiente(client):
 
 
 @pytest.mark.asyncio
-async def test_websocket_broadcast_ganador(client):
-    partida_mock = MagicMock()
-    partida_mock.return_value = Partida(id=1, game_name = "testWsWinner", partida_iniciada= True)
-    jugadores_mock = [
+async def test_websocket_broadcast_winner(client):
+    mock_game.partida_iniciada = True 
+    players_mock = [
         MagicMock(id=1, nombre="testloser", partida_id= 1),
         MagicMock(id=2, nombre="testwinner", partida_id= 1)
     ]
@@ -126,9 +119,8 @@ async def test_websocket_broadcast_ganador(client):
             assert len(ws_manager.active_connections) == 1  
             assert len(ws_manager.active_connections.get(1)) == 2 
             
-            with patch('src.routers.game.get_Jugador', return_value = jugadores_mock[0]), \
-                 patch('src.routers.game.get_Partida', return_value = partida_mock.return_value), \
-                 patch('src.routers.game.get_players', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
+            with patch('src.routers.game.validation_leave', return_value =(players_mock[0], mock_game)), \
+                 patch('src.routers.game.get_players', side_effect=[players_mock, [players_mock.pop(0)]]), \
                  patch('src.routers.game.delete_player', return_value = None):
                             
                 response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})
@@ -151,13 +143,14 @@ async def test_websocket_broadcast_ganador(client):
 
 @pytest.mark.asyncio
 async def test_websocket_broadcast_games_join(client):
+    mock_game.partida_iniciada = False
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
-             patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida:
+        with patch("src.routers.game.add_player_game", return_value=mock_player) as mock_add_game, \
+             patch("src.routers.game.get_Partida", return_value=mock_game) as mock_get_game:
             config = {"player_id": 1 , "game_id": 1}
-            mock_add_partida.return_value = mock_jugador
+            mock_add_game.return_value = mock_player
 
             response = client.post("/game/join", json=config)
 
@@ -172,13 +165,19 @@ async def test_websocket_broadcast_games_join(client):
 
 @pytest.mark.asyncio
 async def test_websocket_broadcast_games_leave(client):
+    mock_game.partida_iniciada = False
+    mock_players = [
+                    MagicMock(id=1, nombre="testws1", partida_id= 1, es_anfitrion= True),
+                    MagicMock(id=2, nombre="testws2", partida_id= 1),
+                    MagicMock(id=3, nombre="testws3", partida_id= 1)
+                ]
+           
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.routers.game.get_Jugador", return_value=mock_jugador) as mock_get_jugador, \
-             patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
+        with patch('src.routers.game.validation_leave', return_value =(mock_players[0], mock_game)), \
              patch("src.routers.game.delete_player"), \
-             patch("src.routers.game.get_players", return_value = mock_jugadores), \
+             patch("src.routers.game.get_players", return_value = mock_players), \
              patch("src.routers.game.delete_players_lobby"):
             
             info_leave = {"id_user": 1, "game_id": 1}
@@ -193,7 +192,7 @@ async def test_websocket_broadcast_games_leave(client):
             assert lobbies1 == CANCEL_LOBBY
             assert lobbies1 == lobbies2
 
-            mock_get_partida.return_value.partida_iniciada = True
+            mock_game.partida_iniciada = True
 
             response = client.put("/game/leave", json=info_leave)
 
@@ -208,7 +207,7 @@ async def test_websocket_broadcast_games_leave(client):
             lobbies1 = websocket1.receive_text()
             lobbies2 = websocket2.receive_text()
 
-            assert lobbies1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Abandonó la partida'}}"
+            assert lobbies1 == "{'type': 'log', 'data': {'player_name': 'testws1', 'event': 'Abandonó la partida'}}"
             assert lobbies1 == lobbies2               
 
 @pytest.mark.asyncio
@@ -245,10 +244,10 @@ async def test_websocket_broadcast_use_mov_card(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+        with patch("src.routers.game.get_Jugador", return_value=mock_player), \
              patch("src.routers.game.get_CartaMovimiento", return_value=MagicMock(id = 1, estado=CardStateMov.mano, 
                                                                           jugador_id=1, partida_id=1)), \
-             patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.get_current_turn_player", return_value=mock_player), \
              patch("src.routers.game.is_valid_move", return_value = True), \
              patch("src.routers.game.movimiento_parcial"), \
              patch("src.routers.game.game_manager"):
@@ -287,11 +286,11 @@ async def test_websocket_broadcast_use_fig_card(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
 
-        with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+        with patch("src.routers.game.get_Jugador", return_value=mock_player), \
              patch("src.routers.game.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
                                                                           jugador_id=1, partida_id=1)), \
-             patch("src.routers.game.get_Partida", return_value= mock_partida), \
-             patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.get_Partida", return_value= mock_game), \
+             patch("src.routers.game.get_current_turn_player", return_value=mock_player), \
              patch("src.routers.game.is_valid_picture_card", return_value = True), \
              patch("src.routers.game.descartar_carta_figura"), \
              patch("src.routers.game.get_jugador_sin_cartas", return_value=None), \
@@ -324,6 +323,8 @@ async def test_websocket_broadcast_use_fig_card(client):
 
             assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Descartó una carta de figura'}}"
             assert mensaje1 == mensaje2
+
+
 @pytest.mark.asyncio
 async def test_broadcast_message_to_other_websockets():
     with TestClient(app) as client:

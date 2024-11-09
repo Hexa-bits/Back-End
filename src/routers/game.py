@@ -17,6 +17,8 @@ from src.repositories.cards_repository import *
 from src.game_helpers import *
 from src.models.patrones_figuras_matriz import generate_all_figures
 
+from src.validation_service import *
+
 router = APIRouter()
 
 ws_manager = WebSocketConnectionManager()
@@ -78,39 +80,27 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
     - 500: Ocurre un error interno 
     """
     try:
-        jugador = get_Jugador(leave_lobby.id_user, db)
-        if jugador is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                                detail=f'No existe el jugador: {leave_lobby.id_user}')
-        
-        partida = get_Partida(leave_lobby.game_id, db)
-        if partida is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                detail=f'No exsite la partida: {leave_lobby.game_id}')
-        
-        if jugador.partida_id == None or jugador.partida_id != partida.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                                detail=f'No exsite la partida asociada a jugador: {leave_lobby.id_user}')
+        player, game = validation_leave(leave_lobby.id_user, leave_lobby.game_id, db)
 
-        game_id = partida.id
-        if partida.partida_iniciada:
-            nombre_jugador = jugador.nombre
-            delete_player(jugador, db)
-            await ws_manager.send_get_info_players(partida.id)
-            await ws_manager.send_leave_log(partida.id, nombre_jugador)
+        game_id = player.id
+        if game.partida_iniciada:
+            nombre_jugador = player.nombre
+            delete_player(player, db)
+            await ws_manager.send_get_info_players(game.id)
+            await ws_manager.send_leave_log(game.id, nombre_jugador)
             jugadores = get_players(game_id, db)
             
-            if partida.winner_id is None and len(jugadores) == 1:
-                partida.winner_id = jugadores[0].id
+            if game.winner_id is None and len(jugadores) == 1:
+                game.winner_id = jugadores[0].id
                 db.commit()
 
-                await ws_manager.send_get_winner(partida.id)
+                await ws_manager.send_get_winner(game.id)
         else:
-            if jugador.es_anfitrion:
-                delete_players_lobby(partida, db)
+            if player.es_anfitrion:
+                delete_players_lobby(game, db)
                 await ws_manager.send_cancel_lobby(game_id)
             else:
-                delete_player(jugador, db)
+                delete_player(player, db)
                 await ws_manager.send_leave_lobby(game_id)
         
             await ws_manager.send_get_lobbies()

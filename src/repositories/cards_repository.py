@@ -67,9 +67,9 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
         
     #Obtengo 3 cartas para cada jugador
     #Obtengo mi lista de jugadores
-    playeres = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    players = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
     
-    for player in playeres:
+    for player in players:
         for i in range(3):
             #Obtengo una carta aleatoria de all_cards_mov
             carta = all_cards_mov.pop()
@@ -134,20 +134,20 @@ def repartir_cartas(game_id: int, db: Session) -> None:
                 db.refresh(carta)
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
-    playeres = get_ordenes(game_id, db)
-    num_playeres = len(playeres)
+    players = get_ordenes(game_id, db)
+    num_players = len(players)
 
-    cartas_total = (50 // num_playeres) *num_playeres
+    cartas_total = (50 // num_players) *num_players
 
     for i in range(cartas_total):
 
         cartaFigura = PictureCard(figura=Picture(figuras_list[i]))
-        if (i < 3 *num_playeres):
+        if (i < 3 *num_players):
             cartaFigura.estado = CardState.mano
 
         cartaFigura.partida_id = game_id
-        cartaFigura.jugador_id = playeres[i % num_playeres].id
-        i += num_playeres
+        cartaFigura.jugador_id = players[i % num_players].id
+        i += num_players
         db.add(cartaFigura)
 
     db.commit()
