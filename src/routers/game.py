@@ -29,7 +29,7 @@ active_timers = {}
 
 async def timer(game_id: int, db: Session):
 
-    await asyncio.sleep(30)
+    await asyncio.sleep(120)
 
     #-------
     player = get_current_turn_player(game_id, db)
