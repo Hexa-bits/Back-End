@@ -121,7 +121,7 @@ def repartir_cartas(game_id: int, blocked: bool, db: Session) -> None:
         if len(cartas_fig_en_mano) < 3:
 
             all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
-                                                              PictureCard.jugador_id == jugador_en_turno.id,
+                                                              PictureCard.jugador_id == player_en_turno.id,
                                                               PictureCard.estado == CardState.mazo)).all()
 
             cant_cartas = 3 - len(cartas_fig_en_mano)
@@ -129,7 +129,7 @@ def repartir_cartas(game_id: int, blocked: bool, db: Session) -> None:
             for i in range(cant_cartas):
                 if len(all_cards_fig_player)>0:
                     carta = all_cards_fig_player.pop()
-                    carta.jugador_id = jugador_en_turno.id
+                    carta.jugador_id = player_en_turno.id
                     carta.estado = CardState.mano
                     db.commit()
                     db.refresh(carta)
