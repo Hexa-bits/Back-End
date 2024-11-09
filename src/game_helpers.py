@@ -314,3 +314,5 @@ class BlockManager:
                 success = True
         return success
     
+#Se usara en routers
+block_manager = BlockManager()

@@ -21,7 +21,6 @@ router = APIRouter()
 
 ws_manager = WebSocketConnectionManager()
 game_manager = GameManager()
-block_manager = BlockManager()
 
 list_patterns = generate_all_figures()
 list_patterns = [np.array(patron) for patron in list_patterns]
