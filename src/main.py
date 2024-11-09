@@ -362,9 +362,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
                 cancelar_movimiento(game_id.game_id, jugador.id, mov, coords, db)
                 game_manager.desapilar_carta_y_ficha(game_id.game_id)
-            print("holaaa")
             player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
-            print(player_blocked)
             repartir_cartas(game_id.game_id, player_blocked, db)
             next_jugador = terminar_turno(game_id.game_id, db)
             #TO DO: ver si quitar jugador en turno de game_manager
@@ -372,7 +370,6 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
 
             await ws_manager.send_message_game_id(event.end_turn, game_id.game_id)
     except Exception as e:
-        print(e)
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
     return next_jugador
