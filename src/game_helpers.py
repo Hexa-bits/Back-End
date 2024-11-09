@@ -6,7 +6,7 @@ from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
 from src.models.utils import *
 from src.models.patrones_figuras_matriz import pictureCardsFigures, generar_rotaciones
-from typing import List, Dict, Tuple, Union
+from typing import Any, List, Dict, Tuple, Union
 import numpy as np
 
 

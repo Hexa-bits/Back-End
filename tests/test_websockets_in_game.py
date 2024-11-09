@@ -93,12 +93,10 @@ async def test_websocket_broadcast_turno_siguiente(client):
                                                                 "name_player": "testuser"}), \
             patch('src.routers.game.repartir_cartas', return_value= None), \
             patch("src.routers.game.game_manager.set_player_in_turn_id"), \
-            patch("src.main.block_manager.is_blocked", return_value= False):
+            patch("src.routers.game.block_manager.is_blocked", return_value= False):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-            mensaje1 = websocket1.receive_text()
-            mensaje2 = websocket2.receive_text()
 
             # Verificar que los mensajes recibidos son iguales para ambos
             assert mensaje1 == "Terminó turno"
@@ -156,7 +154,7 @@ async def test_websocket_broadcast_games_join(client):
 
         with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
              patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
-            patch("src.main.block_manager.is_blocked", return_value= False):
+            patch("src.routers.game.block_manager.is_blocked", return_value= False):
             config = {"player_id": 1 , "game_id": 1}
             mock_add_partida.return_value = mock_jugador
 

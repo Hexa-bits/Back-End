@@ -237,7 +237,7 @@ async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
         fig_cards = list_fig_cards(player_id.player_id, db)
         fig_cards_list = []
         for card in fig_cards:
-            fig_cards_list.append({"id": card.id, "fig": card.figura.value})
+            fig_cards_list.append({"id": card.id, "fig": card.figura.value, "blocked": card.blocked})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -655,11 +655,11 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         
         block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
 
-        game_manager.limpiar_cartas_fichas(game.id)
+        game_manager.clean_cards_box_cards(game.id)
 
-        await ws_manager.send_message_game_id(event.get_cartas_fig, game.id)
-        await ws_manager.send_message_game_id(event.get_tablero, game.id)
-        await ws_manager.send_message_game_id(event.get_info_players, game.id)
+        await ws_manager.send_get_info_players(game.id)
+        await ws_manager.send_get_tablero( game.id)
+        await ws_manager.send_get_cartas_fig( game.id)
         
     except SQLAlchemyError:
         db.rollback()

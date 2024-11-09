@@ -1,7 +1,8 @@
 import pytest
 from unittest.mock import patch, MagicMock, ANY
 from fastapi.testclient import TestClient
-from src.routers.game import app
+from fastapi import status
+from src.main import app
 from src.routers.game import list_patterns
 from sqlalchemy.exc import SQLAlchemyError, MultipleResultsFound
 from sqlalchemy.orm import Session
@@ -400,7 +401,8 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
 @patch('src.routers.game.get_current_turn_player')
 @patch('src.routers.game.descartar_carta_figura')
 @patch('src.routers.game.get_Partida')
-def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
+@patch('src.routers.game.get_color_of_box_card')
+def test_use_picture_card_invalid_card(mock_get_color_of_box_card,mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
                                        mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
     partida = MagicMock(id=1)
@@ -408,6 +410,7 @@ def test_use_picture_card_invalid_card(mock_get_partida, mock_descartar_carta, m
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
 
+    mock_get_color_of_box_card.return_value = Color.ROJO.value
     mock_get_db.return_value = MagicMock(spec=Session)
     mock_get_partida.return_value = partida
     mock_get_jugador.return_value = jugador
@@ -842,7 +845,7 @@ async def test_block_figure_success(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -870,7 +873,7 @@ async def test_block_figure_game_not_found(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -899,7 +902,7 @@ async def test_block_figure_invalid_turn(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -927,7 +930,7 @@ async def test_block_figure_invalid_figure(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -954,7 +957,7 @@ async def test_block_figure_no_player_to_block(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -982,7 +985,7 @@ async def test_block_figure_already_blocked(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -1010,7 +1013,7 @@ async def test_block_figure_sql_error(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -1037,7 +1040,7 @@ async def test_block_figure_not_carta_figura(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
 
@@ -1065,7 +1068,7 @@ async def test_block_figure_only_one_carta_figura(mocker):
     mocker.patch("src.routers.game.block_player_figure_card")
     mocker.patch("src.routers.game.get_cards_not_blocked_id", return_value=[1, 2])
     mocker.patch("src.routers.game.block_manager.block_fig_card")
-    mocker.patch("src.routers.game.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")    
 
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
