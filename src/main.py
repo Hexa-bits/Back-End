@@ -659,6 +659,9 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         if pictureCard.estado != CardState.mano:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
         
+        if pictureCard.blocked:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta esta bloqueada")
+        
         if pictureCard.jugador_id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
         
@@ -746,6 +749,10 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         dict - Diccionario con el estado del tablero
     """
     try:
+
+        if len(figura.figura)==0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida lista vacia")
+
         player = get_Jugador(figura.player_id, db)
         game = get_Partida(player.partida_id, db)
         if game is None:
@@ -767,10 +774,13 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
 
         
         player_to_block = get_Jugador(fig_card.jugador_id, db)
-        
+
         if player_to_block is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador a bloquear")
         
+        if player_to_block.id == player.id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede bloquear a uno mismo")
+
         if block_manager.is_blocked(game.id, player_to_block.id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya está bloqueado")
         

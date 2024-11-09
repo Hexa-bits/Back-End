@@ -843,3 +843,30 @@ async def test_block_figure_not_carta_figura(mocker):
     
     assert response.status_code == status.HTTP_404_NOT_FOUND
     assert response.json() == {"detail": "No existe la carta figura"}
+
+@pytest.mark.asyncio
+async def test_block_figure_only_one_carta_figura(mocker):
+    mock_player = MagicMock(turno=0, partida_id=1)
+    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
+    mock_player_to_block = MagicMock(id=2)
+    mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
+    mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
+    
+    mocker.patch("src.main.get_Jugador",side_effect=[mock_player, mock_player_to_block])
+    mocker.patch("src.main.get_Partida", return_value= mock_game)
+    mocker.patch("src.main.get_CartaFigura", return_value=mock_card_figura_block)
+    mocker.patch("src.main.is_valid_picture_card", return_value=True)
+    #Solo tengo una carta figura
+    mocker.patch("src.main.get_cartasFigura_player", return_value=[mock_card_figura_block])
+    mocker.patch("src.main.block_manager.is_blocked", return_value=False)
+    mocker.patch("src.main.block_player_figure_card")
+    mocker.patch("src.main.get_cards_not_blocked_id", return_value=[1, 2])
+    mocker.patch("src.main.block_manager.block_fig_card")
+    mocker.patch("src.main.game_manager.limpiar_cartas_fichas")
+    mocker.patch("src.main.ws_manager.send_message_game_id")    
+
+    response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
+
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {"detail": "El jugador solo tiene una carta figura"}
