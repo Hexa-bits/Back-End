@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from src.models.color_enum import Color
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.tablero import Tablero
@@ -97,12 +98,14 @@ async def test_websocket_broadcast_turno_siguiente(client):
             # Simular una petición HTTP para obtener el siguiente turno
             response = client.put("/game/end-turn", json={"game_id": 1})
             # Esperar a que los lobbies se envíen a los clientes WebSocket conectados
-
-            # Verificar que los mensajes recibidos son iguales para ambos
-            assert mensaje1 == "Terminó turno"
-            assert mensaje1 == mensaje2
-
+            assert response.status_code == 200
             await asyncio.sleep(0.1)
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "Terminó turno"
+            assert mensaje1 == "Terminó turno"
+
             mensaje1 = websocket1.receive_text()
             mensaje2 = websocket2.receive_text()
 
@@ -154,7 +157,7 @@ async def test_websocket_broadcast_games_join(client):
 
         with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
              patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
-            patch("src.routers.game.block_manager.is_blocked", return_value= False):
+            patch("src.routers.game.block_manager.add_player", return_value= False):
             config = {"player_id": 1 , "game_id": 1}
             mock_add_partida.return_value = mock_jugador
 
@@ -286,13 +289,15 @@ async def test_websocket_broadcast_use_fig_card(client):
 
         with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
              patch("src.routers.game.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
-                                                                          jugador_id=1, partida_id=1)), \
+                                                                          jugador_id=1, partida_id=1, blocked=False)), \
              patch("src.routers.game.get_Partida", return_value= mock_partida), \
              patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.get_color_of_box_card", return_value=Color.ROJO), \
              patch("src.routers.game.is_valid_picture_card", return_value = True), \
              patch("src.routers.game.descartar_carta_figura"), \
              patch("src.routers.game.get_jugador_sin_cartas", return_value=None), \
-             patch("src.routers.game.game_manager"):
+             patch("src.routers.game.game_manager"),\
+             patch("src.routers.game.get_tablero", return_value= MagicMock(color_prohibido=Color.VERDE)):
             
             info = {"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
 

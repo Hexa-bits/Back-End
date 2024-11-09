@@ -202,18 +202,18 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
         jugador = get_current_turn_player(game_id.game_id, db)
         
         if jugador:
-            while game_manager.is_tablero_parcial(game_id.game_id):
+            while game_manager.is_board_parcial(game_id.game_id):
                 mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
                 mov = mov_coords [0]
                 coords = (mov_coords [1][0], mov_coords [1][1])
 
                 cancel_movement(game_id.game_id, jugador.id, mov, coords, db)
-                game_manager.desapilar_carta_y_ficha(game_id.game_id)
+                game_manager.pop_card_and_box_card(game_id.game_id)
             player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
             repartir_cartas(game_id.game_id, player_blocked, db)
             next_jugador = terminar_turno(game_id.game_id, db)
             #TO DO: ver si quitar jugador en turno de game_manager
-            game_manager.set_jugador_en_turno_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
+            game_manager.set_player_in_turn_id(game_id=game_id.game_id, jugador_id=next_jugador["id_player"])
        
             await ws_manager.send_end_turn(game_id.game_id)
             await ws_manager.send_turn_log(game_id.game_id, jugador.nombre)
