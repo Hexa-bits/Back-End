@@ -372,7 +372,9 @@ def test_use_mov_card_error(mock_get_db, mock_mov_parcial, mock_is_valid, mock_g
 @patch('src.routers.game.descartar_carta_figura')
 @patch('src.routers.game.get_jugador_sin_cartas')
 @patch('src.routers.game.get_Partida')
-def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_descartar_carta,
+@patch('src.routers.game.get_color_of_box_card')
+@patch('src.routers.game.get_tablero')
+def test_use_picture_card(mock_get_tablero,mock_get_color,mock_get_partida, mock_get_jugador_sin_cartas, mock_descartar_carta,
                          mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
     partida = MagicMock(id=1)
@@ -380,6 +382,8 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
     
+    mock_get_tablero.return_value = MagicMock(color_prohibido=Color.VERDE)
+    mock_get_color.return_value = Color.ROJO
     mock_get_db.return_value = MagicMock(spec=Session)
     mock_get_partida.return_value = partida
     mock_get_jugador.return_value = jugador
@@ -390,7 +394,7 @@ def test_use_picture_card(mock_get_partida, mock_get_jugador_sin_cartas, mock_de
     mock_get_jugador_sin_cartas.return_value = None
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
-    
+
     assert response.status_code == 200
     mock_game_manager.clean_cards_box_cards.assert_called_once()
 
