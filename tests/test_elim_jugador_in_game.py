@@ -24,12 +24,12 @@ from sqlalchemy.exc import IntegrityError
 
 client = TestClient(app)
 
-@patch("src.main.delete_player")
+@patch("src.routers.game.delete_player")
 def test_endpoint_leave_in_game_anf (mock_delete_jugador):
     mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(4, empezada=True)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=True, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
@@ -39,12 +39,12 @@ def test_endpoint_leave_in_game_anf (mock_delete_jugador):
             assert response.status_code == 204
 
 
-@patch("src.main.delete_player")
+@patch("src.routers.game.delete_player")
 def test_endpoint_leave_in_game (mock_delete_jugador):
     mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(4, empezada=True)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=4, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)
@@ -54,12 +54,12 @@ def test_endpoint_leave_in_game (mock_delete_jugador):
             assert response.status_code == 204
 
 
-@patch("src.main.delete_player")
+@patch("src.routers.game.delete_player")
 def test_endpoint_leave_in_game_elim_partida (mock_delete_jugador):
     mock_delete_jugador.side_effect = lambda jugador, db: mock_delete_player(1, empezada=True)
     info_leave = {"id_user": 1, "game_id": 1}
-    with patch("src.main.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
-        with patch("src.main.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1, partida_iniciada=True)) as mock_get_partida:
+    with patch("src.routers.game.get_Jugador", return_value = Jugador(nombre="player_1", id=1, es_anfitrion=False, partida_id=1)) as mock_get_jugador:
+        with patch("src.routers.game.get_Partida", return_value = Partida(game_name="partida", max_players=2, id=1, partida_iniciada=True)) as mock_get_partida:
             response = client.put(url="/game/leave", json=info_leave)
 
             leave_lobby = Leave_config(**info_leave)

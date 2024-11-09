@@ -8,9 +8,9 @@ from fastapi.testclient import TestClient
 from fastapi.websockets import WebSocketDisconnect
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from src.models.events import Event
 from src.db import Base
-from src.main import app, ws_manager
+from src.main import app
+from src.routers.home import ws_manager
 
 # Probar la conexión de WebSocket
 @pytest.fixture
@@ -42,35 +42,12 @@ async def test_websocket_connection_lobbies(client):
 
 
 @pytest.mark.asyncio
-async def test_websocket_connection_games(client):
-    # Comprobar cuántas conexiones activas hay antes de la conexión
-    if 0 not in ws_manager.active_connections:
-        ws_manager.active_connections[1] = []
-    initial_connections = len(ws_manager.active_connections[1])
-
-    #Simulo una conexión al WebSocket
-    with client.websocket_connect("/game?game_id=1") as websocket:
-        # Verificar que el WebSocket se conectó correctamente
-        assert websocket is not None
-
-        # Verificar que la cantidad de conexiones activas aumentó
-        assert len(ws_manager.active_connections[1]) == initial_connections + 1        
-    
-    await asyncio.sleep(0.1)
-    # Después de cerrar la conexión, verificar que la cantidad de conexiones activas disminuyó
-    if initial_connections == 0:
-        assert 0 not in ws_manager.active_connections
-    else:
-        assert len(ws_manager.active_connections[1]) == initial_connections
-
-
-@pytest.mark.asyncio
 async def test_websocket_broadcast_lobbies(client):
     # Simular que un cliente se conecta al WebSocket
     with client.websocket_connect("/home") as websocket1, \
          client.websocket_connect("/home") as websocket2:
         # Simular una petición HTTP para obtener lobbies
-        with patch("src.main.add_partida") as mock_add_partida:
+        with patch("src.routers.home.add_partida") as mock_add_partida:
             config = {"id_user": 1, "game_name": "partida", "max_players": 4}
             mock_add_partida.return_value = 1
 

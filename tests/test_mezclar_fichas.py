@@ -10,20 +10,20 @@ from src.models.tablero import Tablero
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
 
-from src.repositories.board_repository import mezclar_fichas
+from src.repositories.board_repository import mezclar_box_cards
 
-def test_mezclar_fichas(test_db):
+def test_mezclar_box_cards(test_db):
     
     partida = Partida(game_name="partida", max_players=4)
     test_db.add(partida)
     test_db.commit()
         
     #Creo un tablero y sus fichas mezcladas
-    mezclar_fichas(test_db, partida.id)
+    mezclar_box_cards(test_db, partida.id)
     
     assert partida.tablero is not None
     
     tablero = test_db.query(Tablero).filter(Tablero.partida_id == partida.id).first()
-    fichas = test_db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
+    box_cards = test_db.query(FichaCajon).filter(FichaCajon.tablero_id == tablero.id).all()
     
-    assert len(fichas) == 36
+    assert len(box_cards) == 36

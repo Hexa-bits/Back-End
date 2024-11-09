@@ -21,7 +21,7 @@ from unittest.mock import ANY
 
 client = TestClient(app)
 
-@patch("src.main.add_partida")
+@patch("src.routers.home.add_partida")
 def test_endpoint_partida (mock_add_game):
     mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
     config = {"id_user": 1, "game_name": "partida", "max_players": 4}
@@ -37,7 +37,7 @@ def test_endpoint_partida (mock_add_game):
 
 def test_endpoint_partida_exception_add_partida ():
     config = {"id_user": 1, "game_name": "partida", "max_players": 4}
-    with patch("src.main.add_partida", side_effect=IntegrityError("Error de integridad", 
+    with patch("src.routers.home.add_partida", side_effect=IntegrityError("Error de integridad", 
                                                                     params=None, 
                                                                     orig=None)) as mock_add_player:
         response = client.post("/home/create-config", json=config)
@@ -51,7 +51,7 @@ def test_endpoint_partida_exception_add_partida ():
 
 def test_endpoint_partida_invalid_max ():
     config = {"id_user": 1, "game_name": "partida", "max_players": 1}
-    with patch("src.main.add_partida", return_value=1) as mock_add_player:
+    with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
         mock_add_player.assert_not_called()
@@ -65,7 +65,7 @@ def test_endpoint_partida_invalid_max ():
 
 def test_endpoint_partida_invalid_name_length ():
     config = {"id_user": 1, "game_name": "abcdefghijklmnopq", "max_players": 4}
-    with patch("src.main.add_partida", return_value=1) as mock_add_player:
+    with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
         mock_add_player.assert_not_called()
@@ -79,7 +79,7 @@ def test_endpoint_partida_invalid_name_length ():
 
 def test_endpoint_partida_invalid_name_str ():
     config = {"id_user": 1, "game_name": None, "max_players": 4}
-    with patch("src.main.add_partida", return_value=1) as mock_add_player:
+    with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
         
         mock_add_player.assert_not_called()
@@ -93,7 +93,7 @@ def test_endpoint_partida_invalid_name_str ():
 
 def test_endpoint_partida_invalid_name ():
     config = {"id_user": "str", "game_name": "partida", "max_players": 4, "extra": 1}
-    with patch("src.main.add_partida", return_value=1) as mock_add_player:
+    with patch("src.routers.home.add_partida", return_value=1) as mock_add_player:
         response = client.post("/home/create-config", json=config)
             
         mock_add_player.assert_not_called()

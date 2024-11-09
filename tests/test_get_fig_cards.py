@@ -22,7 +22,7 @@ from sqlalchemy.exc import IntegrityError
 client = TestClient(app)
 
 
-@patch("src.main.list_fig_cards")
+@patch("src.routers.game.list_fig_cards")
 def test_get_fig_cards_endpoint_3cards(mock_list_movs):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
@@ -45,7 +45,7 @@ def test_get_fig_cards_endpoint_3cards(mock_list_movs):
                                         ]
 
 
-@patch("src.main.list_fig_cards")
+@patch("src.routers.game.list_fig_cards")
 def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
@@ -67,7 +67,7 @@ def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
                                         ]
 
 
-@patch("src.main.list_fig_cards")
+@patch("src.routers.game.list_fig_cards")
 def test_get_fig_cards_endpoint_2cards(mock_list_movs):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
@@ -88,7 +88,7 @@ def test_get_fig_cards_endpoint_2cards(mock_list_movs):
                                         ]
 
 
-@patch("src.main.list_fig_cards")
+@patch("src.routers.game.list_fig_cards")
 def test_get_fig_cards_endpoint_1card(mock_list_movs):
     cards_fig = [PictureCard(figura=Picture.figura1, estado=CardState.mano)]
 
@@ -104,7 +104,7 @@ def test_get_fig_cards_endpoint_1card(mock_list_movs):
     
 
 def test_get_fig_enpoint_exception_list():
-    with patch("src.main.list_fig_cards", side_effect=IntegrityError("Error de integridad", 
+    with patch("src.routers.game.list_fig_cards", side_effect=IntegrityError("Error de integridad", 
                                                             params=None, 
                                                             orig=None)) as mock_list_card:
         response = client.get("/game/my-fig-card?player_id=1")
