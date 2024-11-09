@@ -164,10 +164,16 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     - 500: Ocurre un erro interno.
     """
     try:
-        tablero = get_box_cards(game_id.game_id, db)
+        board = get_tablero(game_id.game_id, db)
+        if board.color_prohibido is None:
+            forbidden_color = 0
+        else:
+           forbidden_color = board.color_prohibido.value
+        tokens = get_box_cards(game_id.game_id, db)
         is_parcial = game_manager.is_board_parcial(game_id.game_id)
 
-        response = { "fichas": tablero,
+        response = { "fichas": tokens,
+                    "forbidden_color": forbidden_color,
                     "parcial": is_parcial }
 
     except Exception:
@@ -461,6 +467,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
     - 400: Una request incorrecta con contenido: 
             * "Figura invalida" en caso de que la figura a matchear no coincida
               con la figura de la carta.
+            * "El color de la figura está prohibido"
             * "La carta no pertenece a la partida"
             * "No es turno del jugador"
             * "La carta no está en mano"
@@ -495,9 +502,18 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         
         if pictureCard.jugador_id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
+
+        board = get_tablero(game_id, db)
+        coords_token0 = figureData.figura[0]
+        token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game_id, db)
+        if token_color is not None and (board.color_prohibido == token_color):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
+            if board and token_color:
+                board.color_prohibido = token_color
+                db.commit()
             game_manager.clean_cards_box_cards(game_id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:

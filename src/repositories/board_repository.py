@@ -98,7 +98,7 @@ def get_box_cards(game_id: int, db: Session) -> List[dict]:
 def mezclar_box_cards(db: Session, game_id: int) -> int:
     """Función que mezcla las fichas del tablero"""
 
-    tablero = Tablero(partida_id=game_id)
+    tablero = Tablero(partida_id=game_id, color_prohibido=None)
     db.add(tablero)
     db.commit()
     db.refresh(tablero)
@@ -162,7 +162,9 @@ def get_color_of_box_card( x_pos: int, y_pos: int, game_id: int, db: Session) ->
     if tablero:
         box_card = db.query(FichaCajon).filter(and_(FichaCajon.tablero_id == tablero.id, FichaCajon.x_pos == x_pos, FichaCajon.y_pos == y_pos)).first()
 
-    if box_card:
-        color = box_card.color
+        if box_card:
+            color = box_card.color
 
     return color
+    
+    
