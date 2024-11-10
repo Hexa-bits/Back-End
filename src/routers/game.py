@@ -124,7 +124,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                              detail="Fallo en la base de datos")
     
-@router.post("/join", response_model=JoinGameData, status_code=status.HTTP_200_OK)
+@router.post("/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
 async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
     """
     Descripción: maneja la logica de unirse a una partida.

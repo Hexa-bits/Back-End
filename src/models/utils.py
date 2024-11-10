@@ -51,7 +51,7 @@ class JoinGameData(BaseModel):
     """
     game_id: int = Field (..., gt=0)
     player_id: int = Field (..., gt=0)
-    game_password: str = Field (..., max_length=44, min_length=44)
+    game_password: Optional[str] = Field(None, max_length=44, min_length=44)
 
 class Coords(BaseModel):
     """
