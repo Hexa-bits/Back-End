@@ -84,7 +84,9 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     """
     try:
         id_game = add_partida(partida_config, db)
-
+        #Uso el block manager
+        block_manager.create_game(id_game) #COMO SOLUCIONARLO
+        block_manager.add_player(id_game, partida_config.id_user)
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
         await ws_manager.send_get_lobbies()
 
