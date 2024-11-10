@@ -102,7 +102,8 @@ def delete_player(jugador: Jugador, db: Session) -> None:
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, 
                       max_players=config.max_players,
-                      password=config.game_password)
+                      password=config.game_password if config.game_password != ""
+                      else None)
     
     jugador = get_Jugador(config.id_user, db)
     db.add(partida)

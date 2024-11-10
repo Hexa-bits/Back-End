@@ -45,7 +45,7 @@ def test_endpoint_partida_no_password (mock_add_game):
     config = {
                 "id_user": 1, 
                 "game_name": "partida",
-                "game_password": None,
+                "game_password": "",
                 "max_players": 4
             }
     
@@ -154,7 +154,7 @@ def test_endpoint_partida_invalid_password ():
         json_resp = response.json()
         assert json_resp ["detail"] == [{'type': 'value_error', 
                                          'loc': ['body', 'game_password'], 
-                                         'msg': 'Value error, String should have 44 characters', 
+                                         'msg': 'Value error, String should have 44 characters or be ""', 
                                          'input': '1234', 'ctx': {'error': {}}}]
 
 def test_endpoint_partida_invalid_name ():
