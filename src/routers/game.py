@@ -28,9 +28,8 @@ list_patterns = [np.array(patron) for patron in list_patterns]
 active_timers = {}
 
 async def timer(game_id: int, db: Session):
-    print("olha")
-    await asyncio.sleep(10)
-    print("chau")
+    
+    await asyncio.sleep(120)
     #-------
     player = get_current_turn_player(game_id, db)
         
@@ -41,10 +40,8 @@ async def timer(game_id: int, db: Session):
 
         cancel_movement(game_id, player.id, mov, coords, db)
         game_manager.pop_card_and_box_card(game_id)
-    print("EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     repartir_cartas(game_id, db)
     next_player = terminar_turno(game_id, db)
-    print("OLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     game_manager.set_player_in_turn_id(game_id=game_id, player_id=next_player["id_player"])
     await ws_manager.send_end_turn(game_id)
     await timer_handler(game_id, db) 
@@ -106,6 +103,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 if active_timers[game_id].cancel():
                     del active_timers[game_id]
             elif is_current_turn_player:
+                await ws_manager.send_end_turn(game_id)
                 await timer_handler(game_id, db)
             jugadores = get_players(game_id, db)
             
