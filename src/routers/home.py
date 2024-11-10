@@ -13,7 +13,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.ws_manager import WebSocketConnectionManager
+from src.ws_manager import ws_manager
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -22,7 +22,6 @@ from src.repositories.cards_repository import *
 from src.game_helpers import *
 
 router = APIRouter()
-ws_manager = WebSocketConnectionManager()
 
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):

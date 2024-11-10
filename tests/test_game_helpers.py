@@ -1,3 +1,4 @@
+import pytest
 from unittest.mock import patch, MagicMock
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
@@ -214,3 +215,73 @@ def test_is_valid_picture_card():
               Coords(x_pos= 6, y_pos= 5), Coords(x_pos= 6, y_pos= 6)]                                 #con carta Figura 14
  
     assert not is_valid_picture_card(cartaFigura.return_value, coords)
+
+@pytest.fixture
+def block_manager():
+    return BlockManager()
+
+def test_create_game(block_manager):
+    block_manager.create_game(1)
+    assert 1 in block_manager.games
+
+def test_add_player(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    assert 101 in block_manager.games[1]
+    assert block_manager.games[1][101]["is_blocked"] is False
+    assert block_manager.games[1][101]["block_card_fig_id"] == 0
+    assert block_manager.games[1][101]["other_cards_in_hand"] == []
+
+def test_delete_player(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.delete_player(1, 101)
+    assert 101 not in block_manager.games[1]
+
+def test_delete_game(block_manager):
+    block_manager.create_game(1)
+    block_manager.delete_game(1)
+    assert 1 not in block_manager.games
+
+def test_block_fig_card(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
+    assert block_manager.games[1][101]["is_blocked"] is True
+    assert block_manager.games[1][101]["block_card_fig_id"] == 5
+    assert block_manager.games[1][101]["other_cards_in_hand"] == [3, 7, 9]
+
+def test_is_blocked(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    assert block_manager.is_blocked(1, 101) is False
+    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
+    assert block_manager.is_blocked(1, 101) is True
+
+def test_get_blocked_card_id(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
+    assert block_manager.get_blocked_card_id(1, 101) == 5
+
+def test_delete_other_card(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
+    block_manager.delete_other_card(1, 101, 7)
+    assert block_manager.games[1][101]["other_cards_in_hand"] == [3, 9]
+
+def test_can_delete_blocked_card(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.block_fig_card(1, 101, 5, [])
+    assert block_manager.can_delete_blocked_card(1, 101) is True
+
+def test_delete_blocked_card(block_manager):
+    block_manager.create_game(1)
+    block_manager.add_player(1, 101)
+    block_manager.block_fig_card(1, 101, 5, [])
+    block_manager.delete_blocked_card(1, 101, 5)
+    assert block_manager.games[1][101]["is_blocked"] is False
+    assert block_manager.games[1][101]["block_card_fig_id"] == 0
+    assert block_manager.games[1][101]["other_cards_in_hand"] == []
