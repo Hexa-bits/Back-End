@@ -8,7 +8,7 @@ from src.models.jugadores import Jugador
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch, ANY
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+import pdb
 from src.main import app 
 
 @pytest.fixture
@@ -17,92 +17,61 @@ def client():
 
 def test_join_success(client):
     # Mock de la sesión de la base de datos
-    player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False)
-    
-    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
-        patch('src.routers.game.add_player_game', return_value=player_mock), \
-        patch('src.routers.game.num_players_in_partida', return_value=2), \
-        patch('src.routers.game.get_Partida', return_value=game_mock):
-        response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1})
-
-        print(response.json())
-        assert response.status_code == 200
-        assert response.json() == {"player_id": player_mock.id,
-                            "game_id": 1}
+    with patch('src.db.get_db'): 
+        player_mock = MagicMock()
+        player_mock.return_value = Jugador(id= 1, nombre= "testjoin")
+        
+        with patch('src.routers.game.add_player_game'):
+            with patch('src.routers.game.get_Partida', return_value= Partida(id= 1, game_name="partida", max_players= 4)):
+                response = client.post("/game/join", json={"player_id": player_mock.return_value.id , "game_id": 1})
+  
+                assert response.status_code == 200
+                assert response.json() == {"player_id": player_mock.return_value.id,
+                                    "game_id": 1}
 
 def test_join_many_players(client):
-    players_mock = [
-                    MagicMock(id=1, nombre="testjoins"),
-                    MagicMock(id=2, nombre="testjoins"),
-                    MagicMock(id=3, nombre="testjoins"),
-                    ]
-    
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False)
-    
-    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
-        patch('src.routers.game.add_player_game') as mock_player, \
-        patch('src.routers.game.num_players_in_partida'), \
-        patch('src.routers.game.get_Partida', return_value=game_mock):
+    with patch('src.routers.game.add_player_game') as mock_jugador:
+        with patch('src.routers.game.get_Partida', return_value= Partida(id= 1, game_name="partida", max_players= 4)):
+            mock_jugador.return_value = Jugador(id= 1, nombre= "testjoins")
+            mock_jugador.return_value.partida_id = 1
+            response = client.post("/game/join", json={"player_id": 1 , "game_id": 1})
+            assert response.json() == {"player_id": 1, "game_id": 1}
 
-        mock_player.return_value = players_mock[0]
-        response = client.post("/game/join", json={"player_id": players_mock[0].id , "game_id": game_mock.id})
-        assert response.json() == {"player_id": players_mock[0].id, "game_id": game_mock.id}
+            mock_jugador.return_value = Jugador(id= 2, nombre= "testjoins")
+            mock_jugador.return_value.partida_id = 1
+            response1 = client.post("/game/join", json={"player_id": 2 , "game_id": 1})
+            assert response1.json() == {"player_id": 2, "game_id": 1}
 
-        mock_player.return_value = players_mock[1]
-        response = client.post("/game/join", json={"player_id": players_mock[1].id , "game_id": game_mock.id})
-        assert response.json() == {"player_id": players_mock[1].id, "game_id": game_mock.id}
-
-        mock_player.return_value = players_mock[2]
-        response = client.post("/game/join", json={"player_id": players_mock[2].id , "game_id": game_mock.id})
-        assert response.json() == {"player_id": players_mock[2].id, "game_id": game_mock.id}
-
+            mock_jugador.return_value = Jugador(id= 3, nombre= "testjoins")
+            mock_jugador.return_value.partida_id = 1
+            response1 = client.post("/game/join", json={"player_id": 2 , "game_id": 1})
+            assert response1.json() == {"player_id": 3, "game_id": 1}
 
 def test_join_failure(client):
-    player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False)
+    with patch('src.db.get_db'):
+        player_mock = MagicMock()
+        player_mock.return_value = Jugador(id= 1, nombre= "testjoin")
 
-    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
-         patch('src.routers.game.add_player_game', side_effect=SQLAlchemyError()), \
-         patch('src.routers.game.num_players_in_partida'), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
+        with patch('src.routers.game.add_player_game', side_effect=SQLAlchemyError()):
+            with patch('src.routers.game.get_Partida', return_value= Partida(id= 1, game_name="partida", max_players= 4)):
         
-        response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1})
+                response = client.post("/game/join", json={"player_id": player_mock.return_value.id , "game_id": 1})
 
-        assert response.status_code == 500
-        assert response.json() == {"detail": "Error al unirse a partida"}
-
-def test_join_full_game(client):
-    player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False)
-
-    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
-         patch('src.routers.game.num_players_in_partida', return_value=4), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
-        
-        response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1})
-
-        assert response.status_code == 400
-        assert response.json() == {"detail": "No se aceptan más jugadores"}
+                assert response.status_code == 500
+                assert response.json() == {"detail": "Error al unirse a partida"}
 
 def test_player_not_found(client):
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False)
+    with patch('src.routers.game.add_player_game', return_value= None):
+        with patch('src.routers.game.get_Partida', return_value= Partida(id= 1, game_name="partida", max_players= 4)):
+            response = client.post("/game/join", json={"player_id": 1 , "game_id": 1})
 
-    with patch('src.routers.game.add_player_game', return_value= None), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
-        
-        response = client.post("/game/join", json={"player_id": 1 , "game_id": 1})
-
-        assert response.status_code == 404
-        assert response.json() == {"detail": "El jugador no existe"}
+            assert response.status_code == 404
+            assert response.json() == {"detail": "El jugador no existe"}
 
 def test_game_not_found(client):
-    player_mock = MagicMock(id=1, nombre="testjoin")
+    with patch('src.routers.game.add_player_game', return_value= Jugador(id= 1, nombre= "test")):
+        with patch('src.routers.game.get_Partida', return_value= None):
+            response = client.post("/game/join", json={"player_id": 1 , "game_id": 1})
 
-    with patch('src.routers.game.add_player_game', return_value=player_mock), \
-         patch('src.routers.game.get_Partida', return_value= None):
-
-        response = client.post("/game/join", json={"player_id": 1 , "game_id": 1})
-
-        assert response.status_code == 404
-        assert response.json() == {"detail": "La partida no existe"}
+            assert response.status_code == 404
+            assert response.json() == {"detail": "La partida no existe"}

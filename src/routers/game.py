@@ -135,11 +135,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         partida = get_Partida(playerAndGameId.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
-
-        if partida.max_players == num_players_in_partida(partida, db):
-            # cambiar de querer implementar unirse a partida empezada para admitir retomar partida
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
-
+        
         if partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
 
