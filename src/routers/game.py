@@ -217,7 +217,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     
         await ws_manager.send_end_turn(game_id.game_id)
         await ws_manager.send_turn_log(game_id.game_id, jugador.nombre)
-    except SQLAlchemyError:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
     return next_jugador

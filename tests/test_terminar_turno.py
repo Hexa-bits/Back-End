@@ -63,7 +63,8 @@ def test_terminar_turno_unsuccesful(test_db, client):
 
     with patch("src.db.get_db"):
         with patch("src.routers.game.terminar_turno") as mock_terminar_turno:
-            mock_terminar_turno.side_effect = IntegrityError("Error de DB", params=None, orig=None)
+            #Simulo un erro de base de datos
+            mock_terminar_turno.side_effect = IntegrityError(None, None, None)
 
             response = client.put("/game/end-turn", json={"game_id": 1})
 
