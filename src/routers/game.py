@@ -8,7 +8,7 @@ from src.db import get_db
 from sqlalchemy.orm import Session
 
 from src.models.utils import *
-from src.ws_manager import WebSocketConnectionManager
+from src.ws_manager import ws_manager
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -19,7 +19,6 @@ from src.models.patrones_figuras_matriz import generate_all_figures
 
 router = APIRouter()
 
-ws_manager = WebSocketConnectionManager()
 game_manager = GameManager()
 
 list_patterns = generate_all_figures()
@@ -138,6 +137,9 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         
         if partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
+        
+        if partida.max_players == num_players_in_game(partida, db):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
         jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
         if jugador is None:

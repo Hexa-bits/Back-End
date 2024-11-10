@@ -77,13 +77,13 @@ def delete_players_lobby(partida: Partida, db: Session) -> None:
     delete_partida(partida, db)
 
 
-def player_in_partida(partida: Partida, db: Session) -> int:
+def num_players_in_game(partida: Partida, db: Session) -> int:
     smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
     return db.execute(smt).scalar()
 
 def delete_player(jugador: Jugador, db: Session) -> None:
     partida = get_Partida(jugador.partida_id, db)
-    cant = player_in_partida(partida, db)
+    cant = num_players_in_game(partida, db)
     if (partida.partida_iniciada):
         if (partida.jugador_en_turno == jugador.turno):
             terminar_turno(partida.id, db)
