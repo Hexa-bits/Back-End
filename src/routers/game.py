@@ -99,19 +99,20 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             delete_player(jugador, db)
             await ws_manager.send_get_info_players(partida.id)
-            if get_Partida(game_id, db) is None and not active_timers[game_id].done():
-                if active_timers[game_id].cancel():
-                    del active_timers[game_id]
-            elif is_current_turn_player:
-                await ws_manager.send_end_turn(game_id)
-                await timer_handler(game_id, db)
-            jugadores = get_players(game_id, db)
+            if get_Partida(game_id, db) is not None:
+                jugadores = get_players(game_id, db)
             
-            if partida.winner_id is None and len(jugadores) == 1:
-                partida.winner_id = jugadores[0].id
-                db.commit()
+                if partida.winner_id is None and len(jugadores) == 1:
+                    partida.winner_id = jugadores[0].id
+                    db.commit()
 
-                await ws_manager.send_get_winner(partida.id)
+                    if active_timers[game_id].cancel():
+                        del active_timers[game_id]
+                    await ws_manager.send_get_winner(partida.id)
+                elif is_current_turn_player:
+                    await ws_manager.send_end_turn(game_id)
+                    await timer_handler(game_id, db)
+                    
         else:
             if jugador.es_anfitrion:
                 delete_players_lobby(partida, db)
