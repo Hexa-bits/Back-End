@@ -108,6 +108,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
                     if active_timers[game_id].cancel():
                         del active_timers[game_id]
+                    game_manager.delete_game(game_id)
                     await ws_manager.send_get_winner(partida.id)
                 elif is_current_turn_player:
                     await ws_manager.send_end_turn(game_id)
