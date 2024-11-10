@@ -28,9 +28,9 @@ list_patterns = [np.array(patron) for patron in list_patterns]
 active_timers = {}
 
 async def timer(game_id: int, db: Session):
-
-    await asyncio.sleep(120)
-
+    print("olha")
+    await asyncio.sleep(10)
+    print("chau")
     #-------
     player = get_current_turn_player(game_id, db)
         
@@ -41,11 +41,11 @@ async def timer(game_id: int, db: Session):
 
         cancel_movement(game_id, player.id, mov, coords, db)
         game_manager.pop_card_and_box_card(game_id)
-
+    print("EAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     repartir_cartas(game_id, db)
     next_player = terminar_turno(game_id, db)
-    game_manager.set_player_in_turn_id(game_id=game_id, jugador_id=next_player["id_player"])
-       
+    print("OLAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    game_manager.set_player_in_turn_id(game_id=game_id, player_id=next_player["id_player"])
     await ws_manager.send_end_turn(game_id)
     await timer_handler(game_id, db) 
     #--------  esto es lo mismo que en el endpoint end-turn, hay que modularizarlo a services o a otro lado
