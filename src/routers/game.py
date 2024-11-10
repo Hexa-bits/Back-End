@@ -144,10 +144,10 @@ async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
         if partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
         
-        """
-        if partida.password and (partida.password != joinGameData.game_password)
+        
+        if partida.password and (partida.password != joinGameData.game_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Contraseña incorrecta")
-        """
+        
 
         jugador = add_player_game(joinGameData.player_id, joinGameData.game_id, db)
         if jugador is None:

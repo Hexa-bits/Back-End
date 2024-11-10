@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class Partida_config(BaseModel):
     """
@@ -51,7 +51,13 @@ class JoinGameData(BaseModel):
     """
     game_id: int = Field (..., gt=0)
     player_id: int = Field (..., gt=0)
-    game_password: Optional[str] = Field(None, max_length=44, min_length=44)
+    game_password: str = Field(..., max_length=44, min_length=0)
+
+    @field_validator('game_password')
+    def validate_game_password(cls, value):
+        if value != "" and len(value) != 44:
+            raise ValueError('La contraseña debe ser vacía o tener exactamente 44 caracteres.')
+        return value
 
 class Coords(BaseModel):
     """
