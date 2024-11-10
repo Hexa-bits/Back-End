@@ -6,7 +6,7 @@ from src.models.cartamovimiento import MovementCard, Move
 from src.models.fichas_cajon import FichaCajon
 from src.models.utils import *
 from src.models.patrones_figuras_matriz import pictureCardsFigures, generar_rotaciones
-from typing import List, Dict, Tuple, Union
+from typing import Any, List, Dict, Tuple, Union
 import numpy as np
 
 
@@ -188,7 +188,6 @@ def separate_arrays_by_color(matriz, list_colors) -> List[np.ndarray]:
         matrices_colors.append(matriz_color)   
     return matrices_colors 
 
-
 def is_valid_move(movementCard: MovementCard, coords: Tuple[Coords]) -> bool:
     distancia_x = abs(coords[0].x_pos-coords[1].x_pos)
     distancia_y = abs(coords[0].y_pos-coords[1].y_pos)
@@ -262,3 +261,60 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
             return True
         
     return False
+
+class BlockManager:
+    def __init__(self):
+        self.games: Dict[int, Any] = {}
+        
+    def create_game(self, game_id: int) -> None:
+        self.games[game_id] = {}
+
+    def add_player(self, game_id: int, player_id: int) -> None:
+        self.games[game_id][player_id] = {
+            "is_blocked": False,
+            "block_card_fig_id": 0,
+            "other_cards_in_hand": []
+            }
+
+
+    def delete_player(self, game_id: int, player_id: int) -> None:
+        if game_id in self.games:
+            if player_id in self.games[game_id]:
+                del self.games[game_id][player_id]
+
+    def delete_game(self, game_id: int) -> None:
+        if game_id in self.games:
+            del self.games[game_id]
+        
+    def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
+        self.games[game_id][player_blocked_id]["is_blocked"] = True
+        self.games[game_id][player_blocked_id]["block_card_fig_id"] = block_fig_card_id
+        self.games[game_id][player_blocked_id]["other_cards_in_hand"] = others_fig_cards_id
+
+    def is_blocked(self, game_id: int, player_id: int) -> bool:
+        if game_id not in self.games:
+            return False
+        return self.games[game_id][player_id]["is_blocked"]
+    
+    def get_blocked_card_id(self, game_id: int, player_id: int) -> int:
+        return self.games[game_id][player_id]["block_card_fig_id"]
+    
+    def delete_other_card(self, game_id: int, player_id: int, card_id: int) -> None:
+        self.games[game_id][player_id]["other_cards_in_hand"].remove(card_id)
+
+    def can_delete_blocked_card(self, game_id: int, player_id: int) -> bool:
+        return len(self.games[game_id][player_id]["other_cards_in_hand"]) == 0
+
+    def delete_blocked_card(self, game_id: int, player_id: int, block_card_id: int) -> bool:
+        success = False
+        if self.can_delete_blocked_card(game_id, player_id):
+            if block_card_id == self.games[game_id][player_id]["block_card_fig_id"]:
+                self.games[game_id][player_id]["is_blocked"] = False
+                self.games[game_id][player_id]["block_card_fig_id"] = 0
+                self.games[game_id][player_id]["other_cards_in_hand"] = []
+                success = True
+        
+        return success
+    
+#Se usara en routers
+block_manager = BlockManager()

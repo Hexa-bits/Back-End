@@ -83,21 +83,22 @@ def num_players_in_game(partida: Partida, db: Session) -> int:
 
 def delete_player(jugador: Jugador, db: Session) -> None:
     partida = get_Partida(jugador.partida_id, db)
-    cant = num_players_in_game(partida, db)
-    if (partida.partida_iniciada):
-        if (partida.jugador_en_turno == jugador.turno):
-            terminar_turno(partida.id, db)
-
-        cards_to_mazo(partida, jugador, db)
-
-        if (jugador.es_anfitrion):
-            jugador.es_anfitrion = False
-        
-        if (cant == 1):
-            delete_partida(partida, db)
+    if partida:
+        cant = num_players_in_game(partida, db)
+        if (partida.partida_iniciada):
+            if (partida.jugador_en_turno == jugador.turno):
+                terminar_turno(partida.id, db)
     
-    jugador.partida_id = None
-    db.commit()
+            cards_to_mazo(partida, jugador, db)
+    
+            if (jugador.es_anfitrion):
+                jugador.es_anfitrion = False
+            
+            if (cant == 1):
+                delete_partida(partida, db)
+        
+        jugador.partida_id = None
+        db.commit()
 
 def add_partida(config: Partida_config, db: Session) -> int:
     partida = Partida(game_name=config.game_name, max_players=config.max_players)

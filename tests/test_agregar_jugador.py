@@ -23,6 +23,7 @@ def test_join_success(client):
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.add_player_game', return_value=player_mock), \
         patch('src.routers.game.num_players_in_game', return_value=2), \
+        patch('src.routers.game.block_manager.add_player', return_value= None), \
         patch('src.routers.game.get_Partida', return_value=game_mock):
         response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1})
 
@@ -43,6 +44,7 @@ def test_join_many_players(client):
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.add_player_game') as mock_player, \
         patch('src.routers.game.num_players_in_game'), \
+        patch('src.routers.game.block_manager.add_player', return_value= None), \
         patch('src.routers.game.get_Partida', return_value=game_mock):
 
         mock_player.return_value = players_mock[0]

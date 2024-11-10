@@ -53,7 +53,7 @@ class PictureCard(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     figura = Column(Enum(Picture))
     estado = Column(Enum(CardState), default=CardState.mazo)
-
+    blocked = Column(Boolean, default=False)
     partida_id = Column(Integer, ForeignKey("partidas.id"))
     partida = relationship("Partida", back_populates="cartafigura")
 
