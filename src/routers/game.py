@@ -204,7 +204,7 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador")
         
         while game_manager.is_board_parcial(game_id.game_id):
-            mov_coords = game_manager.top_tupla_carta_y_fichas(game_id.game_id)
+            mov_coords = game_manager.top_tuple_card_and_box_cards(game_id.game_id)
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
             cancel_movement(game_id.game_id, jugador.id, mov, coords, db)
