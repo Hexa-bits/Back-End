@@ -109,6 +109,7 @@ def list_lobbies(db) -> List[dict]:
             "game_name": lobby.game_name,
             "current_players": current_players,
             "max_players": lobby.max_players,
+            "isPrivate": lobby.private
             })
 
     return lobbies

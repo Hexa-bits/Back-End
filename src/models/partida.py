@@ -19,6 +19,7 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
     winner_id = Column(Integer, nullable=True, default=None)
+    private = Column(Boolean, default=False)
 
     jugadores = relationship("Jugador", back_populates="partida")
 
