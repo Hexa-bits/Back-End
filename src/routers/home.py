@@ -13,7 +13,7 @@ from src.models.tablero import Tablero
 from src.models.cartafigura import PictureCard
 from src.models.cartamovimiento import MovementCard
 from src.models.fichas_cajon import FichaCajon
-from src.ws_manager import WebSocketConnectionManager
+from src.ws_manager import ws_manager
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -22,7 +22,6 @@ from src.repositories.cards_repository import *
 from src.game_helpers import *
 
 router = APIRouter()
-ws_manager = WebSocketConnectionManager()
 
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket):
@@ -84,7 +83,9 @@ async def create_partida(partida_config: Partida_config, db: Session = Depends(g
     """
     try:
         id_game = add_partida(partida_config, db)
-
+        #Uso el block manager
+        block_manager.create_game(id_game) #COMO SOLUCIONARLO
+        block_manager.add_player(id_game, partida_config.id_user)
         #Luego de crear la partida, le actualizo a los ws conectados la nueva lista de lobbies
         await ws_manager.send_get_lobbies()
 

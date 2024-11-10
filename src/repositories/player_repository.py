@@ -77,30 +77,35 @@ def delete_players_lobby(partida: Partida, db: Session) -> None:
     delete_partida(partida, db)
 
 
-def player_in_partida(partida: Partida, db: Session) -> int:
+def num_players_in_game(partida: Partida, db: Session) -> int:
     smt = select(func.count()).select_from(Jugador).where(Jugador.partida_id == partida.id)
     return db.execute(smt).scalar()
 
 def delete_player(jugador: Jugador, db: Session) -> None:
     partida = get_Partida(jugador.partida_id, db)
-    cant = player_in_partida(partida, db)
-    if (partida.partida_iniciada):
-        if (partida.jugador_en_turno == jugador.turno):
-            terminar_turno(partida.id, db)
-
-        cards_to_mazo(partida, jugador, db)
-
-        if (jugador.es_anfitrion):
-            jugador.es_anfitrion = False
-        
-        if (cant == 1):
-            delete_partida(partida, db)
+    if partida:
+        cant = num_players_in_game(partida, db)
+        if (partida.partida_iniciada):
+            if (partida.jugador_en_turno == jugador.turno):
+                terminar_turno(partida.id, db)
     
-    jugador.partida_id = None
-    db.commit()
+            cards_to_mazo(partida, jugador, db)
+    
+            if (jugador.es_anfitrion):
+                jugador.es_anfitrion = False
+            
+            if (cant == 1):
+                delete_partida(partida, db)
+        
+        jugador.partida_id = None
+        db.commit()
 
 def add_partida(config: Partida_config, db: Session) -> int:
-    partida = Partida(game_name=config.game_name, max_players=config.max_players)
+    partida = Partida(game_name=config.game_name, 
+                      max_players=config.max_players,
+                      password=config.game_password if config.game_password != ""
+                      else None)
+    
     jugador = get_Jugador(config.id_user, db)
     db.add(partida)
     db.commit()
