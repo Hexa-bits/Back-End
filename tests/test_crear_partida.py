@@ -22,12 +22,30 @@ from unittest.mock import ANY
 client = TestClient(app)
 
 @patch("src.routers.home.add_partida")
-def test_endpoint_partida (mock_add_game):
+def test_endpoint_partida_with_password (mock_add_game):
     mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
     config = {
                 "id_user": 1, 
                 "game_name": "partida",
                 "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                "max_players": 4
+            }
+    
+    response = client.post("/home/create-config", json=config)
+        
+    config_partida = Partida_config(**config)
+    mock_add_game.assert_called_once_with(config_partida, ANY)
+    assert response.status_code == 201
+    json_resp = response.json()
+    assert json_resp ["id"] == 1
+
+@patch("src.routers.home.add_partida")
+def test_endpoint_partida_no_password (mock_add_game):
+    mock_add_game.side_effect = lambda partida, db: mock_add_partida(partida)
+    config = {
+                "id_user": 1, 
+                "game_name": "partida",
+                "game_password": None,
                 "max_players": 4
             }
     
@@ -134,10 +152,10 @@ def test_endpoint_partida_invalid_password ():
         mock_add_player.assert_not_called()
         assert response.status_code == 422
         json_resp = response.json()
-        assert json_resp ["detail"] == [{'type': 'string_too_short', 
+        assert json_resp ["detail"] == [{'type': 'value_error', 
                                          'loc': ['body', 'game_password'], 
-                                         'msg': 'String should have at least 44 characters', 
-                                         'input': '1234', 'ctx': {'min_length': 44}}]
+                                         'msg': 'Value error, String should have 44 characters', 
+                                         'input': '1234', 'ctx': {'error': {}}}]
 
 def test_endpoint_partida_invalid_name ():
     config = {
