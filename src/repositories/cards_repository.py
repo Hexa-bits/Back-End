@@ -227,6 +227,11 @@ def get_cartaMovId(mov_id: int, db: Session) -> MovementCard:
     smt = select(MovementCard).where(MovementCard.id == mov_id)
     return db.execute(smt).scalar()
 
+def unlock_player_figure_card(card_to_unlock_id: int, db: Session) -> None:
+    card_to_unlock = get_CartaFigura(card_to_unlock_id, db)
+    if card_to_unlock:
+        card_to_unlock.blocked = False
+        db.commit()
 
 def cancel_movement(partida_id: int, jugador_id: int, mov_id: int,
                         tuple_coords: tuple[Coords, Coords], db: Session) -> None:

@@ -514,7 +514,14 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             if board and token_color:
                 board.color_prohibido = token_color
                 db.commit()
+
             game_manager.clean_cards_box_cards(game_id)
+            if block_manager.is_blocked(game_id, jugador.id):
+                if block_manager.can_delete_blocked_card(game_id, jugador.id):
+                    block_manager.delete_other_card(game_id, jugador.id, pictureCard.id)
+                else:
+                    unlock_player_figure_card(pictureCard.id, db)
+                    block_manager.delete_blocked_card(game_id, jugador.id, pictureCard.id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
                 partida.winner_id = jugador.id
@@ -523,6 +530,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
                 await ws_manager.send_get_winner(game_id)
             else:
                 await ws_manager.send_get_cartas_fig(game_id)
+                
             await ws_manager.send_get_tablero(game_id)
             await ws_manager.send_fig_log(game_id, jugador.nombre)
         else:
