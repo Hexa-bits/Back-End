@@ -630,7 +630,12 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
 
         if not is_valid_picture_card(fig_card, figura.figura):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
-        
+
+        board = get_tablero(game.id, db)
+        coords_token0 = figura.figura[0]
+        token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game.id, db)
+        if token_color is not None and (board.color_prohibido == token_color):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")        
 
         
         player_to_block = get_Jugador(fig_card.jugador_id, db)

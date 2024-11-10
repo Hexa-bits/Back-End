@@ -275,6 +275,7 @@ def get_cards_not_blocked_id(game_id: int, player_id: int, db: Session) -> List[
     
     cards_not_blocked = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
                                                           PictureCard.jugador_id == player_id,
+                                                          PictureCard.estado == CardState.mano,
                                                           PictureCard.blocked == False)).all()
     
     list_of_cards_not_blocked_id = []

@@ -268,41 +268,51 @@ class BlockManager:
         
     def create_game(self, game_id: int) -> None:
         self.games[game_id] = {}
-        
+        print(self.games)
+
     def add_player(self, game_id: int, player_id: int) -> None:
         self.games[game_id][player_id] = {
             "is_blocked": False,
             "block_card_fig_id": 0,
             "other_cards_in_hand": []
             }
+        print(self.games)
+
 
     def delete_player(self, game_id: int, player_id: int) -> None:
         if game_id in self.games:
             if player_id in self.games[game_id]:
                 del self.games[game_id][player_id]
+        print(self.games)
 
     def delete_game(self, game_id: int) -> None:
         if game_id in self.games:
             del self.games[game_id]
+        print(self.games)
         
     def block_fig_card(self, game_id: int, player_blocked_id: int, block_fig_card_id: int, others_fig_cards_id: List[int] ):
         self.games[game_id][player_blocked_id]["is_blocked"] = True
         self.games[game_id][player_blocked_id]["block_card_fig_id"] = block_fig_card_id
         self.games[game_id][player_blocked_id]["other_cards_in_hand"] = others_fig_cards_id
+        print(self.games)
 
     def is_blocked(self, game_id: int, player_id: int) -> bool:
         if game_id not in self.games:
             return False
         return self.games[game_id][player_id]["is_blocked"]
+        print(self.games)
     
     def get_blocked_card_id(self, game_id: int, player_id: int) -> int:
         return self.games[game_id][player_id]["block_card_fig_id"]
+        print(self.games)
     
     def delete_other_card(self, game_id: int, player_id: int, card_id: int) -> None:
         self.games[game_id][player_id]["other_cards_in_hand"].remove(card_id)
+        print(self.games)
 
     def can_delete_blocked_card(self, game_id: int, player_id: int) -> bool:
         return len(self.games[game_id][player_id]["other_cards_in_hand"]) == 0
+        print(self.games)
 
     def delete_blocked_card(self, game_id: int, player_id: int, block_card_id: int) -> bool:
         success = False
@@ -312,6 +322,8 @@ class BlockManager:
                 self.games[game_id][player_id]["block_card_fig_id"] = 0
                 self.games[game_id][player_id]["other_cards_in_hand"] = []
                 success = True
+        print(self.games)
+        
         return success
     
 #Se usara en routers
