@@ -108,3 +108,5 @@ class WebSocketConnectionManager:
 
     async def send_cancel_mov_log(self, game_id: int, player_name: str):
         await self.send_message_game_id(logs_format(player_name, LOG_CANCEL_MOV), game_id)
+
+ws_manager = WebSocketConnectionManager()

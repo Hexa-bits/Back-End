@@ -188,7 +188,6 @@ def separate_arrays_by_color(matriz, list_colors) -> List[np.ndarray]:
         matrices_colors.append(matriz_color)   
     return matrices_colors 
 
-
 def is_valid_move(movementCard: MovementCard, coords: Tuple[Coords]) -> bool:
     distancia_x = abs(coords[0].x_pos-coords[1].x_pos)
     distancia_y = abs(coords[0].y_pos-coords[1].y_pos)
