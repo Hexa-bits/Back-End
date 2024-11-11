@@ -240,11 +240,12 @@ async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
         fig_cards_list = []
         for card in fig_cards:
             fig_cards_list.append({"id": card.id, "fig": card.figura.value, "blocked": card.blocked})
+        remaining_cards = len(get_cartasFigura_player(player_id.player_id, db))
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
     return JSONResponse(    
-        content={"fig_cards": fig_cards_list},
+        content={"fig_cards": fig_cards_list, "fig_cant": remaining_cards},
         status_code=status.HTTP_200_OK
     )
 
