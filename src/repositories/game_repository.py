@@ -123,13 +123,16 @@ def list_lobbies(username: str,db: Session) -> List[dict]:
         if current_players == 0 or (lobby.partida_iniciada and not name_already_in_game)\
                                 or (name_already_in_game and not lobby.partida_iniciada):
             continue
+        
+        private = True if (lobby.password != None) else False
+
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.game_name,
             "current_players": current_players,
             "max_players": lobby.max_players,
-            "isPrivate": False, #HARDCODEO HASTA QUE ENTRE EN DEVELOP EL TICKET
             "started": lobby.partida_iniciada,
+            "isPrivate": private
             })
 
     return lobbies
