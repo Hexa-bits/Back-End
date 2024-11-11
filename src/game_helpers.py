@@ -289,7 +289,6 @@ class BlockManager:
             "other_cards_in_hand": []
             }
 
-
     def delete_player(self, game_id: int, player_id: int) -> None:
         if game_id in self.games:
             if player_id in self.games[game_id]:
