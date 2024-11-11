@@ -10,6 +10,7 @@ from unittest.mock import MagicMock, patch, ANY
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from src.main import app 
+from .test_helpers import test_db
 
 @pytest.fixture
 def client():
@@ -154,3 +155,35 @@ def test_game_not_found(client):
 
         assert response.status_code == 404
         assert response.json() == {"detail": "La partida no existe"}
+
+def test_join_my_started_game(client):
+    player_mock = MagicMock(id=1, nombre="testjoin")
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=True, password=None)    
+
+    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
+        patch('src.routers.game.get_Jugador', return_value = player_mock), \
+        patch('src.routers.game.get_Partida', return_value=game_mock),\
+        patch('src.routers.game.is_name_in_game', return_value=True),\
+        patch('src.routers.game.get_player_id_in_game_by_name', return_value=1), \
+        patch('src.routers.game.get_left_timer', return_value= 120):
+        
+        response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, "game_password": ""})
+
+        assert response.status_code == 200
+        assert response.json() == {"player_id": 1, "game_id": game_mock.id, "left_timer": 120}
+
+def test_join_started_game_not_mine(client):
+    player_mock = MagicMock(id=1, nombre="testjoin")
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=True, password=None)    
+
+    with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
+        patch('src.routers.game.get_Jugador', return_value = player_mock), \
+        patch('src.routers.game.get_Partida', return_value=game_mock),\
+        patch('src.routers.game.is_name_in_game', return_value=False),\
+        patch('src.routers.game.get_player_id_in_game_by_name', return_value=1), \
+        patch('src.routers.game.get_left_timer', return_value= 120):
+        
+        response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, "game_password": ""})
+
+        assert response.status_code == 400
+        assert response.json() == {"detail": "La partida ya esta empezada"}
