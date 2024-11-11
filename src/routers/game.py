@@ -135,21 +135,41 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
     - 500: Ocurre un error interno.
     """
     try:
+        player = get_Jugador(playerAndGameId.player_id, db)
+        if player is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+
+        username = player.nombre
+
         partida = get_Partida(playerAndGameId.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
-        
-        if partida.partida_iniciada:
+
+        player_already_in_game = is_name_in_started_game(partida.id, username, db)
+
+        if partida.partida_iniciada and not player_already_in_game:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
+
+        player_id_update = None
+
+        if player_already_in_game and partida.partida_iniciada:
+            #Obtengo el player_id del username que ya esta en la partida (distinto a mi player_id, lo envio al front para que pisen el dato)
+            # Esto es para unirme a mi partida ya empezada 
+            player_id_update = get_player_id_in_game_by_name(partida.id, username, db)
+
+        if player_already_in_game and not partida.partida_iniciada:
+            #Si el jugador (username) ya esta en la partida no iniciada (lobby), no puede unirse, deben iniciarla
+            #Sino podria meter dos veces el mismo username en la misma partida (no permitido)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya esta en el lobby, espere a inicio del juego")
         
-        if partida.max_players == num_players_in_game(partida, db):
+        if partida.max_players == num_players_in_game(partida, db) and  not player_already_in_game:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
-        jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
-        if jugador is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
-        
-        block_manager.add_player(playerAndGameId.game_id, playerAndGameId.player_id)
+        if not partida.partida_iniciada and not player_already_in_game:
+            joined_game_player = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
+            if joined_game_player is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fallo al unirse a partida")
+            block_manager.add_player(playerAndGameId.game_id, playerAndGameId.player_id)
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
@@ -159,7 +179,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
-    return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
+    return PlayerAndGameId(player_id= player_id_update, game_id=partida.id)
 
 
 @router.get("/board", status_code=status.HTTP_200_OK)
