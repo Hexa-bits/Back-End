@@ -1,3 +1,4 @@
+from datetime import datetime
 from src.models.jugadores import Jugador
 from src.models.partida import Partida
 from src.models.tablero import Tablero
@@ -9,6 +10,18 @@ from src.models.patrones_figuras_matriz import pictureCardsFigures, generar_rota
 from typing import Any, List, Dict, Tuple, Union
 import numpy as np
 
+#Diccionario que guarda la hora de inicio del timer usado en routers/ home y game 
+timer_start_time = {}
+
+def get_left_timer(game_id: int) -> int:
+    """
+    Funcion que retorna el tiempo restante del timer
+    """
+    current_time = datetime.now()
+    left_time = 120
+    if game_id in timer_start_time:
+        left_time = int((timer_start_time[game_id] - current_time).total_seconds())
+    return left_time
 
 class GameManager:
     """

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import json
 from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
@@ -29,7 +30,10 @@ active_timers = {}
 
 async def timer(game_id: int, db: Session):
     
+    initial_time = datetime.now()
+    timer_start_time[game_id] = initial_time
     await asyncio.sleep(120)
+
     #-------
     player = get_current_turn_player(game_id, db)
         
