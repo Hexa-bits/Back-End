@@ -124,8 +124,11 @@ def list_lobbies(username: str,db: Session) -> List[dict]:
                                 or (name_already_in_game and not lobby.partida_iniciada):
             continue
         
-        private = True if (lobby.password != None) else False
-
+        if (lobby.partida_iniciada):
+            private = False
+        else:
+            private = lobby.password is not None
+            
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.game_name,

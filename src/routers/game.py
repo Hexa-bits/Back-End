@@ -133,11 +133,12 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             nombre_jugador = jugador.nombre
             delete_player(jugador, db)
+            block_manager.delete_player(game_id, jugador.id)
             await ws_manager.send_get_info_players(partida.id)
             await ws_manager.send_leave_log(partida.id, nombre_jugador)
             if get_Partida(game_id, db) is not None:
                 jugadores = get_players(game_id, db)
-            
+
                 if partida.winner_id is None and len(jugadores) == 1:
                     block_manager.delete_game(game_id)
                     partida.winner_id = jugadores[0].id
@@ -158,6 +159,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 await ws_manager.send_cancel_lobby(game_id)
             else:
                 delete_player(jugador, db)
+                block_manager.delete_player(game_id, jugador.id)
                 await ws_manager.send_leave_lobby(game_id)
         
         await ws_manager.send_get_lobbies()
