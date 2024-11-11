@@ -1,4 +1,5 @@
 import asyncio
+import json
 from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
@@ -8,7 +9,7 @@ from src.db import get_db
 from sqlalchemy.orm import Session
 
 from src.models.utils import *
-from src.ws_manager import WebSocketConnectionManager
+from src.ws_manager import ws_manager
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -19,7 +20,6 @@ from src.models.patrones_figuras_matriz import generate_all_figures
 
 router = APIRouter()
 
-ws_manager = WebSocketConnectionManager()
 game_manager = GameManager()
 
 list_patterns = generate_all_figures()
@@ -54,7 +54,7 @@ async def timer_handler(game_id: int, db: Session):
 
 
 @router.websocket("")
-async def websocket_endpoint(game_id: int, websocket: WebSocket):
+async def websocket_endpoint(game_id: int, websocket: WebSocket, db: Session = Depends(get_db)):
     """
     Le permite al front escucha los mensajes entrantes, que se envían a
     todos aquellos en juego, ya sea lobby o en partida inciada por game_id
@@ -62,7 +62,32 @@ async def websocket_endpoint(game_id: int, websocket: WebSocket):
     await ws_manager.connect(game_id=game_id, websocket=websocket)
     try:
         while True:
+
+            #Recibo los mensajes enviados por el front
             data = await websocket.receive_text()
+
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                continue
+            if "msg" in data:
+                if type(data["msg"]) == str:
+                    if len(data["msg"]) !=0:
+                        message = data["msg"]
+                        player_id = data["player_id"]
+
+                        player_name = get_Jugador(player_id, db).nombre
+                        response = {
+                                    "type": "message",
+                                    "data":{
+                                            "msg": message, 
+                                            "player_name": player_name
+                                            }
+                                    }
+                        response = json.dumps(response)
+
+                        #Despues de darle el formato adecuado al mensaje lo reenvio a los demas en partida
+                        await ws_manager.send_message_game_id(response, game_id)
     except WebSocketDisconnect:
         ws_manager.disconnect(websocket)
         await ws_manager.send_all_message("Un usuario se ha desconectado")
@@ -96,13 +121,18 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
 
         is_current_turn_player = partida.jugador_en_turno == jugador.turno
         game_id = partida.id
+        block_manager.delete_player(game_id, jugador.id)
+
         if partida.partida_iniciada:
+            nombre_jugador = jugador.nombre
             delete_player(jugador, db)
             await ws_manager.send_get_info_players(partida.id)
+            await ws_manager.send_leave_log(partida.id, nombre_jugador)
             if get_Partida(game_id, db) is not None:
                 jugadores = get_players(game_id, db)
             
                 if partida.winner_id is None and len(jugadores) == 1:
+                    block_manager.delete_game(game_id)
                     partida.winner_id = jugadores[0].id
                     db.commit()
 
@@ -117,6 +147,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         else:
             if jugador.es_anfitrion:
                 delete_players_lobby(partida, db)
+                block_manager.delete_game(game_id)
                 await ws_manager.send_cancel_lobby(game_id)
             else:
                 delete_player(jugador, db)
@@ -147,10 +178,15 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         
         if partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
+        
+        if partida.max_players == num_players_in_game(partida, db):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
         jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+        
+        block_manager.add_player(playerAndGameId.game_id, playerAndGameId.player_id)
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
@@ -173,10 +209,16 @@ async def get_board(game_id: GameId = Depends(), db: Session = Depends(get_db)):
     - 500: Ocurre un erro interno.
     """
     try:
-        tablero = get_box_cards(game_id.game_id, db)
+        board = get_tablero(game_id.game_id, db)
+        if board.color_prohibido is None:
+            forbidden_color = 0
+        else:
+           forbidden_color = board.color_prohibido.value
+        tokens = get_box_cards(game_id.game_id, db)
         is_parcial = game_manager.is_board_parcial(game_id.game_id)
 
-        response = { "fichas": tablero,
+        response = { "fichas": tokens,
+                    "forbidden_color": forbidden_color,
                     "parcial": is_parcial }
 
     except Exception:
@@ -197,21 +239,24 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     try:
         jugador = get_current_turn_player(game_id.game_id, db)
         
+        if jugador is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador")
+        
         while game_manager.is_board_parcial(game_id.game_id):
             mov_coords = game_manager.top_tuple_card_and_box_cards(game_id.game_id)
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
-
             cancel_movement(game_id.game_id, jugador.id, mov, coords, db)
             game_manager.pop_card_and_box_card(game_id.game_id)
-        
-        repartir_cartas(game_id.game_id, db)
+        player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
+        repartir_cartas(game_id.game_id, player_blocked, db)
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_player_in_turn_id(game_id=game_id.game_id, player_id=next_jugador["id_player"])
-       
+    
         await ws_manager.send_end_turn(game_id.game_id)
-        await timer_handler(game_id.game_id, db) 
+        await ws_manager.send_turn_log(game_id.game_id, jugador.nombre)
+        await timer_handler(game_id.game_id, db)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al finalizar el turno")
@@ -232,7 +277,7 @@ async def get_fig_card(player_id: PlayerId = Depends(), db: Session = Depends(ge
         fig_cards = list_fig_cards(player_id.player_id, db)
         fig_cards_list = []
         for card in fig_cards:
-            fig_cards_list.append({"id": card.id, "fig": card.figura.value})
+            fig_cards_list.append({"id": card.id, "fig": card.figura.value, "blocked": card.blocked})
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
@@ -391,6 +436,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                 
                 await ws_manager.send_get_tablero(partida.id)
                 await ws_manager.send_get_cartas_mov(partida.id)
+                await ws_manager.send_cancel_mov_log(partida.id, jugador.nombre)
 
                 game_manager.pop_card_and_box_card(game_id=partida.id) 
             except Exception:
@@ -452,6 +498,7 @@ async def use_mov_card(movementData: MovementData, db: Session = Depends(get_db)
             
             await ws_manager.send_get_tablero(game_id)
             await ws_manager.send_get_cartas_mov(game_id)
+            await ws_manager.send_mov_log(game_id, jugador.nombre)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Movimiento invalido")
     except SQLAlchemyError:
@@ -469,6 +516,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
     - 400: Una request incorrecta con contenido: 
             * "Figura invalida" en caso de que la figura a matchear no coincida
               con la figura de la carta.
+            * "El color de la figura está prohibido"
             * "La carta no pertenece a la partida"
             * "No es turno del jugador"
             * "La carta no está en mano"
@@ -500,12 +548,24 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         
         if pictureCard.estado != CardState.mano:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no está en mano")
-        
+
+        if pictureCard.blocked:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta esta bloqueada")
+
         if pictureCard.jugador_id != jugador.id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece al jugador")
+
+        board = get_tablero(game_id, db)
+        coords_token0 = figureData.figura[0]
+        token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game_id, db)
+        if token_color is not None and (board.color_prohibido == token_color):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
+            if board and token_color:
+                board.color_prohibido = token_color
+                db.commit()
             game_manager.clean_cards_box_cards(game_id)
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
@@ -516,6 +576,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
             else:
                 await ws_manager.send_get_cartas_fig(game_id)
             await ws_manager.send_get_tablero(game_id)
+            await ws_manager.send_fig_log(game_id, jugador.nombre)
         else:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="Figura invalida")     
     except SQLAlchemyError:
@@ -578,3 +639,73 @@ async def get_others_cards(game_id: int, player_id : int, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener las cartas de los demás jugadores")
     
     return cartas
+
+@router.put("/block-fig-card", status_code=status.HTTP_200_OK)
+async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
+    """
+    Endpoint para bloquear una figura en el tablero
+    args:
+        figura: FigureData - Figura a bloquear
+    return:
+        dict - Diccionario con el estado del tablero
+    """
+    try:
+
+        if len(figura.figura)==0:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida lista vacia")
+
+        player = get_Jugador(figura.player_id, db)
+        game = get_Partida(player.partida_id, db)
+        if game is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
+        
+        if game.jugador_en_turno != player.turno:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No es el turno del jugador")
+        
+        #CHECKEAR QUE NO SEA DEL COLOR PRHIBIDO ANTES DE CHEQUEAR QUE LA FIGURA SEA VALIDA
+        #if not valid_color(figura.figura):
+        #    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura es de color prohibido")
+        fig_card = get_CartaFigura(figura.id_fig_card, db)
+        if fig_card is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la carta figura")
+
+        if not is_valid_picture_card(fig_card, figura.figura):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Figura invalida")
+
+        board = get_tablero(game.id, db)
+        coords_token0 = figura.figura[0]
+        token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game.id, db)
+        if token_color is not None and (board.color_prohibido == token_color):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")        
+
+        player_to_block = get_Jugador(fig_card.jugador_id, db)
+
+        if player_to_block is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador a bloquear")
+        
+        if player_to_block.id == player.id or player_to_block.partida_id != game.id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bloqueo inválido")
+
+        if block_manager.is_blocked(game.id, player_to_block.id):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya está bloqueado")
+        
+        all_player_to_block_fig_cards = get_cartasFigura_player(player_to_block.id, db)
+        
+        if len(all_player_to_block_fig_cards) <= 1:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta figura")
+        
+        block_player_figure_card(figura.id_fig_card, db)
+        
+        list_of_not_blocked_cards = get_cards_not_blocked_id(game.id, player_to_block.id, db)
+        
+        block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
+
+        game_manager.clean_cards_box_cards(game.id)
+
+        await ws_manager.send_get_info_players(game.id)
+        await ws_manager.send_get_tablero( game.id)
+        await ws_manager.send_get_cartas_fig( game.id)
+        
+    except SQLAlchemyError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")

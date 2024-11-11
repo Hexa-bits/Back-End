@@ -14,6 +14,14 @@ START_PARTIDA = "La partida inició"
 JOIN_GAME = "Se unió/abandonó jugador en lobby"
 GET_INFO_PLAYERS = "Actualizar cartas de otros jugadores"
 
+def logs_format(player_name: str, event: str) -> str:
+    return str({"type": "log", "data": {"player_name": player_name, "event": event}})
+
+LOG_LEAVE = "Abandonó la partida"
+LOG_END_TURN = "Terminó el turno"
+LOG_USE_MOV = "Hizo un movimiento"
+LOG_DISCARD_FIG = "Descartó una carta de figura"
+LOG_CANCEL_MOV = "Canceló movimiento"
 
 class WebSocketConnectionManager:
     """
@@ -85,3 +93,20 @@ class WebSocketConnectionManager:
     
     async def send_get_info_players(self, game_id: int):
         await self.send_message_game_id(GET_INFO_PLAYERS, game_id)
+
+    async def send_leave_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_LEAVE), game_id)
+    
+    async def send_mov_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_USE_MOV), game_id)
+
+    async def send_fig_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_DISCARD_FIG), game_id)
+
+    async def send_turn_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_END_TURN), game_id)
+
+    async def send_cancel_mov_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_CANCEL_MOV), game_id)
+
+ws_manager = WebSocketConnectionManager()

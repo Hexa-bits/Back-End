@@ -48,7 +48,12 @@ async def test_websocket_broadcast_lobbies(client):
          client.websocket_connect("/home") as websocket2:
         # Simular una petición HTTP para obtener lobbies
         with patch("src.routers.home.add_partida") as mock_add_partida:
-            config = {"id_user": 1, "game_name": "partida", "max_players": 4}
+            config = {
+                        "id_user": 1, 
+                        "game_name": "partida",
+                        "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                        "max_players": 4
+                    }
             mock_add_partida.return_value = 1
 
             response = client.post("/home/create-config", json=config)

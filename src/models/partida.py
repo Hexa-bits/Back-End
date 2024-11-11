@@ -19,6 +19,7 @@ class Partida(Base):
     jugador_en_turno = Column(Integer, default=0)
     partida_iniciada = Column(Boolean, default=False)
     winner_id = Column(Integer, nullable=True, default=None)
+    password = Column(String(44), default=None)
 
     jugadores = relationship("Jugador", back_populates="partida")
 
@@ -34,4 +35,5 @@ class Partida(Base):
         jugador_en_turno = f'jugador_en_turno={self.jugador_en_turno!r}'
         partida_iniciada = f'partida_iniciada={self.partida_iniciada}'
         winner_id = f'id_ganador={self.winner_id}'
-        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + winner_id + '}'
+        password = f'password={self.password}'
+        return '{' + id + ', ' + nombre + ', ' + cantidad_jugadores + ', ' + jugador_en_turno + ', ' + partida_iniciada + winner_id + password + '}'

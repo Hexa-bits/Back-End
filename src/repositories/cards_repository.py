@@ -79,7 +79,7 @@ def mezclar_cartas_movimiento(db: Session, game_id: int) -> None:
             db.refresh(carta)
 
 
-def repartir_cartas(game_id: int, db: Session) -> None:
+def repartir_cartas(game_id: int, blocked: bool, db: Session) -> None:
     partida = db.query(Partida).filter(Partida.id == game_id).first()
 
     turno_actual = partida.jugador_en_turno
@@ -117,21 +117,22 @@ def repartir_cartas(game_id: int, db: Session) -> None:
             db.commit()
             db.refresh(carta)
     
-    if len(cartas_fig_en_mano) < 3:
-        
-        all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
-                                                          PictureCard.jugador_id == player_en_turno.id,
-                                                          PictureCard.estado == CardState.mazo)).all()
-        
-        cant_cartas = 3 - len(cartas_fig_en_mano)
+    if not blocked:
+        if len(cartas_fig_en_mano) < 3:
 
-        for i in range(cant_cartas):
-            if len(all_cards_fig_player)>0:
-                carta = all_cards_fig_player.pop()
-                carta.jugador_id = player_en_turno.id
-                carta.estado = CardState.mano
-                db.commit()
-                db.refresh(carta)
+            all_cards_fig_player = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
+                                                              PictureCard.jugador_id == player_en_turno.id,
+                                                              PictureCard.estado == CardState.mazo)).all()
+
+            cant_cartas = 3 - len(cartas_fig_en_mano)
+
+            for i in range(cant_cartas):
+                if len(all_cards_fig_player)>0:
+                    carta = all_cards_fig_player.pop()
+                    carta.jugador_id = player_en_turno.id
+                    carta.estado = CardState.mano
+                    db.commit()
+                    db.refresh(carta)
 
 def repartir_cartas_figuras (game_id: int, figuras_list: List[int], db: Session) -> None:
     playeres = get_ordenes(game_id, db)
@@ -213,6 +214,7 @@ def others_cards(player_id: int, jugadores: List[Jugador], db: Session) -> List[
                     carta_info = {}
                     carta_info["id"] = carta.id
                     carta_info["fig"] = carta.figura.value
+                    carta_info["blocked"] = carta.blocked
                     jugador_info["fig_cards"].append(carta_info)
             
             jugador_info["mov_cant"] = len(cartas_mov)
@@ -262,3 +264,23 @@ def movimiento_parcial(game_id: int, moveCard: MovementCard,
     moveCard.jugador_id = None
 
     db.commit()
+
+def block_player_figure_card(card_to_block_id: int, db: Session ):
+    
+    card_to_block = get_CartaFigura(card_to_block_id, db)
+    card_to_block.blocked = True
+    db.commit()
+    
+def get_cards_not_blocked_id(game_id: int, player_id: int, db: Session) -> List[int]:
+    
+    cards_not_blocked = db.query(PictureCard).filter(and_(PictureCard.partida_id == game_id,
+                                                          PictureCard.jugador_id == player_id,
+                                                          PictureCard.estado == CardState.mano,
+                                                          PictureCard.blocked == False)).all()
+    
+    list_of_cards_not_blocked_id = []
+    
+    for card in cards_not_blocked:
+        list_of_cards_not_blocked_id.append(card.id)
+        
+    return list_of_cards_not_blocked_id

@@ -115,7 +115,9 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 3
     
-    repartir_cartas(game_id, test_db)
+    #Testeo que se repartan las cartas correctamente con un jugador NO bloqueado
+    player_blocked = False
+    repartir_cartas(game_id,player_blocked, test_db)
     
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -139,7 +141,7 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 1
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 2
     
-    repartir_cartas(game_id, test_db)
+    repartir_cartas(game_id, player_blocked, test_db)
 
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -164,7 +166,7 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 0
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 1
     
-    repartir_cartas(game_id, test_db)
+    repartir_cartas(game_id,player_blocked, test_db)
 
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -279,3 +281,16 @@ def test_movimiento_parcial(mock_swap, movs_test):
 
     assert moveCard.estado == CardStateMov.descartada
     assert moveCard.jugador_id == None
+
+
+def test_block_player_figure_card(test_db):
+    jugador = Jugador(id=1, nombre="test", partida_id=1)
+    carta_figura = PictureCard(id=1, estado=CardState.mano, partida_id=1, jugador_id=1)
+
+    test_db.add(jugador)
+    test_db.add(carta_figura)
+    test_db.commit()
+
+    block_player_figure_card( 1, test_db)
+
+    assert get_CartaFigura(1, test_db).blocked == True
