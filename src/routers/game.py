@@ -560,6 +560,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
                 partida.winner_id = jugador.id
+                await ws_manager.send_get_lobbies()
                 db.commit()
 
                 await ws_manager.send_get_winner(game_id)
