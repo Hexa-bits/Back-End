@@ -21,37 +21,45 @@ def test_join_success(client):
     game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
     
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
+        patch('src.routers.game.get_Jugador', return_value = player_mock), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
         patch('src.routers.game.add_player_game', return_value=player_mock), \
         patch('src.routers.game.num_players_in_game', return_value=2), \
         patch('src.routers.game.block_manager.add_player', return_value= None), \
         patch('src.routers.game.get_Partida', return_value=game_mock):
             response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, 
-                                                   "game_password": ""})   
+                                                    "game_password": ""})   
     
             assert response.status_code == 200
-            assert response.json() == {"player_id": player_mock.id,
-                                        "game_id": 1}
+            assert response.json() == {"player_id": None,
+                                        "game_id": 1,
+                                        "left_timer": None}
                     
 def test_join_password_success(client):
      
     player_mock = MagicMock(id= 1, nombre= "testjoin")
     with patch('src.db.get_db'), \
-         patch('src.routers.game.add_player_game', return_value = player_mock), \
-         patch('src.routers.game.num_players_in_game', return_value=2), \
-         patch('src.routers.game.block_manager.add_player', return_value= None), \
-         patch('src.routers.game.get_Partida', return_value= MagicMock(id= 1, game_name="partida", max_players= 4,
+        patch('src.routers.game.get_Jugador', return_value = player_mock), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
+        patch('src.routers.game.add_player_game', return_value = player_mock), \
+        patch('src.routers.game.num_players_in_game', return_value=2), \
+        patch('src.routers.game.block_manager.add_player', return_value= None), \
+        patch('src.routers.game.get_Partida', return_value= MagicMock(id= 1, game_name="partida", max_players= 4,
                                                                 partida_iniciada=False, password="U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=")):
             response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, 
                                                                 "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE="})    
     
             assert response.status_code == 200
-            assert response.json() == {"player_id": player_mock.id,
-                                        "game_id": 1}
+            assert response.json() == {"player_id": None,
+                                        "game_id": 1,
+                                        "left_timer": None}
                     
 def test_join_password_failure(client):
 
     player_mock = MagicMock(id= 1, nombre= "testjoin")
     with patch('src.db.get_db'), \
+         patch('src.routers.game.get_Jugador', return_value = player_mock), \
+         patch('src.routers.game.is_name_in_game', return_value = False), \
          patch('src.routers.game.add_player_game', return_value = None), \
          patch('src.routers.game.num_players_in_game', return_value=2), \
          patch('src.routers.game.block_manager.add_player', return_value= None), \
@@ -73,6 +81,7 @@ def test_join_many_players(client):
     game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
     
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
+        patch('src.routers.game.get_Jugador', side_effect=players_mock), \
         patch('src.routers.game.add_player_game') as mock_player, \
         patch('src.routers.game.num_players_in_game'), \
         patch('src.routers.game.block_manager.add_player', return_value= None), \
@@ -81,17 +90,17 @@ def test_join_many_players(client):
         mock_player.return_value = players_mock[0]
         response = client.post("/game/join", json={"player_id": players_mock[0].id , "game_id": game_mock.id, 
                                                    "game_password": ""})
-        assert response.json() == {"player_id": players_mock[0].id, "game_id": game_mock.id}
+        assert response.json() == {"player_id": None, "game_id": game_mock.id, "left_timer": None}
 
         mock_player.return_value = players_mock[1]
         response = client.post("/game/join", json={"player_id": players_mock[1].id , "game_id": game_mock.id, 
                                                    "game_password": ""})
-        assert response.json() == {"player_id": players_mock[1].id, "game_id": game_mock.id}
+        assert response.json() == {"player_id": None, "game_id": game_mock.id, "left_timer": None}
 
         mock_player.return_value = players_mock[2]
         response = client.post("/game/join", json={"player_id": players_mock[2].id , "game_id": game_mock.id, 
                                                    "game_password": ""})
-        assert response.json() == {"player_id": players_mock[2].id, "game_id": game_mock.id}
+        assert response.json() == {"player_id": None, "game_id": game_mock.id, "left_timer": None}
 
 
 def test_join_failure(client):
