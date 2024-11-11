@@ -294,3 +294,15 @@ def test_block_player_figure_card(test_db):
     block_player_figure_card( 1, test_db)
 
     assert get_CartaFigura(1, test_db).blocked == True
+
+def test_unlock_player_figure_card(test_db):
+    player = Jugador(id=1, nombre="test", partida_id=1)
+    figure_card = PictureCard(id=1, estado=CardState.mano, partida_id=1, jugador_id=1)
+
+    test_db.add(player)
+    test_db.add(figure_card)
+    test_db.commit()
+
+    unlock_player_figure_card(1, test_db)
+
+    assert get_CartaFigura(1, test_db).blocked == False

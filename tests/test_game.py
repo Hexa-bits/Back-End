@@ -214,11 +214,13 @@ def test_use_mov_card_error(mock_get_db, mock_mov_parcial, mock_is_valid, mock_g
 @patch('src.routers.game.get_current_turn_player')
 @patch('src.routers.game.descartar_carta_figura')
 @patch('src.routers.game.get_jugador_sin_cartas')
+@patch('src.routers.game.block_manager')
 @patch('src.routers.game.get_Partida')
 @patch('src.routers.game.get_color_of_box_card')
 @patch('src.routers.game.get_tablero')
-def test_use_picture_card(mock_get_tablero,mock_get_color,mock_get_partida, mock_get_jugador_sin_cartas, mock_descartar_carta,
-                         mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+def test_use_picture_card(mock_get_tablero,mock_get_color,mock_get_partida, mock_block_manager, mock_get_jugador_sin_cartas,
+                          mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, 
+                          mock_get_db):
 
     partida = MagicMock(id=1)
     jugador = MagicMock(id=1, partida_id=1)
@@ -235,11 +237,109 @@ def test_use_picture_card(mock_get_tablero,mock_get_color,mock_get_partida, mock
     mock_get_jugador_turno.return_value = mock_get_jugador.return_value
     mock_descartar_carta.return_value = None
     mock_get_jugador_sin_cartas.return_value = None
+    mock_block_manager.is_blocked.return_value = False
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+
+    assert response.status_code == 200
+    mock_game_manager.clean_cards_box_cards.assert_called()
+    mock_block_manager.can_delete_blocked_card.assert_not_called()
+    mock_block_manager.delete_other_card.assert_not_called()
+    mock_block_manager.delete_blocked_card.assert_not_called()
+
+@patch('src.db.get_db')
+@patch('src.routers.game.game_manager')
+@patch("src.routers.game.get_Jugador")
+@patch('src.routers.game.get_CartaFigura')
+@patch('src.routers.game.get_current_turn_player')
+@patch('src.routers.game.descartar_carta_figura')
+@patch('src.routers.game.get_jugador_sin_cartas')
+@patch('src.routers.game.block_manager')
+@patch("src.routers.game.unlock_player_figure_card")
+@patch('src.routers.game.get_Partida')
+@patch('src.routers.game.get_color_of_box_card')
+@patch('src.routers.game.get_tablero')
+def test_use_picture_card_unlock(mock_get_tablero,mock_get_color,mock_get_partida, mock_unlock_figure_card, mock_block_manager, 
+                                 mock_get_jugador_sin_cartas, mock_descartar_carta, mock_get_jugador_turno,
+                                 mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+
+    partida = MagicMock(id=1, winner_id= None)
+    jugador = MagicMock(id=1, partida_id=1)
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5},
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    
+    mock_get_tablero.return_value = MagicMock(color_prohibido=Color.VERDE)
+    mock_get_color.return_value = Color.ROJO
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_jugador.return_value = jugador
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                             partida_id=1, jugador_id=1)
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
+    mock_get_jugador_sin_cartas.return_value = None
+    mock_block_manager.is_blocked.return_value = True
+    mock_block_manager.can_delete_blocked_card.side_effect = [False, True]
+    mock_block_manager.delete_other_card.return_value = None
+    mock_block_manager.get_blocked_card_id.return_value = 2
+    mock_unlock_figure_card.return_value = None
 
     response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
 
     assert response.status_code == 200
     mock_game_manager.clean_cards_box_cards.assert_called_once()
+    mock_block_manager.is_blocked.assert_called_once()
+    mock_block_manager.can_delete_blocked_card.assert_called()
+    mock_block_manager.delete_other_card.assert_called_once()
+    mock_block_manager.delete_blocked_card.assert_not_called()
+    mock_unlock_figure_card.assert_called_once()
+
+@patch('src.db.get_db')
+@patch('src.routers.game.game_manager')
+@patch("src.routers.game.get_Jugador")
+@patch('src.routers.game.get_CartaFigura')
+@patch('src.routers.game.get_current_turn_player')
+@patch('src.routers.game.descartar_carta_figura')
+@patch('src.routers.game.get_jugador_sin_cartas')
+@patch('src.routers.game.block_manager')
+@patch("src.routers.game.unlock_player_figure_card")
+@patch('src.routers.game.get_Partida')
+@patch('src.routers.game.get_color_of_box_card')
+@patch('src.routers.game.get_tablero')
+def test_use_picture_card_delete_blocked(mock_get_tablero,mock_get_color,mock_get_partida, mock_unlock_figure_card,
+                                        mock_block_manager, mock_get_jugador_sin_cartas, mock_descartar_carta, 
+                                        mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
+
+    partida = MagicMock(id=1)
+    jugador = MagicMock(id=1, partida_id=1)
+    figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
+              {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
+    
+    mock_get_tablero.return_value = MagicMock(color_prohibido=Color.VERDE)
+    mock_get_color.return_value = Color.ROJO
+    mock_get_db.return_value = MagicMock(spec=Session)
+    mock_get_partida.return_value = partida
+    mock_get_jugador.return_value = jugador
+    mock_get_carta.return_value = PictureCard(id=1, estado= CardState.mano, figura= Picture.figura10,
+                                             partida_id=1, jugador_id=1)
+    mock_get_jugador_turno.return_value = mock_get_jugador.return_value
+    mock_descartar_carta.return_value = None
+    mock_get_jugador_sin_cartas.return_value = None
+    mock_block_manager.is_blocked.return_value = True
+    mock_block_manager.can_delete_blocked_card.return_value = True
+    mock_block_manager.delete_other_card.return_value = None
+    mock_block_manager.get_blocked_card_id.return_value = 2
+    mock_unlock_figure_card.return_value = None
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})
+
+    assert response.status_code == 200
+    mock_game_manager.clean_cards_box_cards.assert_called_once()
+    mock_block_manager.can_delete_blocked_card.assert_called_once()
+    mock_block_manager.delete_other_card.assert_not_called()
+    mock_block_manager.delete_blocked_card.assert_called_once()
+    mock_unlock_figure_card.assert_not_called()
+
 
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
@@ -273,7 +373,8 @@ def test_use_picture_card_invalid_card(mock_get_tablero,mock_get_color_of_box_ca
     assert response.status_code == 400
     assert response.json() == {'detail': 'Figura invalida'}
     mock_game_manager.clean_cards_box_cards.assert_not_called()
-    
+
+
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
 @patch("src.routers.game.get_Jugador")
@@ -304,6 +405,14 @@ def test_use_picture_card_400_status_code(mock_get_partida, mock_descartar_carta
     assert response.json() == {'detail': 'La carta no pertenece a la partida'}
 
     mock_get_carta.return_value.partida_id = 1
+    mock_get_carta.return_value.blocked = True
+
+    response = client.put("/game/use-fig-card", json = {"player_id": 1, "id_fig_card": 1, "figura": figure})    
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "La carta esta bloqueada"}
+
+    mock_get_carta.return_value.blocked = False
     mock_get_carta.return_value.jugador_id = 1
     mock_get_jugador_turno.return_value = jugador2
 
