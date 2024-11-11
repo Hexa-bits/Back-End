@@ -178,10 +178,14 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         await ws_manager.send_get_lobbies()
         await ws_manager.send_join_game(partida.id)
 
+        response = {
+            "id_player": player_id_update,
+            "game_id": partida.id
+        }
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
-    return PlayerAndGameId(player_id= player_id_update, game_id=partida.id)
+    return response
 
 
 @router.get("/board", status_code=status.HTTP_200_OK)
