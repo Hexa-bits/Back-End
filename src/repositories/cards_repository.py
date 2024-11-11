@@ -218,6 +218,7 @@ def others_cards(player_id: int, jugadores: List[Jugador], db: Session) -> List[
                     jugador_info["fig_cards"].append(carta_info)
             
             jugador_info["mov_cant"] = len(cartas_mov)
+            jugador_info["fig_cant"] = len(cartas_figura)
 
             jugadores_info.append(jugador_info)
     return jugadores_info
