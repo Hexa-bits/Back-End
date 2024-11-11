@@ -161,7 +161,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                              detail="Fallo en la base de datos")
     
 @router.post("/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
-async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
+async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
     """
     Descripción: maneja la logica de unirse a una partida.
 
@@ -169,24 +169,29 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
     - 200: OK.
     - 404: No existe la partida a la que se quiere unir o no existe el jugador.
     - 400: La partida ya esta empezada.
+    - 401: Contraseña incorrecta
     - 500: Ocurre un error interno.
     """
     try:
-        partida = get_Partida(playerAndGameId.game_id, db)
+        partida = get_Partida(joinGameData.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
         
         if partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
         
+        
+        if partida.password and (partida.password != joinGameData.game_password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Contraseña incorrecta")
+        
         if partida.max_players == num_players_in_game(partida, db):
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
-        jugador = add_player_game(playerAndGameId.player_id, playerAndGameId.game_id, db)
+        jugador = add_player_game(joinGameData.player_id, joinGameData.game_id, db)
         if jugador is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
         
-        block_manager.add_player(playerAndGameId.game_id, playerAndGameId.player_id)
+        block_manager.add_player(joinGameData.game_id, joinGameData.player_id)
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
