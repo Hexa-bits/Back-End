@@ -145,7 +145,7 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
 
-        player_already_in_game = is_name_in_started_game(partida.id, username, db)
+        player_already_in_game = is_name_in_game(partida.id, username, db)
 
         if partida.partida_iniciada and not player_already_in_game:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
