@@ -116,7 +116,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 delete_player(jugador, db)
                 await ws_manager.send_leave_lobby(game_id)
         
-            await ws_manager.send_get_lobbies()
+        await ws_manager.send_get_lobbies()
 
     except SQLAlchemyError:
         db.rollback()
@@ -383,6 +383,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
         content={"id_game": game_id.game_id, "iniciada": partida.partida_iniciada},
         status_code=status.HTTP_200_OK
     )
+
 
 
 @router.put("/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
