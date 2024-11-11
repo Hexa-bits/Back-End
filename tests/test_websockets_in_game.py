@@ -30,6 +30,7 @@ mock_partida = MagicMock()
 mock_partida.id = 1
 mock_partida.winner_id = None
 mock_partida.partida_iniciada = False
+mock_partida.password = None
 
 mock_jugador = MagicMock()
 mock_jugador.id = 1
@@ -130,10 +131,14 @@ async def test_websocket_broadcast_ganador(client):
             with patch('src.routers.game.get_Jugador', return_value = jugadores_mock[0]), \
                  patch('src.routers.game.get_Partida', return_value = partida_mock.return_value), \
                  patch('src.routers.game.get_players', side_effect=[jugadores_mock, [jugadores_mock.pop(0)]]), \
+                 patch('src.routers.game.game_manager.delete_game') as mock_game_manager, \
+                 patch('src.routers.game.block_manager.delete_game') as mock_block_manager, \
                  patch('src.routers.game.delete_player', return_value = None):
                             
                 response = client.put("/game/leave", json={"id_user": 1, "game_id": 1})
                 assert response.status_code == 204
+                mock_game_manager.assert_called_once_with(1)
+                mock_block_manager.assert_called_once_with(1)
 
         # se cierra la conexion websocket1 simulando que el jugador abandono
         await asyncio.sleep(0.1)
@@ -157,8 +162,9 @@ async def test_websocket_broadcast_games_join(client):
 
         with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
              patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
-            patch("src.routers.game.block_manager.add_player", return_value= False):
-            config = {"player_id": 1 , "game_id": 1}
+             patch("src.routers.game.num_players_in_game", return_value= 2), \
+             patch("src.routers.game.block_manager.add_player", return_value= False):
+            config = {"player_id": 1 , "game_id": 1, "game_password": ""}
             mock_add_partida.return_value = mock_jugador
 
             response = client.post("/game/join", json=config)

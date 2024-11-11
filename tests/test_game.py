@@ -619,7 +619,8 @@ async def test_get_others_cards(mock_get_db, mock_others_cards):
             "fig_cards": [
                 {"id": 1, "fig": "Figura 1"},
             ],
-            "mov_cant": 2
+            "mov_cant": 2,
+            "fig_cant": 3
         }
     ]
 
@@ -638,7 +639,8 @@ async def test_get_others_cards(mock_get_db, mock_others_cards):
             "fig_cards": [
                 {"id": 1, "fig": "Figura 1"},
             ],
-            "mov_cant": 2
+            "mov_cant": 2,
+            "fig_cant": 3
         }
     ]
     assert response.json() == expected_response

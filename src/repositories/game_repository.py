@@ -106,11 +106,15 @@ def list_lobbies(db) -> List[dict]:
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
         if current_players == 0 or lobby.partida_iniciada:
             continue
+        
+        private = True if (lobby.password != None) else False
+
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.game_name,
             "current_players": current_players,
             "max_players": lobby.max_players,
+            "isPrivate": private
             })
 
     return lobbies

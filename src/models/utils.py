@@ -52,6 +52,20 @@ class PlayerAndGameId(BaseModel):
     game_id: int = Field (..., gt=0)
     player_id: int = Field (..., gt=0)
 
+class JoinGameData(BaseModel):
+    """
+    Se usa para representar la data de front para unirse a una partida. Tiene id de la partida y del jugador 
+    junto con la contraseña
+    """
+    game_id: int = Field (..., gt=0)
+    player_id: int = Field (..., gt=0)
+    game_password: str = Field(..., max_length=44, min_length=0)
+
+    @field_validator('game_password')
+    def validate_game_password(cls, value):
+        if value != "" and len(value) != 44:
+            raise ValueError('La contraseña debe ser vacía o tener exactamente 44 caracteres.')
+        return value
 
 class Coords(BaseModel):
     """

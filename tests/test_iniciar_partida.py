@@ -28,7 +28,8 @@ def test_start_game():
          mock.patch("src.routers.game.mezclar_cartas_movimiento") as mock_mezclar_cartas, \
          mock.patch("src.routers.game.mezclar_figuras") as mock_mezclar_figuras, \
          mock.patch("src.routers.game.asignar_turnos") as mock_asignar_turnos, \
-         mock.patch("src.routers.game.get_Partida") as mock_get_partida:
+         mock.patch("src.routers.game.get_Partida") as mock_get_partida, \
+         mock.patch("src.routers.game.timer_handler") as mock_timer:
         
         # Configura el mock para get_Partida
         mock_partida = mock.Mock()
@@ -47,6 +48,7 @@ def test_start_game():
         mock_mezclar_cartas.assert_called_once_with(mock_db, 1)
         mock_mezclar_figuras.assert_called_once_with(1, mock_db)
         mock_asignar_turnos.assert_called_once_with(1, mock_db)
+        mock_timer.assert_called_once_with(1, mock_db)
 
     # Restablece las dependencias
     app.dependency_overrides.clear()
