@@ -156,6 +156,8 @@ async def join_game(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_
             #Obtengo el player_id del username que ya esta en la partida (distinto a mi player_id, lo envio al front para que pisen el dato)
             # Esto es para unirme a mi partida ya empezada 
             player_id_update = get_player_id_in_game_by_name(partida.id, username, db)
+            #El front deberiua llevarte a la vista de game, no de lobby
+            
 
         if player_already_in_game and not partida.partida_iniciada:
             #Si el jugador (username) ya esta en la partida no iniciada (lobby), no puede unirse, deben iniciarla

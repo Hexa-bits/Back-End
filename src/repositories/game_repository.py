@@ -127,6 +127,7 @@ def list_lobbies(username: str,db: Session) -> List[dict]:
             "game_name": lobby.game_name,
             "current_players": current_players,
             "max_players": lobby.max_players,
+            "isPrivate": False, #HARDCODEO HASTA QUE ENTRE EN DEVELOP EL TICKET
             "started": lobby.partida_iniciada,
             })
 

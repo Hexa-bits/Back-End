@@ -39,7 +39,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 @router.get("/get-lobbies", status_code=status.HTTP_200_OK)
-async def get_lobbies(db: Session = Depends(get_db)):
+async def get_lobbies(username: str, db: Session = Depends(get_db)):
     """
     Descripción: maneja la logica de pedir las lobbies al servidor.
 
