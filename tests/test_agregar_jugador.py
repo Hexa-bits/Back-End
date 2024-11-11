@@ -83,6 +83,7 @@ def test_join_many_players(client):
     
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', side_effect=players_mock), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
         patch('src.routers.game.add_player_game') as mock_player, \
         patch('src.routers.game.num_players_in_game'), \
         patch('src.routers.game.block_manager.add_player', return_value= None), \
@@ -110,9 +111,10 @@ def test_join_failure(client):
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', side_effect=player_mock), \
-         patch('src.routers.game.add_player_game', side_effect=SQLAlchemyError()), \
-         patch('src.routers.game.num_players_in_game'), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
+        patch('src.routers.game.add_player_game', side_effect=SQLAlchemyError()), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
+        patch('src.routers.game.num_players_in_game'), \
+        patch('src.routers.game.get_Partida', return_value=game_mock):
         
         response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, "game_password": ""})
 
@@ -125,8 +127,9 @@ def test_join_full_game(client):
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \
-         patch('src.routers.game.num_players_in_game', return_value=4), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
+        patch('src.routers.game.num_players_in_game', return_value=4), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
+        patch('src.routers.game.get_Partida', return_value=game_mock):
         
         response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, "game_password": ""})
 
@@ -137,7 +140,9 @@ def test_player_not_found(client):
     game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
 
     with patch('src.routers.game.add_player_game', return_value= None), \
-         patch('src.routers.game.get_Partida', return_value=game_mock):
+        patch('src.routers.game.is_name_in_game', return_value = False), \
+        patch('src.routers.game.get_Jugador', return_value= None), \
+        patch('src.routers.game.get_Partida', return_value=game_mock):
         
         response = client.post("/game/join", json={"player_id": 1 , "game_id": 1, "game_password": ""})
 
@@ -148,6 +153,7 @@ def test_game_not_found(client):
     player_mock = MagicMock(id=1, nombre="testjoin")
 
     with patch('src.routers.game.add_player_game', return_value=player_mock), \
+        patch('src.routers.game.is_name_in_game', return_value = False), \
         patch('src.routers.game.get_Jugador', return_value= player_mock), \
         patch('src.routers.game.get_Partida', return_value= None):
 
