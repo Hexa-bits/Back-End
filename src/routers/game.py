@@ -519,14 +519,13 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         board = get_tablero(game_id, db)
         coords_token0 = figureData.figura[0]
         token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game_id, db)
-        if token_color is not None and (board.color_prohibido == token_color):
+        if board is None or (token_color is not None and (board.color_prohibido == token_color)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")
         
         if is_valid_picture_card(pictureCard, figureData.figura):
             descartar_carta_figura(pictureCard.id, db)
-            if board and token_color:
-                board.color_prohibido = token_color
-                db.commit()
+            board.color_prohibido = token_color
+            db.commit()
 
             game_manager.clean_cards_box_cards(game_id)
 
@@ -544,7 +543,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
 
                         if block_manager.can_delete_blocked_card(game_id, jugador.id):
                             unlock_player_figure_card(id_blocked_card, db)
-                            ws_manager.send_unlock_fig_log(game_id, jugador.nombre)
+                            await ws_manager.send_unlock_fig_log(game_id, jugador.nombre)
                     else: 
                         block_manager.delete_blocked_card(game_id, jugador.id, id_blocked_card)
                         await ws_manager.send_fig_log(game_id, jugador.nombre)
@@ -648,7 +647,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         board = get_tablero(game.id, db)
         coords_token0 = figura.figura[0]
         token_color = get_color_of_box_card(coords_token0.x_pos, coords_token0.y_pos, game.id, db)
-        if token_color is not None and (board.color_prohibido == token_color):
+        if board is None or (token_color is not None and (board.color_prohibido == token_color)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")        
 
         player_to_block = get_Jugador(fig_card.jugador_id, db)
@@ -668,20 +667,16 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador solo tiene una carta figura")
         
         block_player_figure_card(figura.id_fig_card, db)
-        if board and token_color:
-            board.color_prohibido = token_color
-            db.commit()
+        board.color_prohibido = token_color
+        db.commit()
 
-            await ws_manager.send_block_fig_log(game.id, player.nombre, player_to_block.nombre)
-        else:
-            await ws_manager.send_fig_log(game.id, player.nombre)
-   
         list_of_not_blocked_cards = get_cards_not_blocked_id(game.id, player_to_block.id, db)
         
         block_manager.block_fig_card(game.id,player_to_block.id,figura.id_fig_card, list_of_not_blocked_cards)
 
         game_manager.clean_cards_box_cards(game.id)
-
+        
+        await ws_manager.send_block_fig_log(game.id, player.nombre, player_to_block.nombre)
         await ws_manager.send_get_info_players(game.id)
         await ws_manager.send_get_tablero(game.id)
         await ws_manager.send_get_cartas_fig(game.id)

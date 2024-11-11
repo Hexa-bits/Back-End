@@ -23,7 +23,7 @@ LOG_USE_MOV = "Hizo un movimiento"
 LOG_DISCARD_FIG = "Descartó una carta de figura"
 LOG_CANCEL_MOV = "Canceló movimiento"
 LOG_UNLOCK_FIG = "Desbloqueó una carta de figura"
-LOG_BLOCK_FIG = "Bloqueó una carta de figura a"
+LOG_BLOCK_FIG = "Bloqueó una carta de figura a "
 
 class WebSocketConnectionManager:
     """

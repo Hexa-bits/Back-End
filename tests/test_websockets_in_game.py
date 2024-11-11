@@ -281,6 +281,56 @@ async def test_websocket_broadcast_use_mov_card(client):
 
 
 @pytest.mark.asyncio
+async def test_websocket_broadcast_unlock_fig_card(client):
+    with client.websocket_connect("/game?game_id=1") as websocket1, \
+         client.websocket_connect("/game?game_id=1") as websocket2:
+
+        with patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+             patch("src.routers.game.get_CartaFigura", return_value=MagicMock(id = 1, estado=CardState.mano, 
+                                                                          jugador_id=1, partida_id=1, blocked=False)), \
+             patch("src.routers.game.get_Partida", return_value= mock_partida), \
+             patch("src.routers.game.get_current_turn_player", return_value=mock_jugador), \
+             patch("src.routers.game.get_color_of_box_card", return_value=Color.ROJO), \
+             patch("src.routers.game.is_valid_picture_card", return_value = True), \
+             patch("src.routers.game.descartar_carta_figura"), \
+             patch("src.routers.game.get_jugador_sin_cartas", return_value=None), \
+             patch("src.routers.game.block_manager.is_blocked", return_value=True), \
+             patch("src.routers.game.block_manager.get_blocked_card_id", return_value=1), \
+             patch("src.routers.game.block_manager.delete_other_card"), \
+             patch("src.routers.game.block_manager.can_delete_blocked_card", side_effect=[False, True]), \
+             patch("src.routers.game.unlock_player_figure_card"), \
+             patch("src.routers.game.game_manager"),\
+             patch("src.routers.game.get_tablero", return_value= MagicMock(color_prohibido=Color.VERDE)):
+            
+            info = {"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}, {"x_pos": 1, "y_pos": 1}]}
+
+            response = client.put("/game/use-fig-card", json=info)
+
+            assert response.status_code == 200
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == "{'type': 'log', 'data': {'player_name': 'testws', 'event': 'Desbloqueó una carta de figura'}}"
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_CARTAS_FIG
+            assert mensaje1 == mensaje2
+
+            await asyncio.sleep(0.1)
+
+            mensaje1 = websocket1.receive_text()
+            mensaje2 = websocket2.receive_text()
+
+            assert mensaje1 == GET_BOARD
+            assert mensaje1 == mensaje2
+
+@pytest.mark.asyncio
 async def test_websocket_broadcast_use_fig_card(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
          client.websocket_connect("/game?game_id=1") as websocket2:
