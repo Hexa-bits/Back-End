@@ -96,7 +96,7 @@ def terminar_turno(game_id: int, db: Session) -> dict:
         return info_jugador_turno
 
 
-def is_name_in_started_game(game_id: int, username: str, db: Session) -> bool:
+def is_name_in_game(game_id: int, username: str, db: Session) -> bool:
 
     jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
     for jugador in jugadores:
@@ -116,11 +116,12 @@ def list_lobbies(username: str,db: Session) -> List[dict]:
 
     for lobby in raw_lobbies:
 
-        name_in_started_game = is_name_in_started_game(lobby.id, username, db)
+        name_already_in_game = is_name_in_game(lobby.id, username, db)
 
         #Calculo la cantidad de jugadores actuales en partida
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
-        if current_players == 0 or (lobby.partida_iniciada and not name_in_started_game):
+        if current_players == 0 or (lobby.partida_iniciada and not name_already_in_game)\
+                                or (name_already_in_game and not lobby.partida_iniciada):
             continue
         lobbies.append({
             "game_id": lobby.id,
