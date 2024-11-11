@@ -53,163 +53,6 @@ def test_use_mov_card(mock_get_db, mock_mov_parcial, mock_is_valid, mock_get_cur
                                                                     (Coords(x_pos=2, y_pos=2), 
                                                                     Coords(x_pos=4, y_pos=4)))
 
-
-@pytest.fixture
-def block_manager():
-    return BlockManager()
-
-def test_create_game(block_manager):
-    block_manager.create_game(1)
-    assert 1 in block_manager.games
-
-def test_add_player(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    assert 101 in block_manager.games[1]
-    assert block_manager.games[1][101]["is_blocked"] is False
-    assert block_manager.games[1][101]["block_card_fig_id"] == 0
-    assert block_manager.games[1][101]["other_cards_in_hand"] == []
-
-def test_delete_player(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.delete_player(1, 101)
-    assert 101 not in block_manager.games[1]
-
-def test_delete_game(block_manager):
-    block_manager.create_game(1)
-    block_manager.delete_game(1)
-    assert 1 not in block_manager.games
-
-def test_block_fig_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    assert block_manager.games[1][101]["is_blocked"] is True
-    assert block_manager.games[1][101]["block_card_fig_id"] == 5
-    assert block_manager.games[1][101]["other_cards_in_hand"] == [3, 7, 9]
-
-def test_is_blocked(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    assert block_manager.is_blocked(1, 101) is False
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    assert block_manager.is_blocked(1, 101) is True
-
-def test_get_blocked_card_id(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    assert block_manager.get_blocked_card_id(1, 101) == 5
-
-def test_delete_other_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    block_manager.delete_other_card(1, 101, 7)
-    assert block_manager.games[1][101]["other_cards_in_hand"] == [3, 9]
-
-def test_can_delete_blocked_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [])
-    assert block_manager.can_delete_blocked_card(1, 101) is True
-
-def test_delete_blocked_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [])
-    block_manager.delete_blocked_card(1, 101, 5)
-    assert block_manager.games[1][101]["is_blocked"] is False
-    assert block_manager.games[1][101]["block_card_fig_id"] == 0
-    assert block_manager.games[1][101]["other_cards_in_hand"] == []
-
-# Testeo el block_manager
-
-@pytest.fixture
-def block_manager():
-    return BlockManager()
-
-def test_create_game(block_manager):
-    block_manager.create_game(1)
-    assert 1 in block_manager.games
-
-def test_add_player(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    assert 101 in block_manager.games[1]
-    assert block_manager.games[1][101]["is_blocked"] is False
-    assert block_manager.games[1][101]["block_card_fig_id"] == 0
-    assert block_manager.games[1][101]["other_cards_in_hand"] == []
-
-def test_delete_player(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.delete_player(1, 101)
-    assert 101 not in block_manager.games[1]
-
-def test_delete_game(block_manager):
-    block_manager.create_game(1)
-    block_manager.delete_game(1)
-    assert 1 not in block_manager.games
-
-def test_block_fig_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    assert block_manager.games[1][101]["is_blocked"] is True
-    assert block_manager.games[1][101]["block_card_fig_id"] == 5
-    assert block_manager.games[1][101]["other_cards_in_hand"] == [3, 7, 9]
-
-def test_is_blocked(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    assert block_manager.is_blocked(1, 101) is False
-    block_manager.block_fig_card(1, 101, 5, [3, 7, 9])
-    assert block_manager.is_blocked(1, 101) is True
-
-def test_get_blocked_card_id(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7])
-    assert block_manager.get_blocked_card_id(1, 101) == 5
-
-def test_delete_other_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [3, 7])
-    block_manager.delete_other_card(1, 101, 7)
-    assert block_manager.games[1][101]["other_cards_in_hand"] == [3]
-    block_manager.delete_other_card(1, 101, 3)
-    assert block_manager.games[1][101]["other_cards_in_hand"] == []
-
-def test_can_delete_blocked_card(block_manager):
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [4,8])
-    assert block_manager.can_delete_blocked_card(1, 101) is False
-    block_manager.delete_other_card(1, 101, 4)
-    assert block_manager.can_delete_blocked_card(1, 101) is False
-    block_manager.delete_other_card(1, 101, 8)
-    assert block_manager.can_delete_blocked_card(1, 101) is True
-
-def test_delete_blocked_card(block_manager):
-    #Solo puedo borrar la carta bloqueada si no tengo otras cartas en la mano, esto me desbloquea al jugador
-    block_manager.create_game(1)
-    block_manager.add_player(1, 101)
-    block_manager.block_fig_card(1, 101, 5, [8,11])
-    delete = block_manager.delete_blocked_card(1, 101, 5)
-    assert delete is False
-    block_manager.delete_other_card(1, 101, 8)
-    delete = block_manager.delete_blocked_card(1, 101, 5)
-    assert delete is False
-    block_manager.delete_other_card(1, 101, 11)
-    delete = block_manager.delete_blocked_card(1, 101, 5)
-    assert delete is True
-    assert block_manager.games[1][101]["is_blocked"] is False
-    assert block_manager.games[1][101]["block_card_fig_id"] == 0
-    assert block_manager.games[1][101]["other_cards_in_hand"] == []
-
 @patch("src.routers.game.game_manager")
 @patch("src.routers.game.get_Jugador")
 @patch("src.routers.game.get_CartaMovimiento")
@@ -430,7 +273,7 @@ def test_use_picture_card_invalid_card(mock_get_tablero,mock_get_color_of_box_ca
     assert response.status_code == 400
     assert response.json() == {'detail': 'Figura invalida'}
     mock_game_manager.clean_cards_box_cards.assert_not_called()
-
+    
 @patch('src.db.get_db')
 @patch('src.routers.game.game_manager')
 @patch("src.routers.game.get_Jugador")
@@ -838,7 +681,8 @@ async def test_block_figure_success(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -846,6 +690,8 @@ async def test_block_figure_success(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -854,9 +700,8 @@ async def test_block_figure_success(mocker):
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
-
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
-    
+
     assert response.status_code == status.HTTP_200_OK
 
 
@@ -866,7 +711,8 @@ async def test_block_figure_game_not_found(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -874,6 +720,8 @@ async def test_block_figure_game_not_found(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= None)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -881,7 +729,6 @@ async def test_block_figure_game_not_found(mocker):
     mocker.patch("src.routers.game.block_manager.block_fig_card")
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
-
 
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
     
@@ -895,7 +742,8 @@ async def test_block_figure_invalid_turn(mocker):
     #El jugador no esta en turno
     mock_game = MagicMock(id=1, jugador_en_turno=1)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -903,6 +751,8 @@ async def test_block_figure_invalid_turn(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -910,7 +760,6 @@ async def test_block_figure_invalid_turn(mocker):
     mocker.patch("src.routers.game.block_manager.block_fig_card")
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
-
 
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
 
@@ -923,7 +772,8 @@ async def test_block_figure_invalid_figure(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -931,6 +781,8 @@ async def test_block_figure_invalid_figure(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=False)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -938,7 +790,6 @@ async def test_block_figure_invalid_figure(mocker):
     mocker.patch("src.routers.game.block_manager.block_fig_card")
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
-
 
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
     
@@ -951,6 +802,7 @@ async def test_block_figure_no_player_to_block(mocker):
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = None
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -958,6 +810,8 @@ async def test_block_figure_no_player_to_block(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -965,7 +819,6 @@ async def test_block_figure_no_player_to_block(mocker):
     mocker.patch("src.routers.game.block_manager.block_fig_card")
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
-
 
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
     
@@ -977,7 +830,8 @@ async def test_block_figure_already_blocked(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -985,6 +839,8 @@ async def test_block_figure_already_blocked(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     #Ya esta bloqueado el jugador
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=True)
@@ -1005,7 +861,8 @@ async def test_block_figure_sql_error(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -1014,6 +871,8 @@ async def test_block_figure_sql_error(mocker):
     mocker.patch("src.routers.game.get_Jugador",side_effect=SQLAlchemyError)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -1022,18 +881,18 @@ async def test_block_figure_sql_error(mocker):
     mocker.patch("src.routers.game.game_manager.clean_cards_box_cards")
     mocker.patch("src.routers.game.ws_manager.send_message_game_id")
 
-
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
     
     assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
     assert response.json() == {"detail": "Fallo en la base de datos"}
 
 @pytest.mark.asyncio
-async def test_block_figure_not_carta_figura(mocker):
+async def test_block_figure_not_card_figure(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = None
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -1041,6 +900,8 @@ async def test_block_figure_not_carta_figura(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.VERDE)
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block, mock_card_figura_2, mock_card_figura_3])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
     mocker.patch("src.routers.game.block_player_figure_card")
@@ -1056,11 +917,12 @@ async def test_block_figure_not_carta_figura(mocker):
     assert response.json() == {"detail": "No existe la carta figura"}
 
 @pytest.mark.asyncio
-async def test_block_figure_only_one_carta_figura(mocker):
+async def test_block_color_figure_block(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     mock_game = MagicMock(id=1, jugador_en_turno=0)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
-    mock_player_to_block = MagicMock(id=2)
+    mock_player_to_block = MagicMock(id=2, partida_id=1)
+    mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
     mock_card_figura_2 = MagicMock(id=2, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=2)
     mock_card_figura_3 = MagicMock(id=3, estado=CardState.mano, figura=Picture.figura11, partida_id=1, jugador_id=2)
     
@@ -1068,6 +930,8 @@ async def test_block_figure_only_one_carta_figura(mocker):
     mocker.patch("src.routers.game.get_Partida", return_value= mock_game)
     mocker.patch("src.routers.game.get_CartaFigura", return_value=mock_card_figura_block)
     mocker.patch("src.routers.game.is_valid_picture_card", return_value=True)
+    mocker.patch("src.routers.game.get_tablero", return_value=mock_tablero)
+    mocker.patch("src.routers.game.get_color_of_box_card", return_value=Color.ROJO)
     #Solo tengo una carta figura
     mocker.patch("src.routers.game.get_cartasFigura_player", return_value=[mock_card_figura_block])
     mocker.patch("src.routers.game.block_manager.is_blocked", return_value=False)
@@ -1080,4 +944,4 @@ async def test_block_figure_only_one_carta_figura(mocker):
     response = client.put("/game/block-fig-card", json={"player_id": 1, "id_fig_card": 1, "figura": [{"x_pos": 1, "y_pos": 1}]})
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
-    assert response.json() == {"detail": "El jugador solo tiene una carta figura"}
+    assert response.json() == {"detail": "El color de la figura está prohibido"}

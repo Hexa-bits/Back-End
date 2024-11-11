@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Union
 from pydantic import BaseModel, Field, field_validator
 
 class Partida_config(BaseModel):
@@ -9,7 +9,15 @@ class Partida_config(BaseModel):
     """
     id_user: int = Field (..., gt=0)
     game_name: str = Field (..., max_length=10, min_length=1)
+    game_password: str
     max_players: int = Field (..., gt=1, lt=5)
+
+    @field_validator('game_password')
+    def validate_field_length(cls, v):
+        if v != "" and len(v) != 44:
+            raise ValueError('String should have 44 characters or be ""')
+        return v
+
 
 class Leave_config(BaseModel):
     """

@@ -8,7 +8,7 @@ from src.db import get_db
 from sqlalchemy.orm import Session
 
 from src.models.utils import *
-from src.ws_manager import WebSocketConnectionManager
+from src.ws_manager import ws_manager
 
 from src.repositories.board_repository import *
 from src.repositories.game_repository import *
@@ -19,7 +19,6 @@ from src.models.patrones_figuras_matriz import generate_all_figures
 
 router = APIRouter()
 
-ws_manager = WebSocketConnectionManager()
 game_manager = GameManager()
 
 list_patterns = generate_all_figures()
@@ -148,6 +147,8 @@ async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
         if partida.password and (partida.password != joinGameData.game_password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Contraseña incorrecta")
         
+        if partida.max_players == num_players_in_game(partida, db):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
         jugador = add_player_game(joinGameData.player_id, joinGameData.game_id, db)
         if jugador is None:
@@ -643,14 +644,13 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
         if token_color is not None and (board.color_prohibido == token_color):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El color de la figura está prohibido")        
 
-        
         player_to_block = get_Jugador(fig_card.jugador_id, db)
 
         if player_to_block is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador a bloquear")
         
-        if player_to_block.id == player.id:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No se puede bloquear a uno mismo")
+        if player_to_block.id == player.id or player_to_block.partida_id != game.id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Bloqueo inválido")
 
         if block_manager.is_blocked(game.id, player_to_block.id):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya está bloqueado")
