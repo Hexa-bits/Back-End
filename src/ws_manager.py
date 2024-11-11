@@ -22,6 +22,8 @@ LOG_END_TURN = "Terminó el turno"
 LOG_USE_MOV = "Hizo un movimiento"
 LOG_DISCARD_FIG = "Descartó una carta de figura"
 LOG_CANCEL_MOV = "Canceló movimiento"
+LOG_UNLOCK_FIG = "Desbloqueó una carta de figura"
+LOG_BLOCK_FIG = "Bloqueó una carta de figura a"
 
 class WebSocketConnectionManager:
     """
@@ -108,5 +110,13 @@ class WebSocketConnectionManager:
 
     async def send_cancel_mov_log(self, game_id: int, player_name: str):
         await self.send_message_game_id(logs_format(player_name, LOG_CANCEL_MOV), game_id)
+    
+    async def send_unlock_fig_log(self, game_id: int, player_name: str):
+        await self.send_message_game_id(logs_format(player_name, LOG_UNLOCK_FIG), game_id)
+    
+    async def send_block_fig_log(self, game_id: int, player_name: str, blocked_player_name: str):
+        await self.send_message_game_id(logs_format(player_name, 
+                                                    LOG_BLOCK_FIG + blocked_player_name),
+                                                    game_id)
 
 ws_manager = WebSocketConnectionManager()
