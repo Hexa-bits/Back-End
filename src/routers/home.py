@@ -48,7 +48,7 @@ async def get_lobbies(username: str, db: Session = Depends(get_db)):
     - 500: Ocurre un error interno.
     """
     try:
-        lobbies = list_lobbies(db)
+        lobbies = list_lobbies(username, db)
     except Exception:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener los lobbies.")
     return lobbies
