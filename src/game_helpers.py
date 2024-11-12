@@ -268,21 +268,11 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
         matriz[x-1][y-1] = 1
     
     submatriz = matriz[min_x-1 : min_x-1 + filas, min_y-1 : min_y-1 + columnas]
-    print("hola submatriz b")
-    print(type(submatriz))
-    submatriz = np.array(submatriz)
-    print(type(submatriz))
-    print("chau sub b")
 
     figure_rotations = generar_rotaciones(figure)
 
     for fig in figure_rotations:
-        print("hola fig b")
-        print(type(fig))
         fig = np.array(fig)
-        print(type(fig))
-        print("chau fig b")
-        print(fig)
         if fig.shape == submatriz.shape:
             match = (fig == -1) | (submatriz == fig)
             if np.all(match):
