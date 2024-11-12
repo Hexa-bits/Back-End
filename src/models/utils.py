@@ -1,5 +1,5 @@
-from typing import Optional, Tuple, List
-from pydantic import BaseModel, Field
+from typing import Optional, Tuple, List, Union
+from pydantic import BaseModel, Field, field_validator
 
 class Partida_config(BaseModel):
     """
@@ -8,8 +8,16 @@ class Partida_config(BaseModel):
     ser menor cómo max 10 carácteres, y max_players es un entero que debe estar entre 2 y 4. 
     """
     id_user: int = Field (..., gt=0)
-    game_name: str = Field (..., max_length=10)
+    game_name: str = Field (..., max_length=10, min_length=1)
+    game_password: str
     max_players: int = Field (..., gt=1, lt=5)
+
+    @field_validator('game_password')
+    def validate_field_length(cls, v):
+        if v != "" and len(v) != 44:
+            raise ValueError('String should have 44 characters or be ""')
+        return v
+
 
 class Leave_config(BaseModel):
     """
@@ -29,7 +37,7 @@ class User(BaseModel):
     """
     Se usa para representar el nombre del usuario al logearse, debe ser cómo max 10 caracteres
     """
-    username: str = Field (..., max_length=10)
+    username: str = Field (..., max_length=10, min_length=1)
 
 class GameId(BaseModel):
     """
@@ -44,6 +52,20 @@ class PlayerAndGameId(BaseModel):
     game_id: int = Field (..., gt=0)
     player_id: int = Field (..., gt=0)
 
+class JoinGameData(BaseModel):
+    """
+    Se usa para representar la data de front para unirse a una partida. Tiene id de la partida y del jugador 
+    junto con la contraseña
+    """
+    game_id: int = Field (..., gt=0)
+    player_id: int = Field (..., gt=0)
+    game_password: str = Field(..., max_length=44, min_length=0)
+
+    @field_validator('game_password')
+    def validate_game_password(cls, value):
+        if value != "" and len(value) != 44:
+            raise ValueError('La contraseña debe ser vacía o tener exactamente 44 caracteres.')
+        return value
 
 class Coords(BaseModel):
     """
@@ -63,6 +85,10 @@ class MovementData(BaseModel):
     fichas: Tuple[Coords, Coords]
 
 class FigureData(BaseModel):
-    player_id: int
-    id_fig_card: int
+    """
+    Se usa para representar la data necesaría para jugar una carta de figura, el
+    jugador y el id de la carta figura deber ser mayor a 0 la lista de tipo Coords
+    """
+    player_id: int = Field (..., gt=0)
+    id_fig_card: int = Field (..., gt=0)
     figura: List[Coords]

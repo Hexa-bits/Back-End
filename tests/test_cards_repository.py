@@ -62,7 +62,7 @@ def test_others_cards():
         mock_get_cartasMovimiento_player.side_effect = lambda player_id, db_session: [carta_movimiento_1] if player_id == jugador_1.id else []
 
         # Llama a la función a testear
-        resultado = others_cards(game_id=1, player_id=2, jugadores= jugadores, db=db)
+        resultado = others_cards(player_id=2, jugadores= jugadores, db=db)
 
         # Validaciones
         assert len(resultado) == 1
@@ -115,7 +115,9 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 3
     
-    repartir_cartas(game_id, test_db)
+    #Testeo que se repartan las cartas correctamente con un jugador NO bloqueado
+    player_blocked = False
+    repartir_cartas(game_id,player_blocked, test_db)
     
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -139,7 +141,7 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 1
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 2
     
-    repartir_cartas(game_id, test_db)
+    repartir_cartas(game_id, player_blocked, test_db)
 
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -164,7 +166,7 @@ def test_repartir_cartas(test_db):
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 0
     assert len(cartas_fig_jugador_en_mano(jugador1.id, test_db)) == 1
     
-    repartir_cartas(game_id, test_db)
+    repartir_cartas(game_id,player_blocked, test_db)
 
     assert len(cartas_mov_juego_en_mano(game_id, test_db)) == 6
     assert len(cartas_mov_jugador_en_mano(jugador1.id, test_db)) == 3
@@ -220,16 +222,16 @@ def movs_test(test_db: Session) -> Session:
     test_db.commit()
     return test_db
 
-@patch("src.repositories.cards_repository.swap_fichasCajon")
-def test_cancelar_movimiento_OK(mock_swap, movs_test):
+@patch("src.repositories.cards_repository.swap_box_card")
+def test_cancel_movement_OK(mock_swap, movs_test):
     """
-    Testeo que la función cancelar_movimiento funcione correctamente con los 
+    Testeo que la función cancel_movement funcione correctamente con los 
     parametros adecuados.
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
+    tuple_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
-    result = cancelar_movimiento(1, 1, 1, tupla_coords, movs_test)
+    result = cancel_movement(1, 1, 1, tuple_coords, movs_test)
     assert result is None, f'No devuelve None, sino {result}'
 
     mov_card = get_cartaMovId(1, movs_test)
@@ -239,38 +241,38 @@ def test_cancelar_movimiento_OK(mock_swap, movs_test):
     assert mov_card.jugador_id == 1, "No tiene el jugador asoc esperado"
     assert mov_card.partida_id == 1, "No tiene la partida asoc esperada"
 
-@patch("src.repositories.cards_repository.swap_fichasCajon")
-def test_cancelar_movimiento_not_in_db(mock_swap, movs_test):
+@patch("src.repositories.cards_repository.swap_box_card")
+def test_cancel_movement_not_in_db(mock_swap, movs_test):
     """
-    Testeo que la función cancelar_movimiento falle si es que no existe la carta de
+    Testeo que la función cancel_movement falle si es que no existe la carta de
     movimiento en la db.  
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
+    tuple_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento no existe en la partida"):
-        cancelar_movimiento(1, 1, 0, tupla_coords, movs_test)
+        cancel_movement(1, 1, 0, tuple_coords, movs_test)
 
-@patch("src.repositories.cards_repository.swap_fichasCajon")
-def test_cancelar_movimiento_mov_mano(mock_swap, movs_test):
+@patch("src.repositories.cards_repository.swap_box_card")
+def test_cancel_movement_mov_mano(mock_swap, movs_test):
     """
-    Testeo que la función cancelar_movimiento falle si es la carta de movimiento esta
+    Testeo que la función cancel_movement falle si es la carta de movimiento esta
     en mano.
     """
     mock_swap.return_value = None
-    tupla_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
+    tuple_coords = (Coords(x_pos=1, y_pos=1), Coords(x_pos=2, y_pos=2))
 
     with pytest.raises(ValueError, match="La carta de movimiento esta en mano de alguien"):
-        cancelar_movimiento(1, 1, 2, tupla_coords, movs_test)
+        cancel_movement(1, 1, 2, tuple_coords, movs_test)
 
-@patch("src.repositories.cards_repository.swap_fichasCajon")
+@patch("src.repositories.cards_repository.swap_box_card")
 def test_movimiento_parcial(mock_swap, movs_test):
 
     mock_swap.return_value = None
     
-    ficha0 = Coords(x_pos = 1, y_pos = 1)
-    ficha1 = Coords(x_pos = 2, y_pos = 2)
-    coord = (ficha0, ficha1)
+    box_card0 = Coords(x_pos = 1, y_pos = 1)
+    box_card1 = Coords(x_pos = 2, y_pos = 2)
+    coord = (box_card0, box_card1)
     moveCard = get_cartaMovId(1, movs_test)
 
     assert moveCard is not None
@@ -279,3 +281,28 @@ def test_movimiento_parcial(mock_swap, movs_test):
 
     assert moveCard.estado == CardStateMov.descartada
     assert moveCard.jugador_id == None
+
+
+def test_block_player_figure_card(test_db):
+    jugador = Jugador(id=1, nombre="test", partida_id=1)
+    carta_figura = PictureCard(id=1, estado=CardState.mano, partida_id=1, jugador_id=1)
+
+    test_db.add(jugador)
+    test_db.add(carta_figura)
+    test_db.commit()
+
+    block_player_figure_card( 1, test_db)
+
+    assert get_CartaFigura(1, test_db).blocked == True
+
+def test_unlock_player_figure_card(test_db):
+    player = Jugador(id=1, nombre="test", partida_id=1)
+    figure_card = PictureCard(id=1, estado=CardState.mano, partida_id=1, jugador_id=1)
+
+    test_db.add(player)
+    test_db.add(figure_card)
+    test_db.commit()
+
+    unlock_player_figure_card(1, test_db)
+
+    assert get_CartaFigura(1, test_db).blocked == False

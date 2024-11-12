@@ -21,9 +21,9 @@ from sqlalchemy.exc import IntegrityError
 
 client = TestClient(app)
 
-
-@patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_3cards(mock_list_movs):
+@patch("src.routers.game.get_cartasFigura_player")
+@patch("src.routers.game.list_fig_cards")
+def test_get_fig_cards_endpoint_3cards(mock_list_movs, mock_get_cards):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
         PictureCard(figura=Picture.figura2, estado=CardState.mano),
@@ -31,22 +31,24 @@ def test_get_fig_cards_endpoint_3cards(mock_list_movs):
     ]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
+    mock_get_cards.return_value = cards_fig
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["fig_cards"]) == 3
+    assert json_resp ["fig_cant"] == 3
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value},
-                                        {"id": cards_fig[2].id, "fig":Picture.figura3.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False},
+                                        {"id": cards_fig[2].id, "fig":Picture.figura3.value, "blocked": False}
                                         ]
 
 
-@patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
+@patch("src.routers.game.get_cartasFigura_player")
+@patch("src.routers.game.list_fig_cards")
+def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs, mock_get_cards):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
         PictureCard(figura=Picture.figura2, estado=CardState.mano),
@@ -54,57 +56,62 @@ def test_get_fig_cards_endpoint_3cards_bloq(mock_list_movs):
     ]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
+    mock_get_cards.return_value = cards_fig
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["fig_cards"]) == 2
+    assert json_resp ["fig_cant"] == 3
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False}
                                         ]
 
 
-@patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_2cards(mock_list_movs):
+@patch("src.routers.game.get_cartasFigura_player")
+@patch("src.routers.game.list_fig_cards")
+def test_get_fig_cards_endpoint_2cards(mock_list_movs, mock_get_cards):
     cards_fig = [
         PictureCard(figura=Picture.figura1, estado=CardState.mano),
         PictureCard(figura=Picture.figura2, estado=CardState.mano)
     ]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
+    mock_get_cards.return_value = cards_fig
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["fig_cards"]) == 2
+    assert json_resp ["fig_cant"] == 2
     assert json_resp ["fig_cards"] == [
-                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value},
-                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value}
+                                        {"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False},
+                                        {"id": cards_fig[1].id, "fig":Picture.figura2.value, "blocked": False}
                                         ]
 
 
-@patch("src.main.list_fig_cards")
-def test_get_fig_cards_endpoint_1card(mock_list_movs):
+@patch("src.routers.game.get_cartasFigura_player")
+@patch("src.routers.game.list_fig_cards")
+def test_get_fig_cards_endpoint_1card(mock_list_movs, mock_get_cards):
     cards_fig = [PictureCard(figura=Picture.figura1, estado=CardState.mano)]
 
     mock_list_movs.side_effect = lambda player_id, db: mock_list_fig_cards(cards_fig)
+    mock_get_cards.return_value = cards_fig
 
     response = client.get("/game/my-fig-card?player_id=1")
 
     mock_list_movs.assert_called_once_with(1, ANY)
     assert response.status_code == 200
     json_resp = response.json()
-    assert len(json_resp ["fig_cards"]) == 1
-    assert json_resp ["fig_cards"] == [{"id": cards_fig[0].id, "fig": Picture.figura1.value}]
+    assert json_resp ["fig_cant"] == 1
+    assert json_resp ["fig_cards"] == [{"id": cards_fig[0].id, "fig": Picture.figura1.value, "blocked": False}]
     
 
 def test_get_fig_enpoint_exception_list():
-    with patch("src.main.list_fig_cards", side_effect=IntegrityError("Error de integridad", 
+    with patch("src.routers.game.list_fig_cards", side_effect=IntegrityError("Error de integridad", 
                                                             params=None, 
                                                             orig=None)) as mock_list_card:
         response = client.get("/game/my-fig-card?player_id=1")
