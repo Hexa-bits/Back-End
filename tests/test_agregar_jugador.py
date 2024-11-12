@@ -19,7 +19,8 @@ def client():
 def test_join_success(client):
     # Mock de la sesión de la base de datos
     player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=False, password=None, winner_id=None)
     
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \
@@ -39,14 +40,17 @@ def test_join_success(client):
 def test_join_password_success(client):
      
     player_mock = MagicMock(id= 1, nombre= "testjoin")
+    game_mock = MagicMock(id= 1, game_name="partida", max_players= 4,
+                          partida_iniciada=False, password="U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=",
+                          winner_id=None)
+    
     with patch('src.db.get_db'), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \
         patch('src.routers.game.is_name_in_game', return_value = False), \
         patch('src.routers.game.add_player_game', return_value = player_mock), \
         patch('src.routers.game.num_players_in_game', return_value=2), \
         patch('src.routers.game.block_manager.add_player', return_value= None), \
-        patch('src.routers.game.get_Partida', return_value= MagicMock(id= 1, game_name="partida", max_players= 4,
-                                                                partida_iniciada=False, password="U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=")):
+        patch('src.routers.game.get_Partida', return_value=game_mock):
             response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, 
                                                                 "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE="})    
     
@@ -58,14 +62,17 @@ def test_join_password_success(client):
 def test_join_password_failure(client):
 
     player_mock = MagicMock(id= 1, nombre= "testjoin")
+    game_mock = MagicMock(id= 1, game_name="partida", max_players= 4,
+                          partida_iniciada=False, password="U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=", 
+                          winner_id=None)
+    
     with patch('src.db.get_db'), \
          patch('src.routers.game.get_Jugador', return_value = player_mock), \
          patch('src.routers.game.is_name_in_game', return_value = False), \
          patch('src.routers.game.add_player_game', return_value = None), \
          patch('src.routers.game.num_players_in_game', return_value=2), \
          patch('src.routers.game.block_manager.add_player', return_value= None), \
-         patch('src.routers.game.get_Partida', return_value= MagicMock(id= 1, game_name="partida", max_players= 4,
-                                                                    partida_iniciada=False, password="U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE=")):
+         patch('src.routers.game.get_Partida', return_value=game_mock):
             response = client.post("/game/join", json={"player_id": player_mock.id , "game_id": 1, 
                                                                 "game_password": "U2FsdGVkX19Rw2m4lWQF8GsXaRT9h/OOM7e2MK8tKyE0"})    
     
@@ -79,7 +86,8 @@ def test_join_many_players(client):
                     MagicMock(id=3, nombre="testjoins"),
                     ]
     
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=False, password=None, winner_id=None)
     
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', side_effect=players_mock), \
@@ -107,7 +115,8 @@ def test_join_many_players(client):
 
 def test_join_failure(client):
     player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=False, password=None, winner_id=None)
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', side_effect=player_mock), \
@@ -123,7 +132,8 @@ def test_join_failure(client):
 
 def test_join_full_game(client):
     player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=False, password=None, winner_id=None)
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \
@@ -137,7 +147,8 @@ def test_join_full_game(client):
         assert response.json() == {"detail": "No se aceptan más jugadores"}
 
 def test_player_not_found(client):
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=False, password=None)
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=False, password=None, winner_id=None)
 
     with patch('src.routers.game.add_player_game', return_value= None), \
         patch('src.routers.game.is_name_in_game', return_value = False), \
@@ -164,7 +175,8 @@ def test_game_not_found(client):
 
 def test_join_my_started_game(client):
     player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=True, password=None)    
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=True, password=None, winner_id=None)    
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \
@@ -180,7 +192,8 @@ def test_join_my_started_game(client):
 
 def test_join_started_game_not_mine(client):
     player_mock = MagicMock(id=1, nombre="testjoin")
-    game_mock = MagicMock(id=1, game_name="partida", max_players=4, partida_iniciada=True, password=None)    
+    game_mock = MagicMock(id=1, game_name="partida", max_players=4, 
+                          partida_iniciada=True, password=None, winner_id=None)    
 
     with patch('src.db.get_db', return_value=MagicMock(spec=Session)), \
         patch('src.routers.game.get_Jugador', return_value = player_mock), \

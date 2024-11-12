@@ -118,7 +118,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                                 detail=f'No existe el jugador: {leave_lobby.id_user}')
         
         partida = get_Partida(leave_lobby.game_id, db)
-        if partida is None:
+        if partida is None or partida.winner_id is not None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail=f'No exsite la partida: {leave_lobby.game_id}')
         
@@ -189,7 +189,7 @@ async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
         username = player.nombre
 
         partida = get_Partida(joinGameData.game_id, db)
-        if partida is None:
+        if partida is None or partida.winner_id is not None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
 
         player_already_in_game = is_name_in_game(partida.id, username, db)
@@ -462,7 +462,7 @@ async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get
                                 detail=f'No existe el jugador: {playerAndGameId.player_id}')
         
         partida = get_Partida(playerAndGameId.game_id, db)
-        if partida is None or not partida.partida_iniciada:
+        if partida is None or partida.winner_id is not None or not partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail=f'No existe la partida: {playerAndGameId.game_id}')
         
@@ -585,7 +585,10 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
         
         game_id = jugador.partida_id
         partida = get_Partida(game_id, db)
-        
+
+        if partida is None or partida.winner_id is not None or not partida.partida_iniciada:
+            raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La partida no es válida")
+
         if game_id != pictureCard.partida_id:
             raise HTTPException(status_code= status.HTTP_400_BAD_REQUEST, detail="La carta no pertenece a la partida")
         
@@ -718,7 +721,7 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
 
         player = get_Jugador(figura.player_id, db)
         game = get_Partida(player.partida_id, db)
-        if game is None:
+        if game is None or game.winner_id is not None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
         
         if game.jugador_en_turno != player.turno:

@@ -222,7 +222,7 @@ def test_use_picture_card(mock_get_tablero,mock_get_color,mock_get_partida, mock
                           mock_descartar_carta, mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, 
                           mock_get_db):
 
-    partida = MagicMock(id=1)
+    partida = MagicMock(id=1, winner_id=None)
     jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
@@ -263,7 +263,7 @@ def test_use_picture_card_unlock(mock_get_tablero,mock_get_color,mock_get_partid
                                  mock_get_jugador_sin_cartas, mock_descartar_carta, mock_get_jugador_turno,
                                  mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
-    partida = MagicMock(id=1, winner_id= None)
+    partida = MagicMock(id=1, winner_id=None)
     jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5},
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
@@ -310,7 +310,7 @@ def test_use_picture_card_delete_blocked(mock_get_tablero,mock_get_color,mock_ge
                                         mock_block_manager, mock_get_jugador_sin_cartas, mock_descartar_carta, 
                                         mock_get_jugador_turno, mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
-    partida = MagicMock(id=1)
+    partida = MagicMock(id=1, winner_id=None)
     jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
@@ -353,7 +353,7 @@ def test_use_picture_card_delete_blocked(mock_get_tablero,mock_get_color,mock_ge
 def test_use_picture_card_invalid_card(mock_get_tablero,mock_get_color_of_box_card,mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
                                        mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
 
-    partida = MagicMock(id=1)
+    partida = MagicMock(id=1, winner_id=None)
     jugador = MagicMock(id=1, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
               {"x_pos": 2, "y_pos": 4}, {"x_pos": 3, "y_pos": 4}]
@@ -385,7 +385,7 @@ def test_use_picture_card_invalid_card(mock_get_tablero,mock_get_color_of_box_ca
 def test_use_picture_card_400_status_code(mock_get_partida, mock_descartar_carta, mock_get_jugador_turno,
                                           mock_get_carta, mock_get_jugador, mock_game_manager, mock_get_db):
     
-    partida = MagicMock(id=1)
+    partida = MagicMock(id=1, winner_id=None)
     jugador1 = MagicMock(id=1, partida_id=1)
     jugador2 = MagicMock(id=2, partida_id=1)
     figure = [{"x_pos": 1, "y_pos": 6}, {"x_pos": 2, "y_pos": 6}, {"x_pos": 2, "y_pos": 5}, 
@@ -677,7 +677,8 @@ async def test_get_others_cards_db_error(mock_get_db, mock_others_cards):
 async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
                                 mock_manager, mock_get_partida, mock_get_jugador):
     #Inicializo elementos para la prueba
-    mock_partida = MagicMock(id=1, jugador_en_turno=0, partida_empezada=True)
+    mock_partida = MagicMock(id=1, jugador_en_turno=0, 
+                             partida_empezada=True, winner_id=None)
     mock_jugador = MagicMock(id=1, turno=0, partida_id=1)
 
     mock_get_db.return_value = MagicMock(spec=Session)
@@ -711,7 +712,8 @@ async def test_cancelar_mov_OK(mock_get_db, mock_cancel_movimiento,
 async def test_cancelar_mov_not_mov_parcial(mock_get_db, mock_cancel_movimiento,
                                           mock_manager, mock_get_partida, mock_get_jugador):
     #Inicializo elementos para la prueba
-    mock_partida = MagicMock(id=1, jugador_en_turno=0, partida_empezada=True)
+    mock_partida = MagicMock(id=1, jugador_en_turno=0, 
+                             partida_empezada=True, winner_id=None)
     mock_jugador = MagicMock(id=1, turno=0, partida_id=1)
 
     mock_get_db.return_value = MagicMock(spec=Session)
@@ -790,7 +792,7 @@ async def test_cancelar_mov_sql_error(mock_get_db, mock_cancel_movimiento,
 @pytest.mark.asyncio
 async def test_block_figure_success(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -820,7 +822,7 @@ async def test_block_figure_success(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_game_not_found(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -851,7 +853,7 @@ async def test_block_figure_game_not_found(mocker):
 async def test_block_figure_invalid_turn(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
     #El jugador no esta en turno
-    mock_game = MagicMock(id=1, jugador_en_turno=1)
+    mock_game = MagicMock(id=1, jugador_en_turno=1, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -881,7 +883,7 @@ async def test_block_figure_invalid_turn(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_invalid_figure(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -910,7 +912,7 @@ async def test_block_figure_invalid_figure(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_no_player_to_block(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = None
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -939,7 +941,7 @@ async def test_block_figure_no_player_to_block(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_already_blocked(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -970,7 +972,7 @@ async def test_block_figure_already_blocked(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_sql_error(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -1000,7 +1002,7 @@ async def test_block_figure_sql_error(mocker):
 @pytest.mark.asyncio
 async def test_block_figure_not_card_figure(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = None
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
@@ -1030,7 +1032,7 @@ async def test_block_figure_not_card_figure(mocker):
 @pytest.mark.asyncio
 async def test_block_color_figure_block(mocker):
     mock_player = MagicMock(turno=0, partida_id=1)
-    mock_game = MagicMock(id=1, jugador_en_turno=0)
+    mock_game = MagicMock(id=1, jugador_en_turno=0, winner_id=None)
     mock_card_figura_block = MagicMock(id=1, estado=CardState.mano, figura=Picture.figura10, partida_id=1, jugador_id=1)
     mock_player_to_block = MagicMock(id=2, partida_id=1)
     mock_tablero = MagicMock(id=1, color_prohibido=Color.ROJO, partida_id=1)
