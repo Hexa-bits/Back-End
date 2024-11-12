@@ -48,7 +48,7 @@ def pictureCardsFigures() -> list[np.ndarray]:
     figures_list.append(fig03)
 
     fig04 = [
-        [1, 0, 0],
+        [1, 0, -1],
         [1, 1, 0],
         [0, 1, 1]
     ]
@@ -60,7 +60,7 @@ def pictureCardsFigures() -> list[np.ndarray]:
     figures_list.append(fig05)
 
     fig06 = [
-        [1, 0, 0],
+        [1, 0, -1], #el -1 es un comodin
         [1, 0, 0],
         [1, 1, 1]
     ]
