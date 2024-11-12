@@ -771,3 +771,21 @@ async def block_figure(figura: FigureData, db: Session = Depends(get_db)):
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Fallo en la base de datos")
+    
+
+@router.get("/timer-left", status_code=status.HTTP_200_OK)
+async def get_timer_left(game_id: int, db: Session = Depends(get_db)):
+    """
+    Endpoint para obtener el tiempo restante de la partida
+    args:
+        game_id: int - id del juego
+    return:
+        int - Tiempo restante en segundos
+    """
+    try:
+        time = get_left_timer(game_id)
+        response = {"left_time": time}
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al obtener el tiempo restante")
+    
+    return response
