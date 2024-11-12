@@ -20,7 +20,7 @@ def get_left_timer(game_id: int) -> int:
     current_time = datetime.now()
     left_time = 120
     if game_id in timer_start_time:
-        left_time = int((current_time - timer_start_time[game_id]).total_seconds())
+        left_time = left_time - int((current_time - timer_start_time[game_id]).total_seconds())
     return left_time
 
 class GameManager:
