@@ -139,7 +139,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             if get_Partida(game_id, db) is not None:
                 jugadores = get_players(game_id, db)
 
-                if partida.winner_id is None and len(jugadores) == 1:
+                if len(jugadores) == 1:
                     block_manager.delete_game(game_id)
                     partida.winner_id = jugadores[0].id
                     db.commit()
@@ -282,25 +282,29 @@ async def end_turn(game_id: GameId, db: Session = Depends(get_db)):
     - 500: En caso de algún fallo en base de datos. Con contenido "Fallo en la base de datos"
     """
     try:
-        jugador = get_current_turn_player(game_id.game_id, db)
-        
-        if jugador is None:
+        game = get_Partida(game_id.game_id, db)
+        if game is None or game.winner_id is not None or not game.partida_iniciada:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe la partida")
+
+        player = get_current_turn_player(game_id.game_id, db)
+        if player is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No existe el jugador")
         
         while game_manager.is_board_parcial(game_id.game_id):
             mov_coords = game_manager.top_tuple_card_and_box_cards(game_id.game_id)
             mov = mov_coords [0]
             coords = (mov_coords [1][0], mov_coords [1][1])
-            cancel_movement(game_id.game_id, jugador.id, mov, coords, db)
+            cancel_movement(game_id.game_id, player.id, mov, coords, db)
             game_manager.pop_card_and_box_card(game_id.game_id)
-        player_blocked = block_manager.is_blocked(game_id.game_id, jugador.id)
+
+        player_blocked = block_manager.is_blocked(game_id.game_id, player.id)
         repartir_cartas(game_id.game_id, player_blocked, db)
         next_jugador = terminar_turno(game_id.game_id, db)
         #TO DO: ver si quitar jugador en turno de game_manager
         game_manager.set_player_in_turn_id(game_id=game_id.game_id, player_id=next_jugador["id_player"])
     
         await ws_manager.send_end_turn(game_id.game_id)
-        await ws_manager.send_turn_log(game_id.game_id, jugador.nombre)
+        await ws_manager.send_turn_log(game_id.game_id, player.nombre)
         await timer_handler(game_id.game_id, db)
     except Exception:
         db.rollback()
@@ -618,11 +622,15 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
 
             game_manager.clean_cards_box_cards(game_id)
 
-            if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
+            if get_jugador_sin_cartas(game_id, db) is not None:
                 partida.winner_id = jugador.id
                 await ws_manager.send_get_lobbies()
                 db.commit()
 
+                if active_timers[game_id].cancel():
+                    del active_timers[game_id]
+                game_manager.delete_game(game_id)
+                block_manager.delete_game(game_id)
                 await ws_manager.send_get_winner(game_id)
             else:
                 if block_manager.is_blocked(game_id, jugador.id):

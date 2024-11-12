@@ -53,6 +53,7 @@ async def test_terminar_turno_succesful(test_db, client):
          patch("src.routers.game.terminar_turno") as mock_terminar_turno, \
          patch("src.routers.game.repartir_cartas", return_value= None), \
          patch("src.routers.game.game_manager.set_player_in_turn_id"), \
+         patch("src.routers.game.get_Partida", return_value=MagicMock(id=1, winner_id=None, partida_iniciada=True)), \
          patch("src.routers.game.timer_handler", side_effect= await sleep(2)) as mock_timer, \
          patch("src.routers.game.block_manager.is_blocked", return_value=False):
         
