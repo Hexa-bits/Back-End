@@ -145,13 +145,14 @@ def detect_patterns(matriz, patterns) -> List[List[Tuple[int, int]]]:
             for j in range(columnas - p_columnas + 1):
                 # Extraer la submatriz de la ventana deslizante
                 submatriz = matriz[i:i + p_filas, j:j + p_columnas]
-                
+
                 # Compara la submatriz con el patrón considerando -1 como comodín
-                match = (patron == -1) | (submatriz == patron)
-                if np.all(match):
-                    # Si coinciden, guardar las coordenadas
-                    coords = [(i + x, j + y) for x in range(p_filas) for y in range(p_columnas) if patron[x, y] == 1]
-                    figuras_detectadas.append(coords)
+                if submatriz.shape == patron.shape:
+                    match = (patron == -1) | (submatriz == patron)
+                    if np.all(match):
+                        # Si coinciden, guardar las coordenadas
+                        coords = [(i + x, j + y) for x in range(p_filas) for y in range(p_columnas) if patron[x, y] == 1]
+                        figuras_detectadas.append(coords)
 
     return figuras_detectadas
 
@@ -267,14 +268,25 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
         matriz[x-1][y-1] = 1
     
     submatriz = matriz[min_x-1 : min_x-1 + filas, min_y-1 : min_y-1 + columnas]
-    
+    print("hola submatriz b")
+    print(type(submatriz))
+    submatriz = np.array(submatriz)
+    print(type(submatriz))
+    print("chau sub b")
+
     figure_rotations = generar_rotaciones(figure)
 
     for fig in figure_rotations:
-
-        match = (fig == -1) | (submatriz == fig)
-        if np.all(match):
-            return True
+        print("hola fig b")
+        print(type(fig))
+        fig = np.array(fig)
+        print(type(fig))
+        print("chau fig b")
+        print(fig)
+        if fig.shape == submatriz.shape:
+            match = (fig == -1) | (submatriz == fig)
+            if np.all(match):
+                return True
         
     return False
 
