@@ -1,4 +1,5 @@
 import asyncio
+from datetime import datetime
 import json
 from fastapi import Depends, status, HTTPException, APIRouter
 from fastapi import WebSocket, WebSocketDisconnect
@@ -29,7 +30,10 @@ active_timers = {}
 
 async def timer(game_id: int, db: Session):
     
+    initial_time = datetime.now()
+    timer_start_time[game_id] = initial_time
     await asyncio.sleep(120)
+
     #-------
     player = get_current_turn_player(game_id, db)
         
@@ -129,11 +133,12 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
         if partida.partida_iniciada:
             nombre_jugador = jugador.nombre
             delete_player(jugador, db)
+            block_manager.delete_player(game_id, jugador.id)
             await ws_manager.send_get_info_players(partida.id)
             await ws_manager.send_leave_log(partida.id, nombre_jugador)
             if get_Partida(game_id, db) is not None:
                 jugadores = get_players(game_id, db)
-            
+
                 if partida.winner_id is None and len(jugadores) == 1:
                     block_manager.delete_game(game_id)
                     partida.winner_id = jugadores[0].id
@@ -154,16 +159,17 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                 await ws_manager.send_cancel_lobby(game_id)
             else:
                 delete_player(jugador, db)
+                block_manager.delete_player(game_id, jugador.id)
                 await ws_manager.send_leave_lobby(game_id)
         
-            await ws_manager.send_get_lobbies()
+        await ws_manager.send_get_lobbies()
 
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                              detail="Fallo en la base de datos")
     
-@router.post("/join", response_model=PlayerAndGameId, status_code=status.HTTP_200_OK)
+@router.post("/join", status_code=status.HTTP_200_OK)
 async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
     """
     Descripción: maneja la logica de unirse a una partida.
@@ -176,35 +182,66 @@ async def join_game(joinGameData: JoinGameData, db: Session = Depends(get_db)):
     - 500: Ocurre un error interno.
     """
     try:
+        player = get_Jugador(joinGameData.player_id, db)
+        if player is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+
+        username = player.nombre
+
         partida = get_Partida(joinGameData.game_id, db)
         if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="La partida no existe")
-        
-        if partida.partida_iniciada:
+
+        player_already_in_game = is_name_in_game(partida.id, username, db)
+
+        if partida.partida_iniciada and not player_already_in_game:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La partida ya esta empezada")
-        
-        
-        if partida.password and (partida.password != joinGameData.game_password):
+
+        player_id_update = None
+        left_timer = None
+
+        if player_already_in_game and partida.partida_iniciada:
+            #Obtengo el player_id del username que ya esta en la partida (distinto a mi player_id, lo envio al front para que pisen el dato)
+            # Esto es para unirme a mi partida ya empezada 
+            player_id_update = get_player_id_in_game_by_name(partida.id, username, db)
+            #El front deberiua llevarte a la vista de game, no de lobby
+            left_timer = get_left_timer(partida.id)
+            
+
+        if player_already_in_game and not partida.partida_iniciada:
+            #Si el jugador (username) ya esta en la partida no iniciada (lobby), no puede unirse, deben iniciarla
+            #Sino podria meter dos veces el mismo username en la misma partida (no permitido)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El jugador ya esta en el lobby, espere a inicio del juego")
+
+        if partida.password and (partida.password != joinGameData.game_password) and not partida.partida_iniciada:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Contraseña incorrecta")
-        
-        if partida.max_players == num_players_in_game(partida, db):
+
+        if partida.max_players == num_players_in_game(partida, db) and  not player_already_in_game:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="No se aceptan más jugadores")
 
-        jugador = add_player_game(joinGameData.player_id, joinGameData.game_id, db)
-        if jugador is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="El jugador no existe")
+        if not partida.partida_iniciada and not player_already_in_game:
+            joined_game_player = add_player_game(joinGameData.player_id, joinGameData.game_id, db)
+            if joined_game_player is None:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fallo al unirse a partida")
+            block_manager.add_player(joinGameData.game_id, joinGameData.player_id)
         
-        block_manager.add_player(joinGameData.game_id, joinGameData.player_id)
+
         
         #Luego de unirse a la partida, le actualizo a los ws conectados la nueva lista de lobbies
         #Porque ahora tiene un jugador mas
         await ws_manager.send_get_lobbies()
         await ws_manager.send_join_game(partida.id)
 
+        response = {
+            "player_id": player_id_update,
+            "game_id": partida.id,
+            "left_timer": left_timer
+        }
+
     except SQLAlchemyError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al unirse a partida")
-    return PlayerAndGameId(player_id=jugador.id, game_id=jugador.partida_id)
+    return response
 
 
 @router.get("/board", status_code=status.HTTP_200_OK)
@@ -405,6 +442,7 @@ async def start_game(game_id: GameId, db: Session = Depends(get_db)):
     )
 
 
+
 @router.put("/cancel-mov", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_mov(playerAndGameId: PlayerAndGameId, db: Session = Depends(get_db)):
     """
@@ -579,6 +617,7 @@ async def use_fig_card(figureData: FigureData, db: Session = Depends(get_db)):
 
             if partida.winner_id is None and get_jugador_sin_cartas(game_id, db) is not None:
                 partida.winner_id = jugador.id
+                await ws_manager.send_get_lobbies()
                 db.commit()
 
                 await ws_manager.send_get_winner(game_id)

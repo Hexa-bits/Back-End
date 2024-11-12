@@ -95,25 +95,46 @@ def terminar_turno(game_id: int, db: Session) -> dict:
         #Debo retornar lo que esta en la API formato JSON
         return info_jugador_turno
 
-def list_lobbies(db) -> List[dict]:
+
+def is_name_in_game(game_id: int, username: str, db: Session) -> bool:
+
+    jugadores = db.query(Jugador).filter(Jugador.partida_id == game_id).all()
+    for jugador in jugadores:
+        if jugador.nombre == username:
+            return True
+    return False
+
+def get_player_id_in_game_by_name(game_id: int, username: str, db: Session) -> int: 
+    jugador = db.query(Jugador).filter(Jugador.partida_id == game_id, Jugador.nombre == username).first()
+    return jugador.id
+
+def list_lobbies(username: str,db: Session) -> List[dict]:
 
     raw_lobbies = db.query(Partida).all()
     
     lobbies = []
 
     for lobby in raw_lobbies:
+
+        name_already_in_game = is_name_in_game(lobby.id, username, db)
+
         #Calculo la cantidad de jugadores actuales en partida
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
-        if current_players == 0 or lobby.partida_iniciada:
+        if current_players == 0 or (lobby.partida_iniciada and not name_already_in_game)\
+                                or (name_already_in_game and not lobby.partida_iniciada):
             continue
         
-        private = True if (lobby.password != None) else False
-
+        if (lobby.partida_iniciada):
+            private = False
+        else:
+            private = lobby.password is not None
+            
         lobbies.append({
             "game_id": lobby.id,
             "game_name": lobby.game_name,
             "current_players": current_players,
             "max_players": lobby.max_players,
+            "started": lobby.partida_iniciada,
             "isPrivate": private
             })
 

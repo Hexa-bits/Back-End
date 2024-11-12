@@ -158,12 +158,13 @@ async def test_websocket_broadcast_ganador(client):
 @pytest.mark.asyncio
 async def test_websocket_broadcast_games_join(client):
     with client.websocket_connect("/game?game_id=1") as websocket1, \
-         client.websocket_connect("/game?game_id=1") as websocket2:
-
+        client.websocket_connect("/game?game_id=1") as websocket2:
         with patch("src.routers.game.add_player_game", return_value=mock_jugador) as mock_add_partida, \
-             patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
-             patch("src.routers.game.num_players_in_game", return_value= 2), \
-             patch("src.routers.game.block_manager.add_player", return_value= False):
+            patch("src.routers.game.get_Jugador", return_value=mock_jugador), \
+            patch("src.routers.game.is_name_in_game", return_value=False), \
+            patch("src.routers.game.get_Partida", return_value=mock_partida) as mock_get_partida, \
+            patch("src.routers.game.num_players_in_game", return_value= 2), \
+            patch("src.routers.game.block_manager.add_player", return_value= False):
             config = {"player_id": 1 , "game_id": 1, "game_password": ""}
             mock_add_partida.return_value = mock_jugador
 

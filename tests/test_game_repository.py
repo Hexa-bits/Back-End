@@ -22,11 +22,14 @@ def test_list_lobbies(test_db):
     # Partida 4: partida no iniciada, sin contraseña, 0 jugadores
     partida4 = Partida(game_name="partida4", max_players=4, password = None, partida_iniciada=False)
     
+    # Partida 5: partida iniciada, pero mi username esta en la partida
+    partida5 = Partida(game_name="partida5", max_players=4, password = None, partida_iniciada=True)
 
     test_db.add(partida1)
     test_db.add(partida2)
     test_db.add(partida3)
     test_db.add(partida4)
+    test_db.add(partida5)
     test_db.commit()
 
     # Jugadores de la partida 1
@@ -53,10 +56,17 @@ def test_list_lobbies(test_db):
     test_db.add(jugador8)
     test_db.add(jugador9)
 
+    # Jugadores de la partida 5
+    jugador10 = Jugador(nombre="test", partida_id=partida5.id, turno=0)
+    jugador11 = Jugador(nombre="jugador11", partida_id=partida5.id, turno=1)
+    test_db.add(jugador10)
+    test_db.add(jugador11)
+
     test_db.commit()
     
+    username = "test"
     # Ejecutar la función a probar
-    result = list_lobbies(test_db)
+    result = list_lobbies(username,test_db)
     
     # Comprobar el resultado
     # La partida 3 no se veria por ser una partida iniciada, la partida 4 no se veria por no tener jugadores
@@ -66,14 +76,24 @@ def test_list_lobbies(test_db):
             "game_name": "partida1",
             "current_players": 2,
             "max_players": 4,
-            "isPrivate": False
+            "isPrivate": False,
+            "started": False
         },
         {
             "game_id": 2,
             "game_name": "partida2",
             "current_players": 3,
             "max_players": 3,
-            "isPrivate": True
+            "isPrivate": True,
+            "started": False
+        },
+        {
+            "game_id": 5,
+            "game_name": "partida5",
+            "current_players": 2,
+            "max_players": 4,
+            "isPrivate": False,
+            "started": True
         }
     ]
     
