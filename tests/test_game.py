@@ -1056,3 +1056,13 @@ async def test_block_color_figure_block(mocker):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "El color de la figura está prohibido"}
+
+@pytest.mark.asyncio
+async def test_left_timer(mocker):
+    game_id = 1
+    mocker.patch("src.routers.game.get_left_timer", return_value=50)
+
+    response = client.get(f"/game/timer-left?game_id={game_id}")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.json() == {"left_time": 50}
