@@ -118,7 +118,7 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
                                 detail=f'No existe el jugador: {leave_lobby.id_user}')
         
         partida = get_Partida(leave_lobby.game_id, db)
-        if partida is None or partida.winner_id is not None:
+        if partida is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                                 detail=f'No exsite la partida: {leave_lobby.game_id}')
         
@@ -139,18 +139,20 @@ async def leave_lobby(leave_lobby: Leave_config, db: Session=Depends(get_db)):
             if get_Partida(game_id, db) is not None:
                 jugadores = get_players(game_id, db)
 
-                if len(jugadores) == 1:
-                    block_manager.delete_game(game_id)
-                    partida.winner_id = jugadores[0].id
-                    db.commit()
-
-                    if active_timers[game_id].cancel():
-                        del active_timers[game_id]
-                    game_manager.delete_game(game_id)
-                    await ws_manager.send_get_winner(partida.id)
-                elif is_current_turn_player:
-                    await ws_manager.send_end_turn(game_id)
-                    await timer_handler(game_id, db)
+                if partida.winner_id is None:
+                    if len(jugadores) == 1:
+                        block_manager.delete_game(game_id)
+                        partida.winner_id = jugadores[0].id
+                        db.commit()
+    
+                        if game_id in active_timers:
+                            if active_timers[game_id].cancel():
+                                del active_timers[game_id]
+                            game_manager.delete_game(game_id)
+                            await ws_manager.send_get_winner(partida.id)
+                    elif is_current_turn_player:
+                        await ws_manager.send_end_turn(game_id)
+                        await timer_handler(game_id, db)
                     
         else:
             if jugador.es_anfitrion:

@@ -52,9 +52,9 @@ class GameManager:
 
     def delete_game(self, game_id: int) -> None:
         """Eliminamos un juego del GameManager cuando se termina la partida (Alguien gana por abandono por ahora)"""
-        
+        if game_id in self.games:
         # Eliminar el juego con game_id
-        del self.games[game_id]
+            del self.games[game_id]
 
 
     def is_board_parcial(self, game_id: int) -> bool:
