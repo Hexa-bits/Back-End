@@ -146,8 +146,9 @@ def detect_patterns(matriz, patterns) -> List[List[Tuple[int, int]]]:
                 # Extraer la submatriz de la ventana deslizante
                 submatriz = matriz[i:i + p_filas, j:j + p_columnas]
                 
-                # Comparar submatriz con el patrón
-                if np.array_equal(submatriz, patron):
+                # Compara la submatriz con el patrón considerando -1 como comodín
+                match = (patron == -1) | (submatriz == patron)
+                if np.all(match):
                     # Si coinciden, guardar las coordenadas
                     coords = [(i + x, j + y) for x in range(p_filas) for y in range(p_columnas) if patron[x, y] == 1]
                     figuras_detectadas.append(coords)
@@ -270,7 +271,9 @@ def is_valid_picture_card(pictureCard: PictureCard, coords: List[Coords]) -> boo
     figure_rotations = generar_rotaciones(figure)
 
     for fig in figure_rotations:
-        if np.array_equal(fig, submatriz):
+
+        match = (fig == -1) | (submatriz == fig)
+        if np.all(match):
             return True
         
     return False
