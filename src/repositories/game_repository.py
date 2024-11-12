@@ -121,7 +121,7 @@ def list_lobbies(username: str,db: Session) -> List[dict]:
         #Calculo la cantidad de jugadores actuales en partida
         current_players = db.query(Jugador).filter(Jugador.partida_id == lobby.id).count()
         if current_players == 0 or (lobby.partida_iniciada and not name_already_in_game)\
-                                or (name_already_in_game and not lobby.partida_iniciada):
+            or lobby.winner_id!=None or (name_already_in_game and not lobby.partida_iniciada):
             continue
         
         if (lobby.partida_iniciada):
